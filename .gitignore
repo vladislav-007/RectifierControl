@@ -1,6 +1,11 @@
 # Prerequisites
 *.d
 
+# Visual Studio db
+*.db
+.vs/
+*.opendb
+
 # Compiled Object files
 *.slo
 *.lo
