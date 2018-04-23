@@ -4,6 +4,7 @@
 # Visual Studio db
 *.db
 .vs/
+**/Debug/
 *.opendb
 
 # Compiled Object files
