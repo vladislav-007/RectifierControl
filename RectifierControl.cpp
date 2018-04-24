@@ -12,6 +12,8 @@
 #include "RectifierControlDoc.h"
 #include "RectifierControlView.h"
 
+#include "SetComportDlg.h"
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -26,6 +28,7 @@ BEGIN_MESSAGE_MAP(CRectifierControlApp, CWinApp)
 	ON_COMMAND(ID_FILE_OPEN, &CWinApp::OnFileOpen)
 	// Стандартная команда настройки печати
 	ON_COMMAND(ID_FILE_PRINT_SETUP, &CWinApp::OnFilePrintSetup)
+	ON_COMMAND(ID_LINK_OPTIONS, &CRectifierControlApp::OnLinkOptions)
 END_MESSAGE_MAP()
 
 
@@ -48,6 +51,7 @@ CRectifierControlApp::CRectifierControlApp()
 
 	// TODO: добавьте код создания,
 	// Размещает весь важный код инициализации в InitInstance
+	m_usedComPort = _T("");
 }
 
 // Единственный объект CRectifierControlApp
@@ -95,6 +99,14 @@ BOOL CRectifierControlApp::InitInstance()
 	// например на название организации
 	SetRegistryKey(_T("Локальные приложения, созданные с помощью мастера приложений"));
 	LoadStdProfileSettings(4);  // Загрузите стандартные параметры INI-файла (включая MRU)
+
+	// set default comport  options, in future get it from saved config files
+	COMMCONFIG commconfig;
+	commconfig.dcb.BaudRate = 115200;
+	commconfig.dcb.ByteSize = 7;
+	commconfig.dcb.Parity = 0;
+	commconfig.dcb.StopBits = 1;
+	m_comportProperties[CString("DefaultPort")] = commconfig;
 
 
 	// Зарегистрируйте шаблоны документов приложения.  Шаблоны документов
@@ -199,3 +211,32 @@ void CRectifierControlApp::OnAppAbout()
 
 
 
+
+bool verifyCommOptions(const COMMCONFIG & comm)
+{
+	if (comm.dcb.BaudRate > 115200)
+		return false;
+
+}
+
+void CRectifierControlApp::OnLinkOptions()
+{
+	// TODO: Add your command handler code here
+	CSetComportDlg setComPortDlg;
+	setComPortDlg.setCurrentlyUsedComport(m_usedComPort);
+	INT_PTR res = setComPortDlg.DoModal();
+	if (IDOK == res) {
+		
+		HWND hWnd = AfxGetMainWnd()->m_hWnd;
+		HWND hwnd = GetDlgItem(setComPortDlg, IDC_COMBO_COMPORT);
+		CComboBox * cmbBox_ComPort = (CComboBox*)(hwnd);
+		CString selectedPort = setComPortDlg.getComport();
+		m_usedComPort = selectedPort;
+		//		cmbBox_ComPort->GetLBText(cmbBox_ComPort->GetCurSel(), selectedPort);
+		COMMCONFIG comm = m_comportProperties[CString("DefaultPort")];
+		CommConfigDialog(selectedPort, hWnd, &comm);
+		while (verifyCommOptions(comm)) {
+			CommConfigDialog(selectedPort, hWnd, &comm);
+		}
+	}
+}

@@ -5,7 +5,9 @@
 *.db
 .vs/
 **/Debug/
+**/ipch/
 *.opendb
+*.aps
 
 # Compiled Object files
 *.slo

@@ -9,6 +9,8 @@
 
 #include "resource.h"       // основные символы
 
+#include <map>
+
 
 // CRectifierControlApp:
 // О реализации данного класса см. RectifierControl.cpp
@@ -28,6 +30,11 @@ public:
 // Реализация
 	afx_msg void OnAppAbout();
 	DECLARE_MESSAGE_MAP()
+	afx_msg void OnLinkOptions();
+private:
+	CString m_usedComPort;
+	// Properties of connection port. 
+	std::map<CString, COMMCONFIG> m_comportProperties;
 };
 
 extern CRectifierControlApp theApp;
