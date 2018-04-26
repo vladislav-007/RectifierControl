@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RectifierController>
+	<Rectifiers>
+		<Rectifier id="01" name="Выпрямитель номер 1" address="01">
+			<Mode id="7001" name="MODBUS ASCII 7-N-1" comport="COM3">
+				<BaudRate value="115200"/>
+				<ByteSize value="7"/>
+				<Parity value="NOPARITY"/>
+				<StopBits value="ONESTOPBIT"/>
+			</Mode>
+		</Rectifier>
+	</Rectifiers>
+</RectifierController>
