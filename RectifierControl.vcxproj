@@ -186,25 +186,33 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ChildFrm.h" />
+    <ClInclude Include="ComportProperties.h" />
     <ClInclude Include="MainFrm.h" />
     <ClInclude Include="RectifierControl.h" />
     <ClInclude Include="RectifierControlDoc.h" />
     <ClInclude Include="RectifierControlView.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="SetComportDlg.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="tinyxml2.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ChildFrm.cpp" />
+    <ClCompile Include="ComportProperties.cpp" />
     <ClCompile Include="MainFrm.cpp" />
     <ClCompile Include="RectifierControl.cpp" />
     <ClCompile Include="RectifierControlDoc.cpp" />
     <ClCompile Include="RectifierControlView.cpp" />
+    <ClCompile Include="SetComportDlg.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="tinyxml2.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -222,4 +230,9 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties RESOURCE_FILE="RectifierControl.rc" />
+    </VisualStudio>
+  </ProjectExtensions>
 </Project>

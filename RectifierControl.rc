@@ -1,11 +1,11 @@
-//Скрипт ресурсов, созданный в Microsoft Visual C++.
+// Microsoft Visual C++ generated resource script.
 //
 #include "resource.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////
 //
-// Создано из ресурса TEXTINCLUDE 2.
+// Generated from the TEXTINCLUDE 2 resource.
 //
 #ifndef APSTUDIO_INVOKED
 #include "targetver.h"
@@ -16,19 +16,25 @@
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
 
-#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+// Russian (Russia) resources
 
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_RUS)
+LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
+#pragma code_page(1251)
+
+#ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
 //
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE
+1 TEXTINCLUDE 
 BEGIN
     "resource.h\0"
 END
 
-2 TEXTINCLUDE
+2 TEXTINCLUDE 
 BEGIN
     "#ifndef APSTUDIO_INVOKED\r\n"
     "#include ""targetver.h""\r\n"
@@ -38,7 +44,7 @@ BEGIN
     "\0"
 END
 
-3 TEXTINCLUDE
+3 TEXTINCLUDE 
 BEGIN
     "#define _AFX_NO_OLE_RESOURCES\r\n"
     "#define _AFX_NO_TRACKER_RESOURCES\r\n"
@@ -58,28 +64,27 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// Значок
+// Icon
 //
 
-// Значок с наименьшим значением идентификатора помещается первым, чтобы гарантировать использование
-// идентичного значка приложения для всех систем.
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDR_MAINFRAME           ICON                    "res\\RectifierControl.ico"
 
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_RUS)
-LANGUAGE 25, 1
-IDR_MAINFRAME           ICON         "res\\RectifierControl.ico"
-IDR_RectifierControTYPE         ICON         "res\\RectifierControlDoc.ico"
-#endif
+IDR_RectifierControTYPE ICON                    "res\\RectifierControlDoc.ico"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// Точечный рисунок
+// Bitmap
 //
 
 IDR_MAINFRAME           BITMAP                  "res\\Toolbar.bmp"
 
+
 /////////////////////////////////////////////////////////////////////////////
 //
-// Панель инструментов
+// Toolbar
 //
 
 IDR_MAINFRAME TOOLBAR 16, 15
@@ -97,36 +102,37 @@ BEGIN
 END
 
 
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_RUS)
-LANGUAGE 25, 1
-
 /////////////////////////////////////////////////////////////////////////////
 //
-// Меню
+// Menu
 //
 
 IDR_MAINFRAME MENU
 BEGIN
     POPUP "&Файл"
     BEGIN
-        MENUITEM "Созд&ать\tCtrl+N",                ID_FILE_NEW
-        MENUITEM "&Открыть...\tCtrl+O",            ID_FILE_OPEN
-        MENUITEM "&Закрыть",                      ID_FILE_CLOSE
+        MENUITEM "Созд&ать\tCtrl+N",            ID_FILE_NEW
+        MENUITEM "&Открыть...\tCtrl+O",         ID_FILE_OPEN
+        MENUITEM "&Закрыть",                    ID_FILE_CLOSE
         MENUITEM SEPARATOR
-        MENUITEM "Нас&тройка печати...",             ID_FILE_PRINT_SETUP
+        MENUITEM "Нас&тройка печати...",        ID_FILE_PRINT_SETUP
         MENUITEM SEPARATOR
-        MENUITEM "Последний файл",                 ID_FILE_MRU_FILE1,GRAYED
+        MENUITEM "Последний файл",              ID_FILE_MRU_FILE1, GRAYED
         MENUITEM SEPARATOR
-        MENUITEM "В&ыход",                       ID_APP_EXIT
+        MENUITEM "В&ыход",                      ID_APP_EXIT
     END
     POPUP "&Вид"
     BEGIN
-        MENUITEM "&Панель инструментов",                    ID_VIEW_TOOLBAR
-        MENUITEM "&Строка состояния",                 ID_VIEW_STATUS_BAR
+        MENUITEM "&Панель инструментов",        ID_VIEW_TOOLBAR
+        MENUITEM "&Строка состояния",           ID_VIEW_STATUS_BAR
+    END
+    POPUP "Настройки"
+    BEGIN
+        MENUITEM "Линия связи",                 ID_LINK_OPTIONS
     END
     POPUP "&Справка"
     BEGIN
-        MENUITEM "&О проекте RectifierControl...",          ID_APP_ABOUT
+        MENUITEM "&О проекте RectifierControl...", ID_APP_ABOUT
     END
 END
 
@@ -134,84 +140,84 @@ IDR_RectifierControTYPE MENU
 BEGIN
     POPUP "&Файл"
     BEGIN
-        MENUITEM "Созд&ать\tCtrl+N",                ID_FILE_NEW
-        MENUITEM "&Открыть...\tCtrl+O",            ID_FILE_OPEN
-        MENUITEM "&Закрыть",                      ID_FILE_CLOSE
-        MENUITEM "Со&хранить\tCtrl+S",               ID_FILE_SAVE
-        MENUITEM "Сохранить &как...",                 ID_FILE_SAVE_AS
+        MENUITEM "Созд&ать\tCtrl+N",            ID_FILE_NEW
+        MENUITEM "&Открыть...\tCtrl+O",         ID_FILE_OPEN
+        MENUITEM "&Закрыть",                    ID_FILE_CLOSE
+        MENUITEM "Со&хранить\tCtrl+S",          ID_FILE_SAVE
+        MENUITEM "Сохранить &как...",           ID_FILE_SAVE_AS
         MENUITEM SEPARATOR
-        MENUITEM "&Печать...\tCtrl+P",           ID_FILE_PRINT
-        MENUITEM "Пред&варительный просмотр",              ID_FILE_PRINT_PREVIEW
-        MENUITEM "Нас&тройка печати...",             ID_FILE_PRINT_SETUP
+        MENUITEM "&Печать...\tCtrl+P",          ID_FILE_PRINT
+        MENUITEM "Пред&варительный просмотр",   ID_FILE_PRINT_PREVIEW
+        MENUITEM "Нас&тройка печати...",        ID_FILE_PRINT_SETUP
         MENUITEM SEPARATOR
-        MENUITEM "Последний файл",                 ID_FILE_MRU_FILE1,GRAYED
+        MENUITEM "Последний файл",              ID_FILE_MRU_FILE1, GRAYED
         MENUITEM SEPARATOR
-        MENUITEM "В&ыход",                       ID_APP_EXIT
+        MENUITEM "В&ыход",                      ID_APP_EXIT
     END
     POPUP "&Правка"
     BEGIN
-        MENUITEM "&Отменить\tCtrl+Z",               ID_EDIT_UNDO
+        MENUITEM "&Отменить\tCtrl+Z",           ID_EDIT_UNDO
         MENUITEM SEPARATOR
-        MENUITEM "&Вырезать\tCtrl+X",                ID_EDIT_CUT
-        MENUITEM "&Копировать\tCtrl+C",               ID_EDIT_COPY
-        MENUITEM "Вст&авить\tCtrl+V",              ID_EDIT_PASTE
+        MENUITEM "&Вырезать\tCtrl+X",           ID_EDIT_CUT
+        MENUITEM "&Копировать\tCtrl+C",         ID_EDIT_COPY
+        MENUITEM "Вст&авить\tCtrl+V",           ID_EDIT_PASTE
     END
     POPUP "&Вид"
     BEGIN
-        MENUITEM "&Панель инструментов",                    ID_VIEW_TOOLBAR
-        MENUITEM "&Строка состояния",                 ID_VIEW_STATUS_BAR
+        MENUITEM "&Панель инструментов",        ID_VIEW_TOOLBAR
+        MENUITEM "&Строка состояния",           ID_VIEW_STATUS_BAR
     END
     POPUP "&Окно"
     BEGIN
         MENUITEM "&Новое окно",                 ID_WINDOW_NEW
-        MENUITEM "&Каскадом",                    ID_WINDOW_CASCADE
-        MENUITEM "&Рядом",                       ID_WINDOW_TILE_HORZ
-        MENUITEM "&Упорядочить значки",              ID_WINDOW_ARRANGE
+        MENUITEM "&Каскадом",                   ID_WINDOW_CASCADE
+        MENUITEM "&Рядом",                      ID_WINDOW_TILE_HORZ
+        MENUITEM "&Упорядочить значки",         ID_WINDOW_ARRANGE
+    END
+    POPUP "&Настройки"
+    BEGIN
+        MENUITEM "Линия &связи",                ID_LINK_OPTIONS
     END
     POPUP "&Справка"
     BEGIN
-        MENUITEM "&О проекте RectifierControl...",          ID_APP_ABOUT
+        MENUITEM "&О проекте RectifierControl...", ID_APP_ABOUT
     END
 END
 
 
-
-
 /////////////////////////////////////////////////////////////////////////////
 //
-// Сочетание клавиш
+// Accelerator
 //
 
 IDR_MAINFRAME ACCELERATORS
 BEGIN
-    "N",            ID_FILE_NEW,            VIRTKEY,CONTROL
-    "O",            ID_FILE_OPEN,           VIRTKEY,CONTROL
-    "S",            ID_FILE_SAVE,           VIRTKEY,CONTROL
-    "P",            ID_FILE_PRINT,          VIRTKEY,CONTROL
-	"Z",            ID_EDIT_UNDO,           VIRTKEY,CONTROL
-	"X",            ID_EDIT_CUT,            VIRTKEY,CONTROL
-	"C",            ID_EDIT_COPY,           VIRTKEY,CONTROL
-	"V",            ID_EDIT_PASTE,          VIRTKEY,CONTROL
-    VK_BACK,        ID_EDIT_UNDO,           VIRTKEY,ALT
-    VK_DELETE,      ID_EDIT_CUT,            VIRTKEY,SHIFT
-    VK_INSERT,      ID_EDIT_COPY,           VIRTKEY,CONTROL
-    VK_INSERT,      ID_EDIT_PASTE,          VIRTKEY,SHIFT
-    VK_F6,          ID_NEXT_PANE,           VIRTKEY
-    VK_F6,          ID_PREV_PANE,           VIRTKEY,SHIFT
+    "N",            ID_FILE_NEW,            VIRTKEY, CONTROL
+    "O",            ID_FILE_OPEN,           VIRTKEY, CONTROL
+    "S",            ID_FILE_SAVE,           VIRTKEY, CONTROL
+    "P",            ID_FILE_PRINT,          VIRTKEY, CONTROL
+    "Z",            ID_EDIT_UNDO,           VIRTKEY, CONTROL
+    "X",            ID_EDIT_CUT,            VIRTKEY, CONTROL
+    "C",            ID_EDIT_COPY,           VIRTKEY, CONTROL
+    "V",            ID_EDIT_PASTE,          VIRTKEY, CONTROL
+    VK_BACK,        ID_EDIT_UNDO,           VIRTKEY, ALT
+    VK_DELETE,      ID_EDIT_CUT,            VIRTKEY, SHIFT
+    VK_INSERT,      ID_EDIT_COPY,           VIRTKEY, CONTROL
+    VK_INSERT,      ID_EDIT_PASTE,          VIRTKEY, SHIFT
+    VK_F6,          ID_NEXT_PANE,           VIRTKEY 
+    VK_F6,          ID_PREV_PANE,           VIRTKEY, SHIFT
 END
-
-
 
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// Диалоговое окно
+// Dialog
 //
 
 IDD_ABOUTBOX DIALOGEX 0, 0, 170, 62
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "О проекте RectifierControl"
-FONT 8, "MS Shell Dlg"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     ICON            IDR_MAINFRAME,IDC_STATIC,14,14,21,20
     LTEXT           "RectifierControl, версия 1.0",IDC_STATIC,42,14,114,8,SS_NOPREFIX
@@ -219,25 +225,35 @@ BEGIN
     DEFPUSHBUTTON   "ОК",IDOK,113,41,50,14,WS_GROUP
 END
 
+IDD_SET_COMPORT_DIALOG DIALOGEX 0, 0, 309, 177
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Dialog"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,198,156,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,252,156,50,14
+    COMBOBOX        IDC_COMBO_COMPORT,59,24,66,30,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Порт связи:",IDC_STATIC,14,25,41,8
+END
 
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// Версия
+// Version
 //
 
-VS_VERSION_INFO     VERSIONINFO
-  FILEVERSION       1,0,0,1
-  PRODUCTVERSION    1,0,0,1
- FILEFLAGSMASK VS_FFI_FILEFLAGSMASK
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
- FILEFLAGS VS_FF_DEBUG
+ FILEFLAGS 0x1L
 #else
  FILEFLAGS 0x0L
 #endif
- FILEOS VOS_NT_WINDOWS32
- FILETYPE VFT_APP
- FILESUBTYPE VFT2_UNKNOWN
+ FILEOS 0x40004L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
 BEGIN
     BLOCK "StringFileInfo"
     BEGIN
@@ -245,19 +261,20 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "TODO: <Название организации>"
             VALUE "FileDescription", "RectifierControl"
-            VALUE "FileVersion",     "1.0.0.1"
-            VALUE "InternalName",    "RectifierControl.exe"
+            VALUE "FileVersion", "1.0.0.1"
+            VALUE "InternalName", "RectifierControl.exe"
             VALUE "LegalCopyright", "TODO: (c) <Название организации>.  Все права защищены."
-            VALUE "OriginalFilename","RectifierControl.exe"
+            VALUE "OriginalFilename", "RectifierControl.exe"
             VALUE "ProductName", "TODO: <Название продукта>"
-            VALUE "ProductVersion",  "1.0.0.1"
+            VALUE "ProductVersion", "1.0.0.1"
         END
     END
     BLOCK "VarFileInfo"
     BEGIN
-        VALUE "Translation", 0x0419, 1200
+        VALUE "Translation", 0x419, 1200
     END
 END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -274,30 +291,51 @@ BEGIN
         TOPMARGIN, 7
         BOTTOMMARGIN, 55
     END
+
+    IDD_SET_COMPORT_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 302
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 170
+    END
 END
 #endif    // APSTUDIO_INVOKED
 
+
 /////////////////////////////////////////////////////////////////////////////
 //
-// Таблица строк
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_SET_COMPORT_DIALOG AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
 //
 
 STRINGTABLE
 BEGIN
-    IDP_OLE_INIT_FAILED       "Не удалось выполнить инициализацию OLE.  Убедитесь в том, что используются правильные версии библиотек OLE."
+    IDP_OLE_INIT_FAILED     "Не удалось выполнить инициализацию OLE.  Убедитесь в том, что используются правильные версии библиотек OLE."
 END
+
 STRINGTABLE
 BEGIN
-// В приложениях, предназначенных не для Mac, две дополнительные подстроки удаляются
     IDR_MAINFRAME           "RectifierControl"
-  // содержит суффикс файла и тип файла оболочки
-    IDR_RectifierControTYPE         "\nRectifierContro\nRectifierContro\nRectifierControl Files (*.rcf)\n.rcf\nRectifierControl.Document\nRectifierControl.Document"
+    IDR_RectifierControTYPE "\nRectifierContro\nRectifierContro\nRectifierControl Files (*.rcf)\n.rcf\nRectifierControl.Document\nRectifierControl.Document"
 END
+
 STRINGTABLE
 BEGIN
     AFX_IDS_APP_TITLE       "RectifierControl"
     AFX_IDS_IDLEMESSAGE     "Готово"
 END
+
 STRINGTABLE
 BEGIN
     ID_INDICATOR_EXT        "EXT"
@@ -307,6 +345,7 @@ BEGIN
     ID_INDICATOR_OVR        "OVR"
     ID_INDICATOR_REC        "REC"
 END
+
 STRINGTABLE
 BEGIN
     ID_FILE_NEW             "Создание нового документа\nСоздать"
@@ -316,11 +355,19 @@ BEGIN
     ID_FILE_SAVE_AS         "Сохранение активного документа под новым именем\nСохранить как"
     ID_FILE_PAGE_SETUP      "Изменение параметров печати\nПараметры страницы"
     ID_FILE_PRINT_SETUP     "Изменение принтера и параметров печати\nНастройка печати"
-    ID_FILE_PRINT_DIRECT    "Печать активного документа с использованием текущих параметров\nБыстрая печать"
     ID_FILE_PRINT           "Печать активного документа\nПечать"
+    ID_FILE_PRINT_DIRECT    "Печать активного документа с использованием текущих параметров\nБыстрая печать"
     ID_FILE_PRINT_PREVIEW   "Просмотр документа в полностраничном режиме\nПредварительный просмотр"
+END
+
+STRINGTABLE
+BEGIN
     ID_APP_ABOUT            "Вывод сведений о программе, ее версии и авторских правах\nО программе"
     ID_APP_EXIT             "Завершение работы приложения с запросом на сохранение документов\nВыход"
+END
+
+STRINGTABLE
+BEGIN
     ID_FILE_MRU_FILE1       "Открытие данного документа"
     ID_FILE_MRU_FILE2       "Открытие данного документа"
     ID_FILE_MRU_FILE3       "Открытие данного документа"
@@ -337,14 +384,26 @@ BEGIN
     ID_FILE_MRU_FILE14      "Открытие данного документа"
     ID_FILE_MRU_FILE15      "Открытие данного документа"
     ID_FILE_MRU_FILE16      "Открытие данного документа"
+END
+
+STRINGTABLE
+BEGIN
     ID_NEXT_PANE            "Переход к следующей области окна\nСледующая область"
     ID_PREV_PANE            "Возврат к предыдущей области окна\nПредыдущая область"
+END
+
+STRINGTABLE
+BEGIN
     ID_WINDOW_NEW           "Открытие еще одного окна для активного документа\nНовое окно"
     ID_WINDOW_ARRANGE       "Расположение значков вдоль нижней границы окна\nУпорядочить значки"
     ID_WINDOW_CASCADE       "Расположение окон друг за другом (с перекрытием)\nОкна каскадом"
     ID_WINDOW_TILE_HORZ     "Расположение окон рядом (без перекрытия)\nОкна рядом"
     ID_WINDOW_TILE_VERT     "Расположение окон рядом (без перекрытия)\nОкна рядом"
     ID_WINDOW_SPLIT         "Разделение активного окна на области\nРазделить"
+END
+
+STRINGTABLE
+BEGIN
     ID_EDIT_CLEAR           "Удаление выделенного фрагмента\nУдалить"
     ID_EDIT_CLEAR_ALL       "Полное удаление содержимого документа\nУдалить все"
     ID_EDIT_COPY            "Копирование выделенного фрагмента в буфер обмена\nКопировать"
@@ -356,6 +415,10 @@ BEGIN
     ID_EDIT_SELECT_ALL      "Выделение всего документа\nВыделить все"
     ID_EDIT_UNDO            "Отмена последнего действия\nОтменить"
     ID_EDIT_REDO            "Повторное выполнение последнего отмененного действия\nВернуть"
+END
+
+STRINGTABLE
+BEGIN
     ID_VIEW_TOOLBAR         "Отображение или скрытие панели инструментов\nПанель инструментов"
     ID_VIEW_STATUS_BAR      "Показать или скрыть строку состояния\n Переключение строки состояния"
 END
@@ -369,29 +432,41 @@ BEGIN
     AFX_IDS_SCNEXTWINDOW    "Переход к следующему окну документа"
     AFX_IDS_SCPREVWINDOW    "Переход к предыдущему окну документа"
     AFX_IDS_SCCLOSE         "Закрытие активного окна с запросом на сохранение документов"
+END
+
+STRINGTABLE
+BEGIN
     AFX_IDS_SCRESTORE       "Восстановление исходных размеров окна"
     AFX_IDS_SCTASKLIST      "Переход к списку задач"
     AFX_IDS_MDICHILD        "Переход к данному окну"
+END
+
+STRINGTABLE
+BEGIN
     AFX_IDS_PREVIEW_CLOSE   "Выход из режима предварительного просмотра\nОтменить просмотр"
 END
 
+#endif    // Russian (Russia) resources
+/////////////////////////////////////////////////////////////////////////////
 
-#endif
+
 
 #ifndef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
 //
-// Создано из ресурса TEXTINCLUDE 3.
+// Generated from the TEXTINCLUDE 3 resource.
 //
-
 #define _AFX_NO_OLE_RESOURCES
 #define _AFX_NO_TRACKER_RESOURCES
 #define _AFX_NO_PROPERTY_RESOURCES
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_RUS)
 LANGUAGE 25, 1
-#include "res\\RectifierControl.rc2"  // ресурсы, не редактируемые в Microsoft Visual C++
-#include "l.RUS\\afxres.rc"      // Стандартные компоненты
-#include "l.RUS\\afxprint.rc"  // ресурсы для печати/предварительного просмотра
+#include "res\RectifierControl.rc2"  // ресурсы, не редактируемые в Microsoft Visual C++
+#include "l.RUS\afxres.rc"      // Стандартные компоненты
+#include "l.RUS\afxprint.rc"    // ресурсы для печати/предварительного просмотра
 #endif
-#endif    // не APSTUDIO_INVOKED
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+
