@@ -13,6 +13,9 @@
 #include "RectifierControlView.h"
 
 #include "SetComportDlg.h"
+#include "tinyxml2.h"
+#include <filesystem>
+namespace fs = std::experimental::filesystem;
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -102,11 +105,29 @@ BOOL CRectifierControlApp::InitInstance()
 
 	// set default comport  options, in future get it from saved config files
 	COMMCONFIG commconfig;
-	commconfig.dcb.BaudRate = 115200;
+	commconfig.dcb.BaudRate = CBR_115200;
 	commconfig.dcb.ByteSize = 7;
-	commconfig.dcb.Parity = 0;
-	commconfig.dcb.StopBits = 1;
+	commconfig.dcb.Parity = NOPARITY;
+	commconfig.dcb.StopBits = ONESTOPBIT;
 	m_comportProperties[CString("DefaultPort")] = commconfig;
+
+	//try to find config file
+	TCHAR szPath[MAX_PATH];
+	if (!GetModuleFileName(NULL, szPath, MAX_PATH))
+	{
+		DWORD error = GetLastError();
+	}
+	tinyxml2::XMLDocument doc;
+	fs::path dir(szPath);
+	fs::path file("RectifierControlConfig.xml");
+	fs::path full_path = dir.parent_path() / file;
+	std::string s = full_path.string(); 
+	const char* filePath = s.c_str();
+	doc.LoadFile(filePath);
+	if (doc.Error()) {
+		const char * msg = doc.ErrorStr();
+		DWORD error = GetLastError();
+	}
 
 
 	// Зарегистрируйте шаблоны документов приложения.  Шаблоны документов
@@ -140,6 +161,9 @@ BOOL CRectifierControlApp::InitInstance()
 	// Синтаксический разбор командной строки на стандартные команды оболочки, DDE, открытие файлов
 	CCommandLineInfo cmdInfo;
 	ParseCommandLine(cmdInfo);
+
+	if (cmdInfo.m_nShellCommand == CCommandLineInfo::FileNew)   // actually none
+		cmdInfo.m_nShellCommand = CCommandLineInfo::FileNothing;
 
 	// Включить открытие выполнения DDE
 	EnableShellOpen();
@@ -235,7 +259,7 @@ void CRectifierControlApp::OnLinkOptions()
 		//		cmbBox_ComPort->GetLBText(cmbBox_ComPort->GetCurSel(), selectedPort);
 		COMMCONFIG comm = m_comportProperties[CString("DefaultPort")];
 		CommConfigDialog(selectedPort, hWnd, &comm);
-		while (verifyCommOptions(comm)) {
+		while (!verifyCommOptions(comm)) {
 			CommConfigDialog(selectedPort, hWnd, &comm);
 		}
 	}
