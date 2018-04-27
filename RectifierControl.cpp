@@ -15,6 +15,7 @@
 #include "SetComportDlg.h"
 #include "tinyxml2.h"
 #include <filesystem>
+
 namespace fs = std::experimental::filesystem;
 
 #ifdef _DEBUG
@@ -117,17 +118,26 @@ BOOL CRectifierControlApp::InitInstance()
 	{
 		DWORD error = GetLastError();
 	}
-	tinyxml2::XMLDocument doc;
+	
 	fs::path dir(szPath);
 	fs::path file("RectifierControlConfig.xml");
 	fs::path full_path = dir.parent_path() / file;
 	std::string s = full_path.string(); 
 	const char* filePath = s.c_str();
+	tinyxml2::XMLDocument doc;
 	doc.LoadFile(filePath);
 	if (doc.Error()) {
 		const char * msg = doc.ErrorStr();
 		DWORD error = GetLastError();
 	}
+	else {
+		tinyxml2::XMLElement * rectifiers = doc.FirstChildElement("RectifierController").FirstChildElement("Rectifiers");
+		tinyxml2::XMLElement * rectifier = rectifiers.FirstChileElement();
+		while (rectifier != nullptr) {
+			rectifier = rectifier.NextSiblingElement();
+		}
+	}
+
 
 
 	// Зарегистрируйте шаблоны документов приложения.  Шаблоны документов
