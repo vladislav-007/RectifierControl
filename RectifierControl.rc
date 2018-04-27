@@ -126,13 +126,13 @@ BEGIN
         MENUITEM "&Панель инструментов",        ID_VIEW_TOOLBAR
         MENUITEM "&Строка состояния",           ID_VIEW_STATUS_BAR
     END
-    POPUP "&Справка"
-    BEGIN
-        MENUITEM "&О проекте RectifierControl...", ID_APP_ABOUT
-    END
     POPUP "Настройки"
     BEGIN
         MENUITEM "Линия связи",                 ID_LINK_OPTIONS
+    END
+    POPUP "&Справка"
+    BEGIN
+        MENUITEM "&О проекте RectifierControl...", ID_APP_ABOUT
     END
 END
 
@@ -173,6 +173,10 @@ BEGIN
         MENUITEM "&Каскадом",                   ID_WINDOW_CASCADE
         MENUITEM "&Рядом",                      ID_WINDOW_TILE_HORZ
         MENUITEM "&Упорядочить значки",         ID_WINDOW_ARRANGE
+    END
+    POPUP "&Настройки"
+    BEGIN
+        MENUITEM "Линия &связи",                ID_LINK_OPTIONS
     END
     POPUP "&Справка"
     BEGIN
