@@ -130,8 +130,6 @@ Stopbits stopbitsFromString(const CString & stopBitsStr) {
 	CT2A ascii(stopBitsStr, CP_UTF8);
 	throw std::invalid_argument(ascii.m_psz);
 }
-
-
 struct RectifierInfo {
 	int id;
 	CString name;
@@ -140,11 +138,9 @@ struct RectifierInfo {
 	int modeID;
 	CString modeName;
 	int modeBoundRate;
-	int byteSize;
-	Parity parity;
-	Stopbits stopbits;
-
-
+	int modeByteSize;
+	Parity modeParity;
+	Stopbits modeStopbits;
 };
 
 // инициализация CRectifierControlApp
@@ -228,35 +224,25 @@ BOOL CRectifierControlApp::InitInstance()
 			rectifierInfo.comport = CA2T(str, CP_UTF8);
 			rectifier->QueryIntAttribute("address", &rectifierInfo.address);
 			tinyxml2::XMLElement * mode = rectifier->FirstChildElement("Mode");
-			if (tinyxml2::XML_SUCCESS != mode->QueryIntAttribute("id", &rectifierInfo.id))
+			if (tinyxml2::XML_SUCCESS != mode->QueryIntAttribute("id", &rectifierInfo.modeID))
 				throw std::exception("Can't read 'id' if rectifier's mode");
 			
 			mode->QueryStringAttribute("name", &str);
 			rectifierInfo.modeName = CA2T(str, CP_UTF8);
 			tinyxml2::XMLElement * valueElement = mode->FirstChildElement("BaudRate");
-			rectifierInfo.modeBoundRate = valueElement->QueryIntAttribute("value", &rectifierInfo.address);
+			valueElement->QueryIntAttribute("value", &rectifierInfo.modeBoundRate);
 			valueElement = mode->FirstChildElement("ByteSize");
-			valueElement->QueryIntAttribute("value", &rectifierInfo.byteSize);
+			valueElement->QueryIntAttribute("value", &rectifierInfo.modeByteSize);
 			valueElement = mode->FirstChildElement("Parity");
 			valueElement->QueryStringAttribute("value", &str);
 			CString valueStr = CA2T(str, CP_UTF8);
-			rectifierInfo.parity = parityFromString(valueStr);
+			rectifierInfo.modeParity = parityFromString(valueStr);
 			valueElement = mode->FirstChildElement("StopBits");
 			valueElement->QueryStringAttribute("value", &str);
 			valueStr = CA2T(str, CP_UTF8);
-			rectifierInfo.parity = parityFromString(valueStr);
-			
-			/*<Parity value = "NOPARITY" / >
-			<StopBits value = "ONESTOPBIT" / >*/
+			rectifierInfo.modeStopbits = stopbitsFromString(valueStr);
 
-			rectifier->QueryIntAttribute("address", &rectifierInfo.address);
-
-
-
-
-			MessageBox(NULL, rectifierInfo.name, _T("message"), MB_OK | MB_SYSTEMMODAL);
-
-
+			m_rectifierConfigs.insert(std::pair<int, RectifierInfo>(rectifierInfo.id, rectifierInfo));
 			rectifier = rectifier->NextSiblingElement();
 		}
 	}
@@ -376,11 +362,29 @@ bool verifyCommOptions(const COMMCONFIG & comm)
 
 }
 
+void updateComportCfg(CString comport, COMMCONFIG comCfg, std::map<int, RectifierInfo> & rectifierInfos) {
+	for (auto & rectInfoItem : rectifierInfos) {
+		RectifierInfo rectInfo = rectInfoItem.second;
+		if (0 == rectInfo.comport.CompareNoCase(comport)) {
+			rectInfo.modeByteSize = comCfg.dcb.ByteSize;
+			rectInfo.modeBoundRate = comCfg.dcb.BaudRate;
+			rectInfo.modeParity = static_cast<Parity>(comCfg.dcb.Parity);
+			rectInfo.modeStopbits = static_cast<Stopbits>(comCfg.dcb.StopBits);
+		}
+	}
+}
+
 void CRectifierControlApp::OnLinkOptions()
 {
 	// TODO: Add your command handler code here
 	CSetComportDlg setComPortDlg;
-	setComPortDlg.setCurrentlyUsedComport(m_usedComPort);
+	// take com port from first rectifier config if exists
+	CString initComport = L"";
+	if (!m_rectifierConfigs.empty()) {
+		const auto & rectifierInfo = m_rectifierConfigs.cbegin()->second;
+		initComport = rectifierInfo.comport;
+	}
+	setComPortDlg.setCurrentlyUsedComport(initComport);
 	INT_PTR res = setComPortDlg.DoModal();
 	if (IDOK == res) {
 		
@@ -395,5 +399,6 @@ void CRectifierControlApp::OnLinkOptions()
 		while (!verifyCommOptions(comm)) {
 			CommConfigDialog(selectedPort, hWnd, &comm);
 		}
+		updateComportCfg(selectedPort, comm, m_rectifierConfigs);
 	}
 }
