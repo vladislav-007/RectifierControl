@@ -15,6 +15,7 @@
 #include "SetComportDlg.h"
 #include "tinyxml2.h"
 #include <filesystem>
+#include <cstdint>
 
 namespace fs = std::experimental::filesystem;
 
@@ -62,6 +63,85 @@ CRectifierControlApp::CRectifierControlApp()
 
 CRectifierControlApp theApp;
 
+enum class Parity : std::int8_t {
+	NO_PARITY = 0,
+	ODD_PARITY = 1,
+	EVEN_PARITY = 2,
+	MARK_PARITY = 3,
+	SPACE_PARITY = 4
+};
+
+CString toString(Parity parity) {
+	switch (parity) {
+	case Parity::NO_PARITY:
+		return CString("NOPARITY");
+	case Parity::EVEN_PARITY:
+		return CString("EVENPARITY");
+	case Parity::MARK_PARITY:
+		return CString("MARKPARITY");
+	case Parity::ODD_PARITY:
+		return CString("ODDPARITY");
+	case Parity::SPACE_PARITY:
+		return CString("SPACEPARITY");
+	}
+}
+
+Parity parityFromString(const CString & parityStr) {
+	if (0 == parityStr.CompareNoCase(L"NOPARITY"))
+		return Parity::NO_PARITY;
+	if (0 == parityStr.CompareNoCase(L"EVENPARITY"))
+		return Parity::EVEN_PARITY;
+	if (0 == parityStr.CompareNoCase(L"MARKPARITY"))
+		return Parity::MARK_PARITY;
+	if (0 == parityStr.CompareNoCase(L"ODDPARITY"))
+		return Parity::ODD_PARITY;
+	if (0 == parityStr.CompareNoCase(L"SPACEPARITY"))
+		return Parity::SPACE_PARITY;
+
+
+	CT2A ascii(parityStr, CP_UTF8);
+	throw std::invalid_argument(ascii.m_psz);
+}
+
+enum class Stopbits : std::int8_t {
+	ONE_STOPBIT = 0,
+	ONE5_STOPBITS = 1,
+	TWO_STOPBITS = 2
+};
+
+CString toString(Stopbits stopBits) {
+	switch (stopBits) {
+	case Stopbits::ONE_STOPBIT:
+		return CString("ONESTOPBIT");
+	case Stopbits::ONE5_STOPBITS:
+		return CString("ONE5STOPBIT");
+	case Stopbits::TWO_STOPBITS:
+		return CString("TWOSTOPBITS");
+	}
+}
+
+Stopbits stopbitsFromString(const CString & stopBitsStr) {
+	if (0 == stopBitsStr.CompareNoCase(L"ONESTOPBIT"))
+		return Stopbits::ONE_STOPBIT;
+	if (0 == stopBitsStr.CompareNoCase(L"ONE5STOPBIT"))
+		return Stopbits::ONE5_STOPBITS;
+	if (0 == stopBitsStr.CompareNoCase(L"TWOSTOPBITS"))
+		return Stopbits::TWO_STOPBITS;
+	CT2A ascii(stopBitsStr, CP_UTF8);
+	throw std::invalid_argument(ascii.m_psz);
+}
+struct RectifierInfo {
+	int id;
+	CString name;
+	int address;
+	CString comport;
+	int modeID;
+	CString modeName;
+	int modeBoundRate;
+	int modeByteSize;
+	Parity modeParity;
+	Stopbits modeStopbits;
+};
 
 // инициализация CRectifierControlApp
 
@@ -131,10 +211,39 @@ BOOL CRectifierControlApp::InitInstance()
 		DWORD error = GetLastError();
 	}
 	else {
-		tinyxml2::XMLElement * rectifiers = doc.FirstChildElement("RectifierController").FirstChildElement("Rectifiers");
-		tinyxml2::XMLElement * rectifier = rectifiers.FirstChileElement();
+		tinyxml2::XMLElement * rectifiers = doc.FirstChildElement("RectifierController")->FirstChildElement("Rectifiers");
+		tinyxml2::XMLElement * rectifier = rectifiers->FirstChildElement("Rectifier");
 		while (rectifier != nullptr) {
-			rectifier = rectifier.NextSiblingElement();
+			RectifierInfo rectifierInfo;
+			if (tinyxml2::XML_SUCCESS != rectifier->QueryIntAttribute("id", &rectifierInfo.id))
+				throw std::exception("Can't read 'id' if rectifier");
+			const char * str;
+			rectifier->QueryStringAttribute("name", &str);
+			rectifierInfo.name = CA2T(str, CP_UTF8);
+			rectifier->QueryStringAttribute("comport", &str);
+			rectifierInfo.comport = CA2T(str, CP_UTF8);
+			rectifier->QueryIntAttribute("address", &rectifierInfo.address);
+			tinyxml2::XMLElement * mode = rectifier->FirstChildElement("Mode");
+			if (tinyxml2::XML_SUCCESS != mode->QueryIntAttribute("id", &rectifierInfo.modeID))
+				throw std::exception("Can't read 'id' if rectifier's mode");
+			
+			mode->QueryStringAttribute("name", &str);
+			rectifierInfo.modeName = CA2T(str, CP_UTF8);
+			tinyxml2::XMLElement * valueElement = mode->FirstChildElement("BaudRate");
+			valueElement->QueryIntAttribute("value", &rectifierInfo.modeBoundRate);
+			valueElement = mode->FirstChildElement("ByteSize");
+			valueElement->QueryIntAttribute("value", &rectifierInfo.modeByteSize);
+			valueElement = mode->FirstChildElement("Parity");
+			valueElement->QueryStringAttribute("value", &str);
+			CString valueStr = CA2T(str, CP_UTF8);
+			rectifierInfo.modeParity = parityFromString(valueStr);
+			valueElement = mode->FirstChildElement("StopBits");
+			valueElement->QueryStringAttribute("value", &str);
+			valueStr = CA2T(str, CP_UTF8);
+			rectifierInfo.modeStopbits = stopbitsFromString(valueStr);
+
+			m_rectifierConfigs.insert(std::pair<int, RectifierInfo>(rectifierInfo.id, rectifierInfo));
+			rectifier = rectifier->NextSiblingElement();
 		}
 	}
 
@@ -253,11 +362,29 @@ bool verifyCommOptions(const COMMCONFIG & comm)
 
 }
 
+void updateComportCfg(CString comport, COMMCONFIG comCfg, std::map<int, RectifierInfo> & rectifierInfos) {
+	for (auto & rectInfoItem : rectifierInfos) {
+		RectifierInfo rectInfo = rectInfoItem.second;
+		if (0 == rectInfo.comport.CompareNoCase(comport)) {
+			rectInfo.modeByteSize = comCfg.dcb.ByteSize;
+			rectInfo.modeBoundRate = comCfg.dcb.BaudRate;
+			rectInfo.modeParity = static_cast<Parity>(comCfg.dcb.Parity);
+			rectInfo.modeStopbits = static_cast<Stopbits>(comCfg.dcb.StopBits);
+		}
+	}
+}
+
 void CRectifierControlApp::OnLinkOptions()
 {
 	// TODO: Add your command handler code here
 	CSetComportDlg setComPortDlg;
-	setComPortDlg.setCurrentlyUsedComport(m_usedComPort);
+	// take com port from first rectifier config if exists
+	CString initComport = L"";
+	if (!m_rectifierConfigs.empty()) {
+		const auto & rectifierInfo = m_rectifierConfigs.cbegin()->second;
+		initComport = rectifierInfo.comport;
+	}
+	setComPortDlg.setCurrentlyUsedComport(initComport);
 	INT_PTR res = setComPortDlg.DoModal();
 	if (IDOK == res) {
 		
@@ -272,5 +399,6 @@ void CRectifierControlApp::OnLinkOptions()
 		while (!verifyCommOptions(comm)) {
 			CommConfigDialog(selectedPort, hWnd, &comm);
 		}
+		updateComportCfg(selectedPort, comm, m_rectifierConfigs);
 	}
 }

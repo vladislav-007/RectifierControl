@@ -15,6 +15,7 @@
 // CRectifierControlApp:
 // О реализации данного класса см. RectifierControl.cpp
 //
+struct RectifierInfo;
 
 class CRectifierControlApp : public CWinApp
 {
@@ -35,6 +36,7 @@ private:
 	CString m_usedComPort;
 	// Properties of connection port. 
 	std::map<CString, COMMCONFIG> m_comportProperties;
+	std::map<int, RectifierInfo> m_rectifierConfigs;
 };
 
 extern CRectifierControlApp theApp;

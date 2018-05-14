@@ -128,7 +128,8 @@ BEGIN
     END
     POPUP "Настройки"
     BEGIN
-        MENUITEM "Линия связи",                 ID_LINK_OPTIONS
+        MENUITEM "~Л~иния связи",               ID_LINK_OPTIONS
+        MENUITEM "~В~ыпрямители",               ID_RECTIFIER_STATE
     END
     POPUP "&Справка"
     BEGIN
@@ -177,6 +178,7 @@ BEGIN
     POPUP "&Настройки"
     BEGIN
         MENUITEM "Линия &связи",                ID_LINK_OPTIONS
+        MENUITEM "~В~ыпрямители",               ID_RECTIFIER_STATE
     END
     POPUP "&Справка"
     BEGIN
@@ -234,6 +236,17 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,252,156,50,14
     COMBOBOX        IDC_COMBO_COMPORT,59,24,66,30,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Порт связи:",IDC_STATIC,14,25,41,8
+END
+
+IDD_DIALOG1 DIALOGEX 0, 0, 309, 177
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Dialog"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,198,156,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,252,156,50,14
+    COMBOBOX        IDC_COMBO1,21,22,88,30,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Button1",IDC_BUTTON1,128,20,50,14
 END
 
 
@@ -299,6 +312,14 @@ BEGIN
         TOPMARGIN, 7
         BOTTOMMARGIN, 170
     END
+
+    IDD_DIALOG1, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 302
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 170
+    END
 END
 #endif    // APSTUDIO_INVOKED
 
@@ -309,6 +330,11 @@ END
 //
 
 IDD_SET_COMPORT_DIALOG AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_DIALOG1 AFX_DIALOG_LAYOUT
 BEGIN
     0
 END
