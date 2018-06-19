@@ -1,5 +1,5 @@
 
-// RectifierControl.cpp : Определяет поведение классов для приложения.
+// RectifierControl.cpp : РћРїСЂРµРґРµР»СЏРµС‚ РїРѕРІРµРґРµРЅРёРµ РєР»Р°СЃСЃРѕРІ РґР»СЏ РїСЂРёР»РѕР¶РµРЅРёСЏ.
 //
 
 #include "stdafx.h"
@@ -16,6 +16,7 @@
 #include "tinyxml2.h"
 #include <filesystem>
 #include <cstdint>
+#include "RectifiersStateDialog.h"
 
 namespace fs = std::experimental::filesystem;
 
@@ -28,63 +29,41 @@ namespace fs = std::experimental::filesystem;
 
 BEGIN_MESSAGE_MAP(CRectifierControlApp, CWinApp)
 	ON_COMMAND(ID_APP_ABOUT, &CRectifierControlApp::OnAppAbout)
-	// Стандартные команды по работе с файлами документов
+	// РЎС‚Р°РЅРґР°СЂС‚РЅС‹Рµ РєРѕРјР°РЅРґС‹ РїРѕ СЂР°Р±РѕС‚Рµ СЃ С„Р°Р№Р»Р°РјРё РґРѕРєСѓРјРµРЅС‚РѕРІ
 	ON_COMMAND(ID_FILE_NEW, &CWinApp::OnFileNew)
 	ON_COMMAND(ID_FILE_OPEN, &CWinApp::OnFileOpen)
-	// Стандартная команда настройки печати
+	// РЎС‚Р°РЅРґР°СЂС‚РЅР°СЏ РєРѕРјР°РЅРґР° РЅР°СЃС‚СЂРѕР№РєРё РїРµС‡Р°С‚Рё
 	ON_COMMAND(ID_FILE_PRINT_SETUP, &CWinApp::OnFilePrintSetup)
 	ON_COMMAND(ID_LINK_OPTIONS, &CRectifierControlApp::OnLinkOptions)
+	ON_COMMAND(ID_RECTIFIER_STATE, &CRectifierControlApp::OnRectifierState)
 END_MESSAGE_MAP()
 
 
-// создание CRectifierControlApp
+// СЃРѕР·РґР°РЅРёРµ CRectifierControlApp
 
 CRectifierControlApp::CRectifierControlApp()
 {
-	// поддержка диспетчера перезагрузки
+	// РїРѕРґРґРµСЂР¶РєР° РґРёСЃРїРµС‚С‡РµСЂР° РїРµСЂРµР·Р°РіСЂСѓР·РєРё
 	m_dwRestartManagerSupportFlags = AFX_RESTART_MANAGER_SUPPORT_ALL_ASPECTS;
 #ifdef _MANAGED
-	// Если приложение построено с поддержкой среды Common Language Runtime (/clr):
-	//     1) Этот дополнительный параметр требуется для правильной поддержки работы диспетчера перезагрузки.
-	//   2) В своем проекте для сборки необходимо добавить ссылку на System.Windows.Forms.
+	// Р•СЃР»Рё РїСЂРёР»РѕР¶РµРЅРёРµ РїРѕСЃС‚СЂРѕРµРЅРѕ СЃ РїРѕРґРґРµСЂР¶РєРѕР№ СЃСЂРµРґС‹ Common Language Runtime (/clr):
+	//     1) Р­С‚РѕС‚ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Р№ РїР°СЂР°РјРµС‚СЂ С‚СЂРµР±СѓРµС‚СЃСЏ РґР»СЏ РїСЂР°РІРёР»СЊРЅРѕР№ РїРѕРґРґРµСЂР¶РєРё СЂР°Р±РѕС‚С‹ РґРёСЃРїРµС‚С‡РµСЂР° РїРµСЂРµР·Р°РіСЂСѓР·РєРё.
+	//   2) Р’ СЃРІРѕРµРј РїСЂРѕРµРєС‚Рµ РґР»СЏ СЃР±РѕСЂРєРё РЅРµРѕР±С…РѕРґРёРјРѕ РґРѕР±Р°РІРёС‚СЊ СЃСЃС‹Р»РєСѓ РЅР° System.Windows.Forms.
 	System::Windows::Forms::Application::SetUnhandledExceptionMode(System::Windows::Forms::UnhandledExceptionMode::ThrowException);
 #endif
 
-	// TODO: замените ниже строку идентификатора приложения строкой уникального идентификатора; рекомендуемый
-	// формат для строки: ИмяКомпании.ИмяПродукта.СубПродукт.СведенияОВерсии
+	// TODO: Р·Р°РјРµРЅРёС‚Рµ РЅРёР¶Рµ СЃС‚СЂРѕРєСѓ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂР° РїСЂРёР»РѕР¶РµРЅРёСЏ СЃС‚СЂРѕРєРѕР№ СѓРЅРёРєР°Р»СЊРЅРѕРіРѕ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂР°; СЂРµРєРѕРјРµРЅРґСѓРµРјС‹Р№
+	// С„РѕСЂРјР°С‚ РґР»СЏ СЃС‚СЂРѕРєРё: РРјСЏРљРѕРјРїР°РЅРёРё.РРјСЏРџСЂРѕРґСѓРєС‚Р°.РЎСѓР±РџСЂРѕРґСѓРєС‚.РЎРІРµРґРµРЅРёСЏРћР’РµСЂСЃРёРё
 	SetAppID(_T("RectifierControl.AppID.NoVersion"));
 
-	// TODO: добавьте код создания,
-	// Размещает весь важный код инициализации в InitInstance
+	// TODO: РґРѕР±Р°РІСЊС‚Рµ РєРѕРґ СЃРѕР·РґР°РЅРёСЏ,
+	// Р Р°Р·РјРµС‰Р°РµС‚ РІРµСЃСЊ РІР°Р¶РЅС‹Р№ РєРѕРґ РёРЅРёС†РёР°Р»РёР·Р°С†РёРё РІ InitInstance
 	m_usedComPort = _T("");
 }
 
-// Единственный объект CRectifierControlApp
+// Р•РґРёРЅСЃС‚РІРµРЅРЅС‹Р№ РѕР±СЉРµРєС‚ CRectifierControlApp
 
 CRectifierControlApp theApp;
-
-enum class Parity : std::int8_t {
-	NO_PARITY = 0,
-	ODD_PARITY = 1,
-	EVEN_PARITY = 2,
-	MARK_PARITY = 3,
-	SPACE_PARITY = 4
-};
-
-CString toString(Parity parity) {
-	switch (parity) {
-	case Parity::NO_PARITY:
-		return CString("NOPARITY");
-	case Parity::EVEN_PARITY:
-		return CString("EVENPARITY");
-	case Parity::MARK_PARITY:
-		return CString("MARKPARITY");
-	case Parity::ODD_PARITY:
-		return CString("ODDPARITY");
-	case Parity::SPACE_PARITY:
-		return CString("SPACEPARITY");
-	}
-}
 
 Parity parityFromString(const CString & parityStr) {
 	if (0 == parityStr.CompareNoCase(L"NOPARITY"))
@@ -103,23 +82,6 @@ Parity parityFromString(const CString & parityStr) {
 	throw std::invalid_argument(ascii.m_psz);
 }
 
-enum class Stopbits : std::int8_t {
-	ONE_STOPBIT = 0,
-	ONE5_STOPBITS = 1,
-	TWO_STOPBITS = 2
-};
-
-CString toString(Stopbits stopBits) {
-	switch (stopBits) {
-	case Stopbits::ONE_STOPBIT:
-		return CString("ONESTOPBIT");
-	case Stopbits::ONE5_STOPBITS:
-		return CString("ONE5STOPBIT");
-	case Stopbits::TWO_STOPBITS:
-		return CString("TWOSTOPBITS");
-	}
-}
-
 Stopbits stopbitsFromString(const CString & stopBitsStr) {
 	if (0 == stopBitsStr.CompareNoCase(L"ONESTOPBIT"))
 		return Stopbits::ONE_STOPBIT;
@@ -130,37 +92,55 @@ Stopbits stopbitsFromString(const CString & stopBitsStr) {
 	CT2A ascii(stopBitsStr, CP_UTF8);
 	throw std::invalid_argument(ascii.m_psz);
 }
-struct RectifierInfo {
-	int id;
-	CString name;
-	int address;
-	CString comport;
-	int modeID;
-	CString modeName;
-	int modeBoundRate;
-	int modeByteSize;
-	Parity modeParity;
-	Stopbits modeStopbits;
-};
 
-// инициализация CRectifierControlApp
+CString toString(Stopbits stopBits) {
+	switch (stopBits) {
+	default:
+		return CString("ONESTOPBIT");
+	case Stopbits::ONE_STOPBIT:
+		return CString("ONESTOPBIT");
+	case Stopbits::ONE5_STOPBITS:
+		return CString("ONE5STOPBIT");
+	case Stopbits::TWO_STOPBITS:
+		return CString("TWOSTOPBITS");
+	}
+}
+
+CString toString(Parity parity) {
+	switch (parity) {
+	default:
+		return CString("NOPARITY");
+	case Parity::NO_PARITY:
+		return CString("NOPARITY");
+	case Parity::EVEN_PARITY:
+		return CString("EVENPARITY");
+	case Parity::MARK_PARITY:
+		return CString("MARKPARITY");
+	case Parity::ODD_PARITY:
+		return CString("ODDPARITY");
+	case Parity::SPACE_PARITY:
+		return CString("SPACEPARITY");
+	}
+}
+
+// РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ CRectifierControlApp
 
 BOOL CRectifierControlApp::InitInstance()
 {
-	// InitCommonControlsEx() требуются для Windows XP, если манифест
-	// приложения использует ComCtl32.dll версии 6 или более поздней версии для включения
-	// стилей отображения.  В противном случае будет возникать сбой при создании любого окна.
+	// InitCommonControlsEx() С‚СЂРµР±СѓСЋС‚СЃСЏ РґР»СЏ Windows XP, РµСЃР»Рё РјР°РЅРёС„РµСЃС‚
+	// РїСЂРёР»РѕР¶РµРЅРёСЏ РёСЃРїРѕР»СЊР·СѓРµС‚ ComCtl32.dll РІРµСЂСЃРёРё 6 РёР»Рё Р±РѕР»РµРµ РїРѕР·РґРЅРµР№ РІРµСЂСЃРёРё РґР»СЏ РІРєР»СЋС‡РµРЅРёСЏ
+	// СЃС‚РёР»РµР№ РѕС‚РѕР±СЂР°Р¶РµРЅРёСЏ.  Р’ РїСЂРѕС‚РёРІРЅРѕРј СЃР»СѓС‡Р°Рµ Р±СѓРґРµС‚ РІРѕР·РЅРёРєР°С‚СЊ СЃР±РѕР№ РїСЂРё СЃРѕР·РґР°РЅРёРё Р»СЋР±РѕРіРѕ РѕРєРЅР°.
 	INITCOMMONCONTROLSEX InitCtrls;
 	InitCtrls.dwSize = sizeof(InitCtrls);
-	// Выберите этот параметр для включения всех общих классов управления, которые необходимо использовать
-	// в вашем приложении.
+	// Р’С‹Р±РµСЂРёС‚Рµ СЌС‚РѕС‚ РїР°СЂР°РјРµС‚СЂ РґР»СЏ РІРєР»СЋС‡РµРЅРёСЏ РІСЃРµС… РѕР±С‰РёС… РєР»Р°СЃСЃРѕРІ СѓРїСЂР°РІР»РµРЅРёСЏ, РєРѕС‚РѕСЂС‹Рµ РЅРµРѕР±С…РѕРґРёРјРѕ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ
+	// РІ РІР°С€РµРј РїСЂРёР»РѕР¶РµРЅРёРё.
 	InitCtrls.dwICC = ICC_WIN95_CLASSES;
 	InitCommonControlsEx(&InitCtrls);
 
 	CWinApp::InitInstance();
 
 
-	// Инициализация библиотек OLE
+	// РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ Р±РёР±Р»РёРѕС‚РµРє OLE
 	if (!AfxOleInit())
 	{
 		AfxMessageBox(IDP_OLE_INIT_FAILED);
@@ -171,18 +151,18 @@ BOOL CRectifierControlApp::InitInstance()
 
 	EnableTaskbarInteraction(FALSE);
 
-	// Для использования элемента управления RichEdit требуется метод AfxInitRichEdit2()	
+	// Р”Р»СЏ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёСЏ СЌР»РµРјРµРЅС‚Р° СѓРїСЂР°РІР»РµРЅРёСЏ RichEdit С‚СЂРµР±СѓРµС‚СЃСЏ РјРµС‚РѕРґ AfxInitRichEdit2()	
 	// AfxInitRichEdit2();
 
-	// Стандартная инициализация
-	// Если эти возможности не используются и необходимо уменьшить размер
-	// конечного исполняемого файла, необходимо удалить из следующего
-	// конкретные процедуры инициализации, которые не требуются
-	// Измените раздел реестра, в котором хранятся параметры
-	// TODO: следует изменить эту строку на что-нибудь подходящее,
-	// например на название организации
-	SetRegistryKey(_T("Локальные приложения, созданные с помощью мастера приложений"));
-	LoadStdProfileSettings(4);  // Загрузите стандартные параметры INI-файла (включая MRU)
+	// РЎС‚Р°РЅРґР°СЂС‚РЅР°СЏ РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ
+	// Р•СЃР»Рё СЌС‚Рё РІРѕР·РјРѕР¶РЅРѕСЃС‚Рё РЅРµ РёСЃРїРѕР»СЊР·СѓСЋС‚СЃСЏ Рё РЅРµРѕР±С…РѕРґРёРјРѕ СѓРјРµРЅСЊС€РёС‚СЊ СЂР°Р·РјРµСЂ
+	// РєРѕРЅРµС‡РЅРѕРіРѕ РёСЃРїРѕР»РЅСЏРµРјРѕРіРѕ С„Р°Р№Р»Р°, РЅРµРѕР±С…РѕРґРёРјРѕ СѓРґР°Р»РёС‚СЊ РёР· СЃР»РµРґСѓСЋС‰РµРіРѕ
+	// РєРѕРЅРєСЂРµС‚РЅС‹Рµ РїСЂРѕС†РµРґСѓСЂС‹ РёРЅРёС†РёР°Р»РёР·Р°С†РёРё, РєРѕС‚РѕСЂС‹Рµ РЅРµ С‚СЂРµР±СѓСЋС‚СЃСЏ
+	// РР·РјРµРЅРёС‚Рµ СЂР°Р·РґРµР» СЂРµРµСЃС‚СЂР°, РІ РєРѕС‚РѕСЂРѕРј С…СЂР°РЅСЏС‚СЃСЏ РїР°СЂР°РјРµС‚СЂС‹
+	// TODO: СЃР»РµРґСѓРµС‚ РёР·РјРµРЅРёС‚СЊ СЌС‚Сѓ СЃС‚СЂРѕРєСѓ РЅР° С‡С‚Рѕ-РЅРёР±СѓРґСЊ РїРѕРґС…РѕРґСЏС‰РµРµ,
+	// РЅР°РїСЂРёРјРµСЂ РЅР° РЅР°Р·РІР°РЅРёРµ РѕСЂРіР°РЅРёР·Р°С†РёРё
+	SetRegistryKey(_T("Р›РѕРєР°Р»СЊРЅС‹Рµ РїСЂРёР»РѕР¶РµРЅРёСЏ, СЃРѕР·РґР°РЅРЅС‹Рµ СЃ РїРѕРјРѕС‰СЊСЋ РјР°СЃС‚РµСЂР° РїСЂРёР»РѕР¶РµРЅРёР№"));
+	LoadStdProfileSettings(4);  // Р—Р°РіСЂСѓР·РёС‚Рµ СЃС‚Р°РЅРґР°СЂС‚РЅС‹Рµ РїР°СЂР°РјРµС‚СЂС‹ INI-С„Р°Р№Р»Р° (РІРєР»СЋС‡Р°СЏ MRU)
 
 	// set default comport  options, in future get it from saved config files
 	COMMCONFIG commconfig;
@@ -220,8 +200,10 @@ BOOL CRectifierControlApp::InitInstance()
 			const char * str;
 			rectifier->QueryStringAttribute("name", &str);
 			rectifierInfo.name = CA2T(str, CP_UTF8);
-			rectifier->QueryStringAttribute("comport", &str);
+			if(tinyxml2::XML_SUCCESS != rectifier->QueryStringAttribute("comport", &str))
+				throw std::exception("Can't read 'comport' if rectifier's mode");
 			rectifierInfo.comport = CA2T(str, CP_UTF8);
+
 			rectifier->QueryIntAttribute("address", &rectifierInfo.address);
 			tinyxml2::XMLElement * mode = rectifier->FirstChildElement("Mode");
 			if (tinyxml2::XML_SUCCESS != mode->QueryIntAttribute("id", &rectifierInfo.modeID))
@@ -249,18 +231,18 @@ BOOL CRectifierControlApp::InitInstance()
 
 
 
-	// Зарегистрируйте шаблоны документов приложения.  Шаблоны документов
-	//  выступают в роли посредника между документами, окнами рамок и представлениями
+	// Р—Р°СЂРµРіРёСЃС‚СЂРёСЂСѓР№С‚Рµ С€Р°Р±Р»РѕРЅС‹ РґРѕРєСѓРјРµРЅС‚РѕРІ РїСЂРёР»РѕР¶РµРЅРёСЏ.  РЁР°Р±Р»РѕРЅС‹ РґРѕРєСѓРјРµРЅС‚РѕРІ
+	//  РІС‹СЃС‚СѓРїР°СЋС‚ РІ СЂРѕР»Рё РїРѕСЃСЂРµРґРЅРёРєР° РјРµР¶РґСѓ РґРѕРєСѓРјРµРЅС‚Р°РјРё, РѕРєРЅР°РјРё СЂР°РјРѕРє Рё РїСЂРµРґСЃС‚Р°РІР»РµРЅРёСЏРјРё
 	CMultiDocTemplate* pDocTemplate;
 	pDocTemplate = new CMultiDocTemplate(IDR_RectifierControTYPE,
 		RUNTIME_CLASS(CRectifierControlDoc),
-		RUNTIME_CLASS(CChildFrame), // настраиваемая дочерняя рамка MDI
+		RUNTIME_CLASS(CChildFrame), // РЅР°СЃС‚СЂР°РёРІР°РµРјР°СЏ РґРѕС‡РµСЂРЅСЏСЏ СЂР°РјРєР° MDI
 		RUNTIME_CLASS(CRectifierControlView));
 	if (!pDocTemplate)
 		return FALSE;
 	AddDocTemplate(pDocTemplate);
 
-	// создайте главное окно рамки MDI
+	// СЃРѕР·РґР°Р№С‚Рµ РіР»Р°РІРЅРѕРµ РѕРєРЅРѕ СЂР°РјРєРё MDI
 	CMainFrame* pMainFrame = new CMainFrame;
 	if (!pMainFrame || !pMainFrame->LoadFrame(IDR_MAINFRAME))
 	{
@@ -269,31 +251,31 @@ BOOL CRectifierControlApp::InitInstance()
 	}
 	m_pMainWnd = pMainFrame;
 
-	// вызов DragAcceptFiles только при наличии суффикса
-	//  В приложении MDI это должно произойти сразу после задания m_pMainWnd
-	// Включить открытие перетаскивания
+	// РІС‹Р·РѕРІ DragAcceptFiles С‚РѕР»СЊРєРѕ РїСЂРё РЅР°Р»РёС‡РёРё СЃСѓС„С„РёРєСЃР°
+	//  Р’ РїСЂРёР»РѕР¶РµРЅРёРё MDI СЌС‚Рѕ РґРѕР»Р¶РЅРѕ РїСЂРѕРёР·РѕР№С‚Рё СЃСЂР°Р·Сѓ РїРѕСЃР»Рµ Р·Р°РґР°РЅРёСЏ m_pMainWnd
+	// Р’РєР»СЋС‡РёС‚СЊ РѕС‚РєСЂС‹С‚РёРµ РїРµСЂРµС‚Р°СЃРєРёРІР°РЅРёСЏ
 	m_pMainWnd->DragAcceptFiles();
 
-	// Разрешить использование расширенных символов в горячих клавишах меню
+	// Р Р°Р·СЂРµС€РёС‚СЊ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ СЂР°СЃС€РёСЂРµРЅРЅС‹С… СЃРёРјРІРѕР»РѕРІ РІ РіРѕСЂСЏС‡РёС… РєР»Р°РІРёС€Р°С… РјРµРЅСЋ
 	CMFCToolBar::m_bExtCharTranslation = TRUE;
 
-	// Синтаксический разбор командной строки на стандартные команды оболочки, DDE, открытие файлов
+	// РЎРёРЅС‚Р°РєСЃРёС‡РµСЃРєРёР№ СЂР°Р·Р±РѕСЂ РєРѕРјР°РЅРґРЅРѕР№ СЃС‚СЂРѕРєРё РЅР° СЃС‚Р°РЅРґР°СЂС‚РЅС‹Рµ РєРѕРјР°РЅРґС‹ РѕР±РѕР»РѕС‡РєРё, DDE, РѕС‚РєСЂС‹С‚РёРµ С„Р°Р№Р»РѕРІ
 	CCommandLineInfo cmdInfo;
 	ParseCommandLine(cmdInfo);
 
 	if (cmdInfo.m_nShellCommand == CCommandLineInfo::FileNew)   // actually none
 		cmdInfo.m_nShellCommand = CCommandLineInfo::FileNothing;
 
-	// Включить открытие выполнения DDE
+	// Р’РєР»СЋС‡РёС‚СЊ РѕС‚РєСЂС‹С‚РёРµ РІС‹РїРѕР»РЅРµРЅРёСЏ DDE
 	EnableShellOpen();
 	RegisterShellFileTypes(TRUE);
 
 
-	// Команды диспетчеризации, указанные в командной строке.  Значение FALSE будет возвращено, если
-	// приложение было запущено с параметром /RegServer, /Register, /Unregserver или /Unregister.
+	// РљРѕРјР°РЅРґС‹ РґРёСЃРїРµС‚С‡РµСЂРёР·Р°С†РёРё, СѓРєР°Р·Р°РЅРЅС‹Рµ РІ РєРѕРјР°РЅРґРЅРѕР№ СЃС‚СЂРѕРєРµ.  Р—РЅР°С‡РµРЅРёРµ FALSE Р±СѓРґРµС‚ РІРѕР·РІСЂР°С‰РµРЅРѕ, РµСЃР»Рё
+	// РїСЂРёР»РѕР¶РµРЅРёРµ Р±С‹Р»Рѕ Р·Р°РїСѓС‰РµРЅРѕ СЃ РїР°СЂР°РјРµС‚СЂРѕРј /RegServer, /Register, /Unregserver РёР»Рё /Unregister.
 	if (!ProcessShellCommand(cmdInfo))
 		return FALSE;
-	// Главное окно было инициализировано, поэтому отобразите и обновите его
+	// Р“Р»Р°РІРЅРѕРµ РѕРєРЅРѕ Р±С‹Р»Рѕ РёРЅРёС†РёР°Р»РёР·РёСЂРѕРІР°РЅРѕ, РїРѕСЌС‚РѕРјСѓ РѕС‚РѕР±СЂР°Р·РёС‚Рµ Рё РѕР±РЅРѕРІРёС‚Рµ РµРіРѕ
 	pMainFrame->ShowWindow(m_nCmdShow);
 	pMainFrame->UpdateWindow();
 
@@ -302,31 +284,31 @@ BOOL CRectifierControlApp::InitInstance()
 
 int CRectifierControlApp::ExitInstance()
 {
-	//TODO: обработайте дополнительные ресурсы, которые могли быть добавлены
+	//TODO: РѕР±СЂР°Р±РѕС‚Р°Р№С‚Рµ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Рµ СЂРµСЃСѓСЂСЃС‹, РєРѕС‚РѕСЂС‹Рµ РјРѕРіР»Рё Р±С‹С‚СЊ РґРѕР±Р°РІР»РµРЅС‹
 	AfxOleTerm(FALSE);
 
 	return CWinApp::ExitInstance();
 }
 
-// обработчики сообщений CRectifierControlApp
+// РѕР±СЂР°Р±РѕС‚С‡РёРєРё СЃРѕРѕР±С‰РµРЅРёР№ CRectifierControlApp
 
 
-// Диалоговое окно CAboutDlg используется для описания сведений о приложении
+// Р”РёР°Р»РѕРіРѕРІРѕРµ РѕРєРЅРѕ CAboutDlg РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РґР»СЏ РѕРїРёСЃР°РЅРёСЏ СЃРІРµРґРµРЅРёР№ Рѕ РїСЂРёР»РѕР¶РµРЅРёРё
 
 class CAboutDlg : public CDialogEx
 {
 public:
 	CAboutDlg();
 
-// Данные диалогового окна
+// Р”Р°РЅРЅС‹Рµ РґРёР°Р»РѕРіРѕРІРѕРіРѕ РѕРєРЅР°
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_ABOUTBOX };
 #endif
 
 protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // поддержка DDX/DDV
+	virtual void DoDataExchange(CDataExchange* pDX);    // РїРѕРґРґРµСЂР¶РєР° DDX/DDV
 
-// Реализация
+// Р РµР°Р»РёР·Р°С†РёСЏ
 protected:
 	DECLARE_MESSAGE_MAP()
 };
@@ -343,14 +325,14 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
 END_MESSAGE_MAP()
 
-// Команда приложения для запуска диалога
+// РљРѕРјР°РЅРґР° РїСЂРёР»РѕР¶РµРЅРёСЏ РґР»СЏ Р·Р°РїСѓСЃРєР° РґРёР°Р»РѕРіР°
 void CRectifierControlApp::OnAppAbout()
 {
 	CAboutDlg aboutDlg;
 	aboutDlg.DoModal();
 }
 
-// обработчики сообщений CRectifierControlApp
+// РѕР±СЂР°Р±РѕС‚С‡РёРєРё СЃРѕРѕР±С‰РµРЅРёР№ CRectifierControlApp
 
 
 
@@ -359,7 +341,7 @@ bool verifyCommOptions(const COMMCONFIG & comm)
 {
 	if (comm.dcb.BaudRate > 115200)
 		return false;
-
+	return true;
 }
 
 void updateComportCfg(CString comport, COMMCONFIG comCfg, std::map<int, RectifierInfo> & rectifierInfos) {
@@ -401,4 +383,13 @@ void CRectifierControlApp::OnLinkOptions()
 		}
 		updateComportCfg(selectedPort, comm, m_rectifierConfigs);
 	}
+}
+
+
+void CRectifierControlApp::OnRectifierState()
+{
+	CRectifiersStateDialog rectifiersStateDlg(m_rectifierConfigs);
+	// TODO: Add your command handler code here
+	INT_PTR res = rectifiersStateDlg.DoModal();
+	
 }

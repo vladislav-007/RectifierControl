@@ -1,21 +1,73 @@
-
-// RectifierControl.h : главный файл заголовка для приложения RectifierControl
+п»ї
+// RectifierControl.h : ГЈГ«Г ГўГ­Г»Г© ГґГ Г©Г« Г§Г ГЈГ®Г«Г®ГўГЄГ  Г¤Г«Гї ГЇГ°ГЁГ«Г®Г¦ГҐГ­ГЁГї RectifierControl
 //
+#ifndef RECTIFIERCONTROL_H 
+#define RECTIFIERCONTROL_H 
 #pragma once
 
+
 #ifndef __AFXWIN_H__
-	#error "включить stdafx.h до включения этого файла в PCH"
+	#error "ГўГЄГ«ГѕГ·ГЁГІГј stdafx.h Г¤Г® ГўГЄГ«ГѕГ·ГҐГ­ГЁГї ГЅГІГ®ГЈГ® ГґГ Г©Г«Г  Гў PCH"
 #endif
 
-#include "resource.h"       // основные символы
+#include "resource.h"       // Г®Г±Г­Г®ГўГ­Г»ГҐ Г±ГЁГ¬ГўГ®Г«Г»
+#include "RectifierCommand.h"
 
 #include <map>
+#include <vector>
 
 
 // CRectifierControlApp:
-// О реализации данного класса см. RectifierControl.cpp
+// ГЋ Г°ГҐГ Г«ГЁГ§Г Г¶ГЁГЁ Г¤Г Г­Г­Г®ГЈГ® ГЄГ«Г Г±Г±Г  Г±Г¬. RectifierControl.cpp
 //
-struct RectifierInfo;
+enum class Parity : std::int8_t {
+	NO_PARITY = 0,
+	ODD_PARITY = 1,
+	EVEN_PARITY = 2,
+	MARK_PARITY = 3,
+	SPACE_PARITY = 4
+};
+
+
+
+
+
+enum class Stopbits : std::int8_t {
+	ONE_STOPBIT = 0,
+	ONE5_STOPBITS = 1,
+	TWO_STOPBITS = 2
+};
+
+
+
+
+struct RectifierInfo {
+	int id;
+	CString name;
+	int address;
+	CString comport;
+	int modeID;
+	CString modeName;
+	int modeBoundRate;
+	int modeByteSize;
+	Parity modeParity;
+	Stopbits modeStopbits;
+};
+
+typedef struct _CMDFRAME {
+	static const uint8_t BEGIN = ':';
+	uint8_t MODBUS_ADDR;
+	uint8_t MODBUS_FUNC;
+	std::vector<uint8_t> data;
+	uint8_t LRC;
+	static const uint8_t RC = 0x0D;
+	static const uint8_t LF = 0x0A;
+} CMDFRAME, *LPCMDFRAME;
+
+
+std::vector<uint8_t> convertToASCIIFrame(const std::vector<uint8_t> & frame_bytes);
+
+
 
 class CRectifierControlApp : public CWinApp
 {
@@ -23,12 +75,12 @@ public:
 	CRectifierControlApp();
 
 
-// Переопределение
+// ГЏГҐГ°ГҐГ®ГЇГ°ГҐГ¤ГҐГ«ГҐГ­ГЁГҐ
 public:
 	virtual BOOL InitInstance();
 	virtual int ExitInstance();
 
-// Реализация
+// ГђГҐГ Г«ГЁГ§Г Г¶ГЁГї
 	afx_msg void OnAppAbout();
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnLinkOptions();
@@ -37,6 +89,10 @@ private:
 	// Properties of connection port. 
 	std::map<CString, COMMCONFIG> m_comportProperties;
 	std::map<int, RectifierInfo> m_rectifierConfigs;
+public:
+	afx_msg void OnRectifierState();
 };
 
 extern CRectifierControlApp theApp;
+
+#endif

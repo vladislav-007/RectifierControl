@@ -1,10 +1,10 @@
 
-// RectifierControlView.cpp : реализация класса CRectifierControlView
+// RectifierControlView.cpp : СЂРµР°Р»РёР·Р°С†РёСЏ РєР»Р°СЃСЃР° CRectifierControlView
 //
 
 #include "stdafx.h"
-// SHARED_HANDLERS можно определить в обработчиках фильтров просмотра реализации проекта ATL, эскизов
-// и поиска; позволяет совместно использовать код документа в данным проекте.
+// SHARED_HANDLERS РјРѕР¶РЅРѕ РѕРїСЂРµРґРµР»РёС‚СЊ РІ РѕР±СЂР°Р±РѕС‚С‡РёРєР°С… С„РёР»СЊС‚СЂРѕРІ РїСЂРѕСЃРјРѕС‚СЂР° СЂРµР°Р»РёР·Р°С†РёРё РїСЂРѕРµРєС‚Р° ATL, СЌСЃРєРёР·РѕРІ
+// Рё РїРѕРёСЃРєР°; РїРѕР·РІРѕР»СЏРµС‚ СЃРѕРІРјРµСЃС‚РЅРѕ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ РєРѕРґ РґРѕРєСѓРјРµРЅС‚Р° РІ РґР°РЅРЅС‹Рј РїСЂРѕРµРєС‚Рµ.
 #ifndef SHARED_HANDLERS
 #include "RectifierControl.h"
 #endif
@@ -22,17 +22,17 @@
 IMPLEMENT_DYNCREATE(CRectifierControlView, CView)
 
 BEGIN_MESSAGE_MAP(CRectifierControlView, CView)
-	// Стандартные команды печати
+	// РЎС‚Р°РЅРґР°СЂС‚РЅС‹Рµ РєРѕРјР°РЅРґС‹ РїРµС‡Р°С‚Рё
 	ON_COMMAND(ID_FILE_PRINT, &CView::OnFilePrint)
 	ON_COMMAND(ID_FILE_PRINT_DIRECT, &CView::OnFilePrint)
 	ON_COMMAND(ID_FILE_PRINT_PREVIEW, &CView::OnFilePrintPreview)
 END_MESSAGE_MAP()
 
-// создание/уничтожение CRectifierControlView
+// СЃРѕР·РґР°РЅРёРµ/СѓРЅРёС‡С‚РѕР¶РµРЅРёРµ CRectifierControlView
 
 CRectifierControlView::CRectifierControlView()
 {
-	// TODO: добавьте код создания
+	// TODO: РґРѕР±Р°РІСЊС‚Рµ РєРѕРґ СЃРѕР·РґР°РЅРёСЏ
 
 }
 
@@ -42,13 +42,13 @@ CRectifierControlView::~CRectifierControlView()
 
 BOOL CRectifierControlView::PreCreateWindow(CREATESTRUCT& cs)
 {
-	// TODO: изменить класс Window или стили посредством изменения
+	// TODO: РёР·РјРµРЅРёС‚СЊ РєР»Р°СЃСЃ Window РёР»Рё СЃС‚РёР»Рё РїРѕСЃСЂРµРґСЃС‚РІРѕРј РёР·РјРµРЅРµРЅРёСЏ
 	//  CREATESTRUCT cs
 
 	return CView::PreCreateWindow(cs);
 }
 
-// рисование CRectifierControlView
+// СЂРёСЃРѕРІР°РЅРёРµ CRectifierControlView
 
 void CRectifierControlView::OnDraw(CDC* /*pDC*/)
 {
@@ -57,30 +57,30 @@ void CRectifierControlView::OnDraw(CDC* /*pDC*/)
 	if (!pDoc)
 		return;
 
-	// TODO: добавьте здесь код отрисовки для собственных данных
+	// TODO: РґРѕР±Р°РІСЊС‚Рµ Р·РґРµСЃСЊ РєРѕРґ РѕС‚СЂРёСЃРѕРІРєРё РґР»СЏ СЃРѕР±СЃС‚РІРµРЅРЅС‹С… РґР°РЅРЅС‹С…
 }
 
 
-// печать CRectifierControlView
+// РїРµС‡Р°С‚СЊ CRectifierControlView
 
 BOOL CRectifierControlView::OnPreparePrinting(CPrintInfo* pInfo)
 {
-	// подготовка по умолчанию
+	// РїРѕРґРіРѕС‚РѕРІРєР° РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
 	return DoPreparePrinting(pInfo);
 }
 
 void CRectifierControlView::OnBeginPrinting(CDC* /*pDC*/, CPrintInfo* /*pInfo*/)
 {
-	// TODO: добавьте дополнительную инициализацию перед печатью
+	// TODO: РґРѕР±Р°РІСЊС‚Рµ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅСѓСЋ РёРЅРёС†РёР°Р»РёР·Р°С†РёСЋ РїРµСЂРµРґ РїРµС‡Р°С‚СЊСЋ
 }
 
 void CRectifierControlView::OnEndPrinting(CDC* /*pDC*/, CPrintInfo* /*pInfo*/)
 {
-	// TODO: добавьте очистку после печати
+	// TODO: РґРѕР±Р°РІСЊС‚Рµ РѕС‡РёСЃС‚РєСѓ РїРѕСЃР»Рµ РїРµС‡Р°С‚Рё
 }
 
 
-// диагностика CRectifierControlView
+// РґРёР°РіРЅРѕСЃС‚РёРєР° CRectifierControlView
 
 #ifdef _DEBUG
 void CRectifierControlView::AssertValid() const
@@ -93,7 +93,7 @@ void CRectifierControlView::Dump(CDumpContext& dc) const
 	CView::Dump(dc);
 }
 
-CRectifierControlDoc* CRectifierControlView::GetDocument() const // встроена неотлаженная версия
+CRectifierControlDoc* CRectifierControlView::GetDocument() const // РІСЃС‚СЂРѕРµРЅР° РЅРµРѕС‚Р»Р°Р¶РµРЅРЅР°СЏ РІРµСЂСЃРёСЏ
 {
 	ASSERT(m_pDocument->IsKindOf(RUNTIME_CLASS(CRectifierControlDoc)));
 	return (CRectifierControlDoc*)m_pDocument;
@@ -101,4 +101,4 @@ CRectifierControlDoc* CRectifierControlView::GetDocument() const // встроена нео
 #endif //_DEBUG
 
 
-// обработчики сообщений CRectifierControlView
+// РѕР±СЂР°Р±РѕС‚С‡РёРєРё СЃРѕРѕР±С‰РµРЅРёР№ CRectifierControlView

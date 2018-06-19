@@ -5,9 +5,11 @@
 *.db
 .vs/
 **/Debug/
+**/Release/
 **/ipch/
 *.opendb
 *.aps
+*.vcxproj.user
 
 # Compiled Object files
 *.slo
@@ -38,3 +40,7 @@
 *.exe
 *.out
 *.app
+# Git
+*.exe.stackdump
+
+

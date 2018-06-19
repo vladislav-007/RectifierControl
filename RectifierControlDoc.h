@@ -1,5 +1,5 @@
 
-// RectifierControlDoc.h : интерфейс класса CRectifierControlDoc
+// RectifierControlDoc.h : РёРЅС‚РµСЂС„РµР№СЃ РєР»Р°СЃСЃР° CRectifierControlDoc
 //
 
 
@@ -8,17 +8,17 @@
 
 class CRectifierControlDoc : public CDocument
 {
-protected: // создать только из сериализации
+protected: // СЃРѕР·РґР°С‚СЊ С‚РѕР»СЊРєРѕ РёР· СЃРµСЂРёР°Р»РёР·Р°С†РёРё
 	CRectifierControlDoc();
 	DECLARE_DYNCREATE(CRectifierControlDoc)
 
-// Атрибуты
+// РђС‚СЂРёР±СѓС‚С‹
 public:
 
-// Операции
+// РћРїРµСЂР°С†РёРё
 public:
 
-// Переопределение
+// РџРµСЂРµРѕРїСЂРµРґРµР»РµРЅРёРµ
 public:
 	virtual BOOL OnNewDocument();
 	virtual void Serialize(CArchive& ar);
@@ -27,7 +27,7 @@ public:
 	virtual void OnDrawThumbnail(CDC& dc, LPRECT lprcBounds);
 #endif // SHARED_HANDLERS
 
-// Реализация
+// Р РµР°Р»РёР·Р°С†РёСЏ
 public:
 	virtual ~CRectifierControlDoc();
 #ifdef _DEBUG
@@ -37,12 +37,12 @@ public:
 
 protected:
 
-// Созданные функции схемы сообщений
+// РЎРѕР·РґР°РЅРЅС‹Рµ С„СѓРЅРєС†РёРё СЃС…РµРјС‹ СЃРѕРѕР±С‰РµРЅРёР№
 protected:
 	DECLARE_MESSAGE_MAP()
 
 #ifdef SHARED_HANDLERS
-	// Вспомогательная функция, задающая содержимое поиска для обработчика поиска
+	// Р’СЃРїРѕРјРѕРіР°С‚РµР»СЊРЅР°СЏ С„СѓРЅРєС†РёСЏ, Р·Р°РґР°СЋС‰Р°СЏ СЃРѕРґРµСЂР¶РёРјРѕРµ РїРѕРёСЃРєР° РґР»СЏ РѕР±СЂР°Р±РѕС‚С‡РёРєР° РїРѕРёСЃРєР°
 	void SetSearchContent(const CString& value);
 #endif // SHARED_HANDLERS
 };

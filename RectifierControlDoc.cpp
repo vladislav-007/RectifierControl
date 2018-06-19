@@ -1,10 +1,10 @@
 
-// RectifierControlDoc.cpp : реализация класса CRectifierControlDoc
+// RectifierControlDoc.cpp : СЂРµР°Р»РёР·Р°С†РёСЏ РєР»Р°СЃСЃР° CRectifierControlDoc
 //
 
 #include "stdafx.h"
-// SHARED_HANDLERS можно определить в обработчиках фильтров просмотра реализации проекта ATL, эскизов
-// и поиска; позволяет совместно использовать код документа в данным проекте.
+// SHARED_HANDLERS РјРѕР¶РЅРѕ РѕРїСЂРµРґРµР»РёС‚СЊ РІ РѕР±СЂР°Р±РѕС‚С‡РёРєР°С… С„РёР»СЊС‚СЂРѕРІ РїСЂРѕСЃРјРѕС‚СЂР° СЂРµР°Р»РёР·Р°С†РёРё РїСЂРѕРµРєС‚Р° ATL, СЌСЃРєРёР·РѕРІ
+// Рё РїРѕРёСЃРєР°; РїРѕР·РІРѕР»СЏРµС‚ СЃРѕРІРјРµСЃС‚РЅРѕ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ РєРѕРґ РґРѕРєСѓРјРµРЅС‚Р° РІ РґР°РЅРЅС‹Рј РїСЂРѕРµРєС‚Рµ.
 #ifndef SHARED_HANDLERS
 #include "RectifierControl.h"
 #endif
@@ -25,11 +25,11 @@ BEGIN_MESSAGE_MAP(CRectifierControlDoc, CDocument)
 END_MESSAGE_MAP()
 
 
-// создание/уничтожение CRectifierControlDoc
+// СЃРѕР·РґР°РЅРёРµ/СѓРЅРёС‡С‚РѕР¶РµРЅРёРµ CRectifierControlDoc
 
 CRectifierControlDoc::CRectifierControlDoc()
 {
-	// TODO: добавьте код для одноразового вызова конструктора
+	// TODO: РґРѕР±Р°РІСЊС‚Рµ РєРѕРґ РґР»СЏ РѕРґРЅРѕСЂР°Р·РѕРІРѕРіРѕ РІС‹Р·РѕРІР° РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂР°
 
 }
 
@@ -42,8 +42,8 @@ BOOL CRectifierControlDoc::OnNewDocument()
 	if (!CDocument::OnNewDocument())
 		return FALSE;
 
-	// TODO: добавьте код повторной инициализации
-	// (Документы SDI будут повторно использовать этот документ)
+	// TODO: РґРѕР±Р°РІСЊС‚Рµ РєРѕРґ РїРѕРІС‚РѕСЂРЅРѕР№ РёРЅРёС†РёР°Р»РёР·Р°С†РёРё
+	// (Р”РѕРєСѓРјРµРЅС‚С‹ SDI Р±СѓРґСѓС‚ РїРѕРІС‚РѕСЂРЅРѕ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ СЌС‚РѕС‚ РґРѕРєСѓРјРµРЅС‚)
 
 	return TRUE;
 }
@@ -51,26 +51,26 @@ BOOL CRectifierControlDoc::OnNewDocument()
 
 
 
-// сериализация CRectifierControlDoc
+// СЃРµСЂРёР°Р»РёР·Р°С†РёСЏ CRectifierControlDoc
 
 void CRectifierControlDoc::Serialize(CArchive& ar)
 {
 	if (ar.IsStoring())
 	{
-		// TODO: добавьте код сохранения
+		// TODO: РґРѕР±Р°РІСЊС‚Рµ РєРѕРґ СЃРѕС…СЂР°РЅРµРЅРёСЏ
 	}
 	else
 	{
-		// TODO: добавьте код загрузки
+		// TODO: РґРѕР±Р°РІСЊС‚Рµ РєРѕРґ Р·Р°РіСЂСѓР·РєРё
 	}
 }
 
 #ifdef SHARED_HANDLERS
 
-// Поддержка для эскизов
+// РџРѕРґРґРµСЂР¶РєР° РґР»СЏ СЌСЃРєРёР·РѕРІ
 void CRectifierControlDoc::OnDrawThumbnail(CDC& dc, LPRECT lprcBounds)
 {
-	// Измените этот код для отображения данных документа
+	// РР·РјРµРЅРёС‚Рµ СЌС‚РѕС‚ РєРѕРґ РґР»СЏ РѕС‚РѕР±СЂР°Р¶РµРЅРёСЏ РґР°РЅРЅС‹С… РґРѕРєСѓРјРµРЅС‚Р°
 	dc.FillSolidRect(lprcBounds, RGB(255, 255, 255));
 
 	CString strText = _T("TODO: implement thumbnail drawing here");
@@ -88,14 +88,14 @@ void CRectifierControlDoc::OnDrawThumbnail(CDC& dc, LPRECT lprcBounds)
 	dc.SelectObject(pOldFont);
 }
 
-// Поддержка обработчиков поиска
+// РџРѕРґРґРµСЂР¶РєР° РѕР±СЂР°Р±РѕС‚С‡РёРєРѕРІ РїРѕРёСЃРєР°
 void CRectifierControlDoc::InitializeSearchContent()
 {
 	CString strSearchContent;
-	// Задайте содержимое поиска из данных документа. 
-	// Части содержимого должны разделяться точкой с запятой ";"
+	// Р—Р°РґР°Р№С‚Рµ СЃРѕРґРµСЂР¶РёРјРѕРµ РїРѕРёСЃРєР° РёР· РґР°РЅРЅС‹С… РґРѕРєСѓРјРµРЅС‚Р°. 
+	// Р§Р°СЃС‚Рё СЃРѕРґРµСЂР¶РёРјРѕРіРѕ РґРѕР»Р¶РЅС‹ СЂР°Р·РґРµР»СЏС‚СЊСЃСЏ С‚РѕС‡РєРѕР№ СЃ Р·Р°РїСЏС‚РѕР№ ";"
 
-	// Например:  strSearchContent = _T("точка;прямоугольник;круг;объект ole;");
+	// РќР°РїСЂРёРјРµСЂ:  strSearchContent = _T("С‚РѕС‡РєР°;РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРє;РєСЂСѓРі;РѕР±СЉРµРєС‚ ole;");
 	SetSearchContent(strSearchContent);
 }
 
@@ -119,7 +119,7 @@ void CRectifierControlDoc::SetSearchContent(const CString& value)
 
 #endif // SHARED_HANDLERS
 
-// диагностика CRectifierControlDoc
+// РґРёР°РіРЅРѕСЃС‚РёРєР° CRectifierControlDoc
 
 #ifdef _DEBUG
 void CRectifierControlDoc::AssertValid() const
@@ -134,4 +134,4 @@ void CRectifierControlDoc::Dump(CDumpContext& dc) const
 #endif //_DEBUG
 
 
-// команды CRectifierControlDoc
+// РєРѕРјР°РЅРґС‹ CRectifierControlDoc

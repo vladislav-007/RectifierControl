@@ -9,9 +9,12 @@
 #define ID_WINDOW_MANAGER               131
 #define IDD_SET_COMPORT_DIALOG          310
 #define IDD_DIALOG1                     312
+#define IDD_RECTIFIERS_STATE_DIALOG     312
 #define IDC_COMBO_COMPORT               1000
-#define IDC_COMBO1                      1001
+#define IDC_RECTIFIERS_COMBO            1001
 #define IDC_BUTTON1                     1002
+#define IDC_ADDRESS_TEXT                1003
+#define IDC_TEST_LOG                    1004
 #define ID_32771                        32771
 #define ID_LINK_OPTIONS                 32772
 #define ID_32773                        32773
@@ -26,7 +29,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        314
 #define _APS_NEXT_COMMAND_VALUE         32778
-#define _APS_NEXT_CONTROL_VALUE         1003
+#define _APS_NEXT_CONTROL_VALUE         1005
 #define _APS_NEXT_SYMED_VALUE           310
 #endif
 #endif
