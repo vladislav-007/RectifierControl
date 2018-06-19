@@ -1,5 +1,5 @@
 
-// RectifierControlView.h : интерфейс класса CRectifierControlView
+// RectifierControlView.h : РёРЅС‚РµСЂС„РµР№СЃ РєР»Р°СЃСЃР° CRectifierControlView
 //
 
 #pragma once
@@ -7,27 +7,27 @@
 
 class CRectifierControlView : public CView
 {
-protected: // создать только из сериализации
+protected: // СЃРѕР·РґР°С‚СЊ С‚РѕР»СЊРєРѕ РёР· СЃРµСЂРёР°Р»РёР·Р°С†РёРё
 	CRectifierControlView();
 	DECLARE_DYNCREATE(CRectifierControlView)
 
-// Атрибуты
+// СС‚СЂРёР±СѓС‚С‹
 public:
 	CRectifierControlDoc* GetDocument() const;
 
-// Операции
+// СњРїРµСЂР°С†РёРё
 public:
 
-// Переопределение
+// С•РµСЂРµРѕРїСЂРµРґРµР»РµРЅРёРµ
 public:
-	virtual void OnDraw(CDC* pDC);  // переопределено для отрисовки этого представления
+	virtual void OnDraw(CDC* pDC);  // РїРµСЂРµРѕРїСЂРµРґРµР»РµРЅРѕ РґР»В¤ РѕС‚СЂРёСЃРѕРІРєРё СЌС‚РѕРіРѕ РїСЂРµРґСЃС‚Р°РІР»РµРЅРёВ¤
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 protected:
 	virtual BOOL OnPreparePrinting(CPrintInfo* pInfo);
 	virtual void OnBeginPrinting(CDC* pDC, CPrintInfo* pInfo);
 	virtual void OnEndPrinting(CDC* pDC, CPrintInfo* pInfo);
 
-// Реализация
+// вЂ“РµР°Р»РёР·Р°С†РёВ¤
 public:
 	virtual ~CRectifierControlView();
 #ifdef _DEBUG
@@ -37,12 +37,12 @@ public:
 
 protected:
 
-// Созданные функции схемы сообщений
+// вЂ”РѕР·РґР°РЅРЅС‹Рµ С„СѓРЅРєС†РёРё СЃС…РµРјС‹ СЃРѕРѕР±С‰РµРЅРёР№
 protected:
 	DECLARE_MESSAGE_MAP()
 };
 
-#ifndef _DEBUG  // отладочная версия в RectifierControlView.cpp
+#ifndef _DEBUG  // РѕС‚Р»Р°РґРѕС‡РЅР°В¤ РІРµСЂСЃРёВ¤ РІ RectifierControlView.cpp
 inline CRectifierControlDoc* CRectifierControlView::GetDocument() const
    { return reinterpret_cast<CRectifierControlDoc*>(m_pDocument); }
 #endif

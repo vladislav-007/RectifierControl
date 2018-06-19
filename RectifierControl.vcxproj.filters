@@ -54,6 +54,12 @@
     <ClInclude Include="tinyxml2.h">
       <Filter>TinyXml2</Filter>
     </ClInclude>
+    <ClInclude Include="RectifiersStateDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RectifierCommand.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RectifierControl.cpp">
@@ -82,6 +88,12 @@
     </ClCompile>
     <ClCompile Include="tinyxml2.cpp">
       <Filter>TinyXml2</Filter>
+    </ClCompile>
+    <ClCompile Include="RectifiersStateDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RectifierCommand.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

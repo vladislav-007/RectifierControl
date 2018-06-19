@@ -38,7 +38,7 @@
     <PlatformToolset>v140</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
-    <UseOfMfc>Dynamic</UseOfMfc>
+    <UseOfMfc>Static</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -189,9 +189,11 @@
     <ClInclude Include="ChildFrm.h" />
     <ClInclude Include="ComportProperties.h" />
     <ClInclude Include="MainFrm.h" />
+    <ClInclude Include="RectifierCommand.h" />
     <ClInclude Include="RectifierControl.h" />
     <ClInclude Include="RectifierControlDoc.h" />
     <ClInclude Include="RectifierControlView.h" />
+    <ClInclude Include="RectifiersStateDialog.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="SetComportDlg.h" />
     <ClInclude Include="stdafx.h" />
@@ -202,9 +204,11 @@
     <ClCompile Include="ChildFrm.cpp" />
     <ClCompile Include="ComportProperties.cpp" />
     <ClCompile Include="MainFrm.cpp" />
+    <ClCompile Include="RectifierCommand.cpp" />
     <ClCompile Include="RectifierControl.cpp" />
     <ClCompile Include="RectifierControlDoc.cpp" />
     <ClCompile Include="RectifierControlView.cpp" />
+    <ClCompile Include="RectifiersStateDialog.cpp" />
     <ClCompile Include="SetComportDlg.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -214,6 +218,7 @@
     </ClCompile>
     <ClCompile Include="tinyxml2.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
