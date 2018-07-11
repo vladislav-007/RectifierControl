@@ -169,7 +169,7 @@ void CRectifiersStateDialog::OnBnClickedButton1()
 
 		ss.clear();
 		DWORD iSize;
-		char sReceivedChar;
+		//char sReceivedChar;
 		ss << L"Started reading replay..." << std::endl;
 		str1 = ss.str();
 		log += str1.c_str();
@@ -192,7 +192,7 @@ void CRectifiersStateDialog::OnBnClickedButton1()
 						{
 							ReadFile(hSerial, bufrd, btr, &iSize, &overlappedRD);     //прочитать байты из порта в буфер программы
 							if (iSize > 0) {   // если что-то принято, выводим
-								for( int i=0; i < iSize;++i)
+								for( DWORD i=0; i < iSize;++i)
 									ss << std::hex << bufrd[i];
 							}
 						}

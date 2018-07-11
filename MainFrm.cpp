@@ -17,6 +17,8 @@ IMPLEMENT_DYNAMIC(CMainFrame, CMDIFrameWnd)
 
 BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWnd)
 	ON_WM_CREATE()
+	//ON_MESSAGE(UPDATE_RECTIFIERS, &CMainFrame::OnUpdateRectifiers)
+	//ON_REGISTERED_MESSAGE(UPDATE_RECTIFIERS1, &CMainFrame::OnUpdateRectifiers1)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -93,3 +95,15 @@ void CMainFrame::Dump(CDumpContext& dc) const
 
 // обработчики сообщений CMainFrame
 
+
+
+afx_msg LRESULT CMainFrame::OnUpdateRectifiers(WPARAM wParam, LPARAM lParam)
+{
+	return 0;
+}
+
+
+afx_msg LRESULT CMainFrame::OnUpdateRectifiers1(WPARAM wParam, LPARAM lParam)
+{
+	return 0;
+}

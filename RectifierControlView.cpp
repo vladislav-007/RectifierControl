@@ -50,7 +50,7 @@ BOOL CRectifierControlView::PreCreateWindow(CREATESTRUCT& cs)
 
 // рисование CRectifierControlView
 
-void CRectifierControlView::OnDraw(CDC* /*pDC*/)
+void CRectifierControlView::OnDraw(CDC* pDC)
 {
 	CRectifierControlDoc* pDoc = GetDocument();
 	ASSERT_VALID(pDoc);
@@ -58,6 +58,16 @@ void CRectifierControlView::OnDraw(CDC* /*pDC*/)
 		return;
 
 	// TODO: добавьте здесь код отрисовки для собственных данных
+	CString rectifierName(CA2T("Выпрямитель: ", CP_UTF8));
+	// MessageBox(rectifierName);
+	CFont font;
+	font.CreateFont(16, 0, 0, 0, 400, FALSE, FALSE, 0, ANSI_CHARSET,
+		OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+		ANTIALIASED_QUALITY, DEFAULT_PITCH | FF_SWISS,
+		L"Tahoma");
+	pDC->SelectObject(font);
+	rectifierName += pDoc->getRectifierInfo().name;
+	pDC->TextOutW(10, 10, rectifierName);
 }
 
 
@@ -102,3 +112,19 @@ CRectifierControlDoc* CRectifierControlView::GetDocument() const // встрое
 
 
 // обработчики сообщений CRectifierControlView
+
+
+BOOL CRectifierControlView::OnCommand(WPARAM wParam, LPARAM lParam)
+{
+	// TODO: Add your specialized code here and/or call the base class
+
+	return CView::OnCommand(wParam, lParam);
+}
+
+
+BOOL CRectifierControlView::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
+{
+	// TODO: Add your specialized code here and/or call the base class
+
+	return CView::OnNotify(wParam, lParam, pResult);
+}

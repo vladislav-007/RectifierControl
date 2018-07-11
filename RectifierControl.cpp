@@ -31,14 +31,14 @@ BEGIN_MESSAGE_MAP(CRectifierControlApp, CWinApp)
 	ON_COMMAND(ID_APP_ABOUT, &CRectifierControlApp::OnAppAbout)
 	// Стандартные команды по работе с файлами документов
 	ON_COMMAND(ID_FILE_NEW, &CWinApp::OnFileNew)
-	ON_COMMAND(ID_FILE_OPEN, &CWinApp::OnFileOpen)
 	// Стандартная команда настройки печати
 	ON_COMMAND(ID_FILE_PRINT_SETUP, &CWinApp::OnFilePrintSetup)
 	ON_COMMAND(ID_LINK_OPTIONS, &CRectifierControlApp::OnLinkOptions)
 	ON_COMMAND(ID_RECTIFIER_STATE, &CRectifierControlApp::OnRectifierState)
+	ON_COMMAND(ID_FILE_OPEN, &CRectifierControlApp::OnFileOpen)
 END_MESSAGE_MAP()
 
-
+SThread_param param;
 // создание CRectifierControlApp
 
 CRectifierControlApp::CRectifierControlApp()
@@ -243,7 +243,7 @@ BOOL CRectifierControlApp::InitInstance()
 	AddDocTemplate(pDocTemplate);
 
 	// создайте главное окно рамки MDI
-	CMainFrame* pMainFrame = new CMainFrame;
+	CMainFrame * pMainFrame = new CMainFrame;
 	if (!pMainFrame || !pMainFrame->LoadFrame(IDR_MAINFRAME))
 	{
 		delete pMainFrame;
@@ -258,6 +258,16 @@ BOOL CRectifierControlApp::InitInstance()
 
 	// Разрешить использование расширенных символов в горячих клавишах меню
 	CMFCToolBar::m_bExtCharTranslation = TRUE;
+
+	param.wnd = m_pMainWnd->GetSafeHwnd();
+	param.m_rectifierConfigs = &m_rectifierConfigs;
+	//param.portPtr = portPtr;
+	m_threadState = 0;
+	param.statePtr = &m_threadState;
+	//param.portBlock = &portBlock;
+	//param.dwpByteTimeOut = &dwByteTimeOut;
+
+	AfxBeginThread(ThreadProc, &param, THREAD_PRIORITY_NORMAL);
 
 	// Синтаксический разбор командной строки на стандартные команды оболочки, DDE, открытие файлов
 	CCommandLineInfo cmdInfo;
@@ -285,8 +295,20 @@ BOOL CRectifierControlApp::InitInstance()
 int CRectifierControlApp::ExitInstance()
 {
 	//TODO: обработайте дополнительные ресурсы, которые могли быть добавлены
-	AfxOleTerm(FALSE);
+	if (m_threadState > 0) {
+		m_threadState = 2;
+		for (int i = 0; i < 10; ++i) {
+			Sleep(1);
+			if (m_threadState > 2)
+				break;
+		}
 
+		if (m_threadState == 3) {
+			//AfxMessageBox(CA2T("Поток остановлен", CP_UTF8));
+		}
+	}
+
+	AfxOleTerm(FALSE);
 	return CWinApp::ExitInstance();
 }
 
@@ -386,10 +408,48 @@ void CRectifierControlApp::OnLinkOptions()
 }
 
 
+void CRectifierControlApp::registerRectifier(CRectifierControlDoc * rectifierDoc)
+{
+	RectifierInfo & rectifierInfo = rectifierDoc->getRectifierInfo();
+	rectifierInfo.doc = rectifierDoc;
+	m_rectifierConfigs.insert(std::pair<int, RectifierInfo>(rectifierInfo.id, rectifierInfo));
+}
+
 void CRectifierControlApp::OnRectifierState()
 {
 	CRectifiersStateDialog rectifiersStateDlg(m_rectifierConfigs);
 	// TODO: Add your command handler code here
 	INT_PTR res = rectifiersStateDlg.DoModal();
-	
+}
+
+
+CDocument* CRectifierControlApp::OpenDocumentFile(LPCTSTR lpszFileName)
+{
+	// TODO: Add your specialized code here and/or call the base class
+	CRectifierControlDoc * openedDoc = (CRectifierControlDoc*) CWinApp::OpenDocumentFile(lpszFileName);
+	if( NULL != openedDoc )	{
+		registerRectifier(openedDoc);
+	}
+	return openedDoc;
+}
+
+
+void CRectifierControlApp::OnFileOpen()
+{
+	// TODO: Add your command handler code here
+	CWinApp::OnFileOpen();
+	//CDocTemplate* templ = NULL;
+	//for (POSITION pos = CWinApp::GetFirstDocTemplatePosition(); pos != NULL;
+	//	templ = CWinApp::GetNextDocTemplate(pos)) {
+	//	CDocument * templ = NULL;
+	//	for(templ->GetFirstDocPosition
+	//}
+}
+
+
+BOOL CRectifierControlApp::OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO* pHandlerInfo)
+{
+	// TODO: Add your specialized code here and/or call the base class
+
+	return CWinApp::OnCmdMsg(nID, nCode, pExtra, pHandlerInfo);
 }
