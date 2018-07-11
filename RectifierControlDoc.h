@@ -1,7 +1,7 @@
 
 // RectifierControlDoc.h : интерфейс класса CRectifierControlDoc
 //
-
+#include "scomport.h"
 
 #pragma once
 
@@ -35,7 +35,17 @@ public:
 	virtual void Dump(CDumpContext& dc) const;
 #endif
 
+public:
+	RectifierInfo & getRectifierInfo();
+
 protected:
+	RectifierInfo m_rectifierInfo;
+
+protected:
+	void parseRectifierCfg(CString & rectifierCfgPath);
+protected:
+
+	
 
 // Созданные функции схемы сообщений
 protected:
@@ -45,4 +55,6 @@ protected:
 	// Вспомогательная функция, задающая содержимое поиска для обработчика поиска
 	void SetSearchContent(const CString& value);
 #endif // SHARED_HANDLERS
+public:
+	virtual BOOL OnOpenDocument(LPCTSTR lpszPathName);
 };

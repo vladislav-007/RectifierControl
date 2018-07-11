@@ -12,47 +12,31 @@
 
 #include "resource.h"       // îñíîâíûå ñèìâîëû
 #include "RectifierCommand.h"
+#include "RectifierControlDoc.h"
 
 #include <map>
 #include <vector>
-
+#include "scomport.h"
 
 // CRectifierControlApp:
 // Î ðåàëèçàöèè äàííîãî êëàññà ñì. RectifierControl.cpp
 //
-enum class Parity : std::int8_t {
-	NO_PARITY = 0,
-	ODD_PARITY = 1,
-	EVEN_PARITY = 2,
-	MARK_PARITY = 3,
-	SPACE_PARITY = 4
-};
 
 
 
 
-
-enum class Stopbits : std::int8_t {
-	ONE_STOPBIT = 0,
-	ONE5_STOPBITS = 1,
-	TWO_STOPBITS = 2
-};
-
-
-
-
-struct RectifierInfo {
-	int id;
-	CString name;
-	int address;
-	CString comport;
-	int modeID;
-	CString modeName;
-	int modeBoundRate;
-	int modeByteSize;
-	Parity modeParity;
-	Stopbits modeStopbits;
-};
+//struct RectifierInfo {
+//	int id;
+//	CString name;
+//	int address;
+//	CString comport;
+//	int modeID;
+//	CString modeName;
+//	int modeBoundRate;
+//	int modeByteSize;
+//	Parity modeParity;
+//	Stopbits modeStopbits;
+//};
 
 typedef struct _CMDFRAME {
 	static const uint8_t BEGIN = ':';
@@ -66,6 +50,10 @@ typedef struct _CMDFRAME {
 
 
 std::vector<uint8_t> convertToASCIIFrame(const std::vector<uint8_t> & frame_bytes);
+Parity parityFromString(const CString & parityStr);
+Stopbits stopbitsFromString(const CString & stopBitsStr);
+
+
 
 
 
@@ -86,11 +74,18 @@ public:
 	afx_msg void OnLinkOptions();
 private:
 	CString m_usedComPort;
+	SECURITY_ATTRIBUTES port_security_attributes;
+	//CMainFrame * m_pMainFrame;
 	// Properties of connection port. 
 	std::map<CString, COMMCONFIG> m_comportProperties;
 	std::map<int, RectifierInfo> m_rectifierConfigs;
+	WORD m_threadState;
 public:
+	void registerRectifier(CRectifierControlDoc * rectifierDoc);
 	afx_msg void OnRectifierState();
+	virtual CDocument* OpenDocumentFile(LPCTSTR lpszFileName);
+	afx_msg void OnFileOpen();
+	virtual BOOL OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO* pHandlerInfo);
 };
 
 extern CRectifierControlApp theApp;

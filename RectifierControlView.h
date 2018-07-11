@@ -40,6 +40,8 @@ protected:
 // —озданные функции схемы сообщений
 protected:
 	DECLARE_MESSAGE_MAP()
+	virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam);
+	virtual BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult);
 };
 
 #ifndef _DEBUG  // отладочна¤ верси¤ в RectifierControlView.cpp

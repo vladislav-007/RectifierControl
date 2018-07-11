@@ -195,6 +195,7 @@
     <ClInclude Include="RectifierControlView.h" />
     <ClInclude Include="RectifiersStateDialog.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="scomport.h" />
     <ClInclude Include="SetComportDlg.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
@@ -209,6 +210,7 @@
     <ClCompile Include="RectifierControlDoc.cpp" />
     <ClCompile Include="RectifierControlView.cpp" />
     <ClCompile Include="RectifiersStateDialog.cpp" />
+    <ClCompile Include="scomport.cpp" />
     <ClCompile Include="SetComportDlg.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

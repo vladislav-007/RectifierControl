@@ -60,6 +60,9 @@
     <ClInclude Include="RectifierCommand.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="scomport.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RectifierControl.cpp">
@@ -93,6 +96,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="RectifierCommand.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="scomport.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
