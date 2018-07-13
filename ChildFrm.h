@@ -30,4 +30,5 @@ public:
 // Созданные функции схемы сообщений
 protected:
 	DECLARE_MESSAGE_MAP()
+	virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam);
 };

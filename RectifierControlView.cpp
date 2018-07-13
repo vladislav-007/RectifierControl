@@ -12,6 +12,8 @@
 #include "RectifierControlDoc.h"
 #include "RectifierControlView.h"
 
+#include <sstream>
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -66,8 +68,22 @@ void CRectifierControlView::OnDraw(CDC* pDC)
 		ANTIALIASED_QUALITY, DEFAULT_PITCH | FF_SWISS,
 		L"Tahoma");
 	pDC->SelectObject(font);
+	int rectifierID = pDoc->getRectifierInfo().id;
 	rectifierName += pDoc->getRectifierInfo().name;
+	std::map<int, RectifierInfo> & actualRectifiesInfos = theApp.getRectifierInfos();
 	pDC->TextOutW(10, 10, rectifierName);
+	CString rectifierState(CA2T("Reciver state: ", CP_UTF8));
+	std::wstringstream ss;
+	const RectifierInfo & info = actualRectifiesInfos.at(rectifierID);
+	ss << info.recivedData.status;
+	rectifierState += ss.str().c_str();
+	pDC->TextOutW(10, 25, rectifierState);
+	CString recivedData(CA2T("Recived data: ", CP_UTF8));
+	ss.clear();
+	for (DWORD i = 0; i < 20; ++i)
+		ss << std::hex << " " << info.recivedData.buffer[i];
+	recivedData += ss.str().c_str();
+	pDC->TextOutW(10, 50, recivedData);
 }
 
 

@@ -1,10 +1,15 @@
 ﻿#include "stdafx.h"
 #include "scomport.h"
+#include "RectifierCommand.h"
+#include <vector>
 
 //#include "cncload.h"
 
 #include <Windows.h>
 #include <sstream>
+
+OVERLAPPED overlappedWR;
+OVERLAPPED overlappedRD;
 
 char * taskStateStr[] = { "Нет задания","Ожидание запроса на загрузку программы",
 	"Загрузка программы",
@@ -530,6 +535,127 @@ char * machStateStr[] = { " Режим ожидания","Старт фотов�
 //	return 0;
 //	}
 
+void getRectifierState(RectifierInfo & info) {
+
+	// L"Send command 0x07";
+	std::vector<uint8_t> frameBytes = DeviceCommand::createCmdFrame(
+		info.address, 0x43, GET_CONCISE_DEVICE_STATE_07);
+
+	frameBytes = DeviceCommand::convertToASCIIFrame(frameBytes);
+
+	HANDLE hSerial;
+	LPCTSTR sPortName = info.comport;
+	hSerial = ::CreateFile(sPortName, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, 0);
+	if (hSerial == INVALID_HANDLE_VALUE)
+	{
+		CString message;
+		message.Format(L"Failed to open comport %s.", info.comport);
+		if (GetLastError() == ERROR_FILE_NOT_FOUND)
+		{
+			message += L"Comport doesn't exists";
+		}
+		AfxMessageBox(message, MB_YESNO | MB_ICONSTOP);
+	}
+	DCB dcbSerialParams = { 0 };
+	dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
+	if (!GetCommState(hSerial, &dcbSerialParams))
+	{
+		AfxMessageBox(L"getting state error", MB_YESNO | MB_ICONSTOP);
+	}
+	dcbSerialParams.BaudRate = info.modeBoundRate;
+	dcbSerialParams.ByteSize = info.modeByteSize;
+	dcbSerialParams.StopBits = (BYTE)info.modeStopbits;
+	dcbSerialParams.Parity = (BYTE)info.modeParity;
+	if (!SetCommState(hSerial, &dcbSerialParams))
+	{
+		//log += L"error setting serial port state\n";
+		//m_CEditTestLog.SetWindowText(log);
+		AfxMessageBox(L"getting state error", MB_YESNO | MB_ICONSTOP);
+	}
+	const uint8_t * data = frameBytes.data();  // строка для передачи
+	DWORD dwSize = frameBytes.size();   // размер этой строки
+	DWORD dwBytesWritten;    // тут будет количество собственно переданных байт
+	overlappedWR.hEvent = CreateEvent(NULL, true, true, NULL);
+
+	unsigned char bufrd[1024];
+	overlappedRD.hEvent = CreateEvent(NULL, true, true, NULL);
+	SetCommMask(hSerial, EV_RXCHAR);
+	DWORD mask;
+	//ожидать события приёма байта (это и есть перекрываемая операция)
+	WaitCommEvent(hSerial, &mask, &overlappedRD);
+
+
+	BOOL iRet = WriteFile(hSerial, data, dwSize, &dwBytesWritten, &overlappedWR);
+	DWORD btr, temp, signal;
+	signal = WaitForSingleObject(overlappedWR.hEvent, 1000);	//приостановить поток, пока не завершится
+																//перекрываемая операция WriteFile
+																//если операция завершилась успешно, установить соответствующий флажок
+	std::wstringstream ss;
+	if ((signal == WAIT_OBJECT_0) && (GetOverlappedResult(hSerial, &overlappedWR, &dwBytesWritten, true))) {
+		ss << L"sent - OK \n/n" << std::endl;
+	}
+	else {
+
+		ss << L"Failed to send cm..." << std::endl;
+	}
+
+
+	ss << dwSize << L" Bytes in string. " << std::endl << dwBytesWritten << L" Bytes sended. " << std::endl;
+	std::wstring str1;
+	str1 = ss.str();
+	//log += str1.c_str();
+	//m_CEditTestLog.SetWindowText(log);
+	Sleep(150);
+
+	ss.clear();
+	DWORD iSize;
+	//char sReceivedChar;
+	ss << L"Started reading replay..." << std::endl;
+	str1 = ss.str();
+	//log += str1.c_str();
+	//m_CEditTestLog.SetWindowText(log);
+	COMSTAT comstat;
+	//OVERLAPPED overlapped;
+	while (true)
+	{
+
+		signal = WaitForSingleObject(overlappedRD.hEvent, 10000);	//приостановить поток до прихода байта
+		if (signal == WAIT_OBJECT_0)				        //если событие прихода байта произошло
+		{
+			if (GetOverlappedResult(hSerial, &overlappedRD, &temp, true)) //проверяем, успешно ли завершилась
+																		  //перекрываемая операция WaitCommEvent
+				if ((mask & EV_RXCHAR) != 0)				//если произошло именно событие прихода байта
+				{
+					ClearCommError(hSerial, &temp, &comstat);		//нужно заполнить структуру COMSTAT
+					btr = comstat.cbInQue;                          	//и получить из неё количество принятых байтов
+					if (btr)                         			//если действительно есть байты для чтения
+					{
+						ReadFile(hSerial, bufrd, btr, &iSize, &overlappedRD);     //прочитать байты из порта в буфер программы
+						if (iSize > 0) {   // если что-то принято, выводим
+							for (DWORD i = 0; i < iSize; ++i) {
+								ss << std::hex << bufrd[i];
+								info.recivedData.buffer[i] = bufrd[i];
+							}
+							info.recivedData.buffer[iSize] = 0;
+						}
+					}
+				}
+		}
+		else {
+			//log += L"НЕТ ОТВЕТА!!!";
+			//m_CEditTestLog.SetWindowText(log);
+			AfxMessageBox(L"НЕТ ОТВЕТА", MB_YESNO | MB_ICONSTOP);
+			break;
+		}
+		break;
+	}
+	ss << std::endl;
+	str1 = ss.str();
+	
+	//log += str1.c_str();
+	//m_CEditTestLog.SetWindowText(log);
+	CloseHandle(hSerial);
+}
 
 UINT ThreadProc(LPVOID par) {
 	SThread_param * param;
@@ -565,17 +691,12 @@ UINT ThreadProc(LPVOID par) {
 			//команда на выход из потока работы с ком портом
 			break;
 		}
-		Sleep(100);
-
+		Sleep(1000);
 		for (auto & rectInfo : rectInfos[0]) {
 			RectifierInfo & info = rectInfo.second;
+			getRectifierState(info);
 			info.recivedData.status = ++cnt;
-			//SendMessage((HWND)param->wnd, WM_UPDATEUISTATE, NULL, NULL);
-			//info.doc->UpdateAllViews(NULL);
-			//PostMessage(hMain, WM_NOTIFY, 0, (LPARAM)&(pObject->m_hdrObject));
-			//UpdateWindow((HWND)param->wnd);
-			
-			//UpdateAllViews(NULL);
+			PostMessage((HWND)param->wnd, WM_COMMAND, 7,7);
 		}
 		//std::wstringstream ss;
 		//ss << L"Thread cnt: " << ++cnt;

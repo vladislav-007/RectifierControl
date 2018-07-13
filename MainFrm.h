@@ -39,6 +39,7 @@ protected:
 
 	afx_msg LRESULT OnUpdateRectifiers(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnUpdateRectifiers1(WPARAM wParam, LPARAM lParam);
+	virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam);
 };
 
 

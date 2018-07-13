@@ -80,3 +80,61 @@ std::vector<uint8_t> DeviceCommand::convertToASCIIFrame(const std::vector<uint8_
 	return ascii_array;
 }
 
+uint8_t hexToByte(uint8_t asciiSymbol) {
+	switch (asciiSymbol) {
+	case '0': return 0;
+	case '1': return 1;
+	case '2': return 2;
+	case '3': return 3;
+	case '4': return 4;
+	case '5': return 5;
+	case '6': return 6;
+	case '7': return 7;
+	case '8': return 8;
+	case '9': return 9;
+	case 'A': return 10;
+	case 'a': return 10;
+	case 'B': return 11;
+	case 'b': return 11;
+	case 'C': return 12;
+	case 'c': return 12;
+	case 'D': return 13;
+	case 'd': return 13;
+	case 'E': return 14;
+	case 'e': return 14;
+	case 'F': return 15;
+	case 'f': return 15;
+	default:
+		throw std::exception("Not hex symbol");
+	}
+}
+
+std::vector<uint8_t> DeviceCommand::parseASCIIFrameToBytes(const std::vector<uint8_t> & ascii_bytes) {
+
+	// check LRC
+	std::vector<uint8_t> bytes_array;
+	for (int i = 0; i < ascii_bytes.size(); i+=2) {
+		
+		uint8_t first_simbol = hexSymbols[(0x0F & byte)];
+		uint8_t second_simbol = hexSymbols[(0xF0 & byte) >> 4];
+		ascii_array.push_back(second_simbol);
+		ascii_array.push_back(first_simbol);
+		check_LRC += byte;
+	}
+	ascii_array.push_back(':'); // ASCII start
+								// every byte in ascii is two byte e.g. 0x23 -> 0x32,0x33
+	const char hexSymbols[] = { '0', '1','2', '3','4', '5','6', '7','8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+	uint8_t check_LRC = 0;
+	for (const auto & byte : frame_bytes) {
+		check_LRC += byte;
+		uint8_t first_simbol = hexSymbols[(0x0F & byte)];
+		uint8_t second_simbol = hexSymbols[(0xF0 & byte) >> 4];
+		ascii_array.push_back(second_simbol);
+		ascii_array.push_back(first_simbol);
+	}
+	assert(check_LRC == 0);
+	ascii_array.push_back(0x0D);
+	ascii_array.push_back(0x0A);
+	return ascii_array;
+}
+

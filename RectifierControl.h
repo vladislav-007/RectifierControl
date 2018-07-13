@@ -82,6 +82,7 @@ private:
 	WORD m_threadState;
 public:
 	void registerRectifier(CRectifierControlDoc * rectifierDoc);
+	std::map<int, RectifierInfo> & getRectifierInfos();
 	afx_msg void OnRectifierState();
 	virtual CDocument* OpenDocumentFile(LPCTSTR lpszFileName);
 	afx_msg void OnFileOpen();

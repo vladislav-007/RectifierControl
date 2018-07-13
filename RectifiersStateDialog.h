@@ -31,4 +31,5 @@ private:
 public:
 	afx_msg void OnBnClickedButton1();
 	CEdit m_CEditTestLog;
+	afx_msg void OnBnClickedButton2();
 };

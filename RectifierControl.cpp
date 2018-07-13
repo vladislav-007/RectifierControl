@@ -415,6 +415,11 @@ void CRectifierControlApp::registerRectifier(CRectifierControlDoc * rectifierDoc
 	m_rectifierConfigs.insert(std::pair<int, RectifierInfo>(rectifierInfo.id, rectifierInfo));
 }
 
+std::map<int, RectifierInfo>& CRectifierControlApp::getRectifierInfos()
+{
+	return m_rectifierConfigs;
+}
+
 void CRectifierControlApp::OnRectifierState()
 {
 	CRectifiersStateDialog rectifiersStateDlg(m_rectifierConfigs);
