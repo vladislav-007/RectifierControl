@@ -244,7 +244,7 @@ void CRectifiersStateDialog::OnBnClickedButton1()
 }
 
 
-void sendCommand(const HANDLE & hSerial, const uint8_t * data, DWORD & dwSize, 
+void sendCommand(const HANDLE & hSerial, const uint8_t * data, DWORD dwSize, 
 	DWORD dwBytesWritten, CEdit & m_CEditTestLog, CString &log) {
 
 	BOOL iRet = WriteFile(hSerial, data, dwSize, &dwBytesWritten, &overlappedWR);
@@ -364,6 +364,7 @@ void CRectifiersStateDialog::OnBnClickedButton2()
 		COMSTAT comstat;
 		//OVERLAPPED overlapped;
 		DWORD btr, temp;
+		std::vector<std::uint8_t> rdSymbols;
 		while (true)
 		{
 			DWORD signal = WaitForSingleObject(overlappedRD.hEvent, 10000);	//приостановить поток до прихода байта
@@ -379,11 +380,16 @@ void CRectifiersStateDialog::OnBnClickedButton2()
 						{
 							ReadFile(hSerial, bufrd, btr, &iSize, &overlappedRD);     //прочитать байты из порта в буфер программы
 							if (iSize > 0) {   // если что-то принято, выводим
-								for (DWORD i = 0; i < iSize; ++i)
-									ss << std::hex << bufrd[i];
+								for (DWORD i = 0; i < iSize; ++i) {}
+								ss << std::hex << bufrd[i];
+								rdSymbols.push_back(bufrd[i]);
 							}
+							
 						}
 					}
+					std::vector<std::uint8_t> readBytes = DeviceCommand::parseASCIIFrameToBytes(rdSymbols);
+
+					sendCommand(hSerial, data, 1, dwBytesWritten, m_CEditTestLog, log);
 				}
 			}
 			else {
