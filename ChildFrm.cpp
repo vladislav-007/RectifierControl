@@ -54,3 +54,11 @@ void CChildFrame::Dump(CDumpContext& dc) const
 #endif //_DEBUG
 
 // обработчики сообщений CChildFrame
+
+
+BOOL CChildFrame::OnCommand(WPARAM wParam, LPARAM lParam)
+{
+	// TODO: Add your specialized code here and/or call the base class
+
+	return CMDIChildWnd::OnCommand(wParam, lParam);
+}

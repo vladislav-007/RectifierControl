@@ -107,3 +107,37 @@ afx_msg LRESULT CMainFrame::OnUpdateRectifiers1(WPARAM wParam, LPARAM lParam)
 {
 	return 0;
 }
+
+
+BOOL CMainFrame::OnCommand(WPARAM wParam, LPARAM lParam)
+{
+	// TODO: Add your specialized code here and/or call the base class
+	if (wParam == 7 && lParam == 7) {
+		CDocTemplate *pTempl;
+		CDocument *pDoc;
+		CView *pView;
+
+		POSITION posT = theApp.GetFirstDocTemplatePosition();
+
+		while (posT)
+		{
+			pTempl = theApp.GetNextDocTemplate(posT);
+
+			POSITION posD = pTempl->GetFirstDocPosition();
+			while (posD)
+			{
+
+				pDoc = pTempl->GetNextDoc(posD);
+				pDoc->UpdateAllViews(NULL);
+				POSITION posV = pDoc->GetFirstViewPosition();
+				while (posV)
+				{
+					pView = pDoc->GetNextView(posV);
+					pView->Invalidate();
+				}
+			}
+		}
+		return TRUE;
+	}
+	return CMDIFrameWnd::OnCommand(wParam, lParam);
+}

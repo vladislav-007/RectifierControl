@@ -39,6 +39,8 @@ public:
 
 	static std::vector<uint8_t> convertToASCIIFrame(const std::vector<uint8_t>& frame_bytes);
 
+	std::vector<uint8_t> parseASCIIFrameToBytes(const std::vector<uint8_t>& ascii_bytes);
+
 
 	DeviceCommand(const DATA & cmd_data) {
 		this->cmd_data_ = cmd_data;
