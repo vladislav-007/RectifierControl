@@ -17,7 +17,7 @@ public:
 	static DeviceCommand& getSimpleCommand(const std::uint8_t cmdNumber) {
 
 		if (simpleCmds_.find(cmdNumber) == simpleCmds_.end()) {
-			DATA simple_data = { 0x01/*size*/,0x07/*addr*/,0/*cmd*/,0/*data*/ };
+			DATA simple_data = { 0x01/*size*/,0x07/*addr*/,0/*cmd*/, std::vector<std::uint8_t>()/*data*/ };
 			simple_data.command = cmdNumber;
 
 			DeviceCommand cmd(simple_data);
@@ -30,7 +30,7 @@ public:
 	}
 
 	static std::vector<uint8_t> dataToVector(DATA cmd_data);
-	static DATA bytesToData(const std::vector<uint8_t> & bytes);
+	static std::uint8_t DeviceCommand::bytesToData(const std::vector<uint8_t> & bytes, DATA & data);
 
 	static std::vector<uint8_t> createCmdFrame(
 		const uint8_t modbus_addr,
@@ -42,10 +42,10 @@ public:
 
 	static std::vector<uint8_t> parseASCIIFrameToBytes(const std::vector<uint8_t>& ascii_bytes);
 
-	static std::vector<uint8_t> parseCmdFrame(const std::vector<uint8_t> & bytes,
-		uint8_t modbus_addr,
-		uint8_t modbus_func,
-		DATA data
+	static std::uint8_t parseResponseFrame(const std::vector<uint8_t> & bytes,
+		uint8_t & modbus_addr,
+		uint8_t & modbus_func,
+		DATA & data
 	);
 
 

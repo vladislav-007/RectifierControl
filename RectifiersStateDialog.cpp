@@ -245,7 +245,7 @@ void CRectifiersStateDialog::OnBnClickedButton1()
 
 
 void sendCommand(const HANDLE & hSerial, const uint8_t * data, DWORD dwSize, 
-	DWORD dwBytesWritten, CEdit & m_CEditTestLog, CString &log) {
+	DWORD & dwBytesWritten, CEdit & m_CEditTestLog, CString &log) {
 
 	BOOL iRet = WriteFile(hSerial, data, dwSize, &dwBytesWritten, &overlappedWR);
 	DWORD signal = WaitForSingleObject(overlappedWR.hEvent, 1000);	//приостановить поток, пока не завершится
@@ -380,15 +380,18 @@ void CRectifiersStateDialog::OnBnClickedButton2()
 						{
 							ReadFile(hSerial, bufrd, btr, &iSize, &overlappedRD);     //прочитать байты из порта в буфер программы
 							if (iSize > 0) {   // если что-то принято, выводим
-								for (DWORD i = 0; i < iSize; ++i) {}
-								ss << std::hex << bufrd[i];
-								rdSymbols.push_back(bufrd[i]);
+								for (DWORD i = 0; i < iSize; ++i) {
+									ss << std::hex << bufrd[i];
+									rdSymbols.push_back(bufrd[i]);
+								}
 							}
 							
 						}
 					}
 					std::vector<std::uint8_t> readBytes = DeviceCommand::parseASCIIFrameToBytes(rdSymbols);
-
+					std:uint8_t addr, modbus_func;
+					DeviceCommand::DATA cmd_data;
+					DeviceCommand::parseResponseFrame(readBytes, addr, modbus_func, cmd_data);
 					sendCommand(hSerial, data, 1, dwBytesWritten, m_CEditTestLog, log);
 				}
 			}
@@ -396,9 +399,9 @@ void CRectifiersStateDialog::OnBnClickedButton2()
 				log += L"НЕТ команд!";
 				m_CEditTestLog.SetWindowText(log);
 				//AfxMessageBox(L"НЕТ ОТВЕТА", MB_YESNO | MB_ICONSTOP);
-				break;
+				//break;
 			}
-			break;
+			//break;
 		}
 		ss << std::endl;
 		str1 = ss.str();

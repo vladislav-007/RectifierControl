@@ -2,10 +2,10 @@
 #include <vector>
 #include "RectifierCommand.h"
 
-const DeviceCommand::DATA GIVE_PREPARED_DATA = { 0x01/*size*/,0x01/*addr*/,0/*cmd*/,0/*data*/ };
-const DeviceCommand::DATA CHECK_CONNECTION_WITH_CPU = { 0x01/*size*/,0x04/*addr*/,0/*cmd*/,0/*data*/ };
-const DeviceCommand::DATA GET_CONCISE_DEVICE_STATE_07 = { 0x01/*size*/,0x07/*addr*/,0/*cmd*/,0/*data*/ };
-const DeviceCommand::DATA GET_RECTIFIER_STATE_10 = { 0x01/*size*/,0x10/*addr*/,0/*cmd*/,0/*data*/ };
+const DeviceCommand::DATA GIVE_PREPARED_DATA = { 0x01/*size*/,0x01/*addr*/,0/*cmd*/,std::vector<std::uint8_t>()/*data*/ };
+const DeviceCommand::DATA CHECK_CONNECTION_WITH_CPU = { 0x01/*size*/,0x04/*addr*/,0/*cmd*/,std::vector<std::uint8_t>()/*data*/ };
+const DeviceCommand::DATA GET_CONCISE_DEVICE_STATE_07 = { 0x01/*size*/,0x07/*addr*/,0/*cmd*/,std::vector<std::uint8_t>()/*data*/ };
+const DeviceCommand::DATA GET_RECTIFIER_STATE_10 = { 0x01/*size*/,0x10/*addr*/,0/*cmd*/,std::vector<std::uint8_t>()/*data*/ };
 
 DeviceCommand::DeviceCommand()
 {
@@ -41,26 +41,34 @@ std::vector<uint8_t> DeviceCommand::dataToVector(DATA cmd_data) {
 	return data_array;
 }
 
-DeviceCommand::DATA DeviceCommand::bytesToData(const std::vector<uint8_t> & bytes) {
+std::uint8_t DeviceCommand::bytesToData(const std::vector<uint8_t> & bytes, DATA & data) {
 	// TODO try to use move semantic
 	DATA cmd_data;
+	std::uint8_t CRC = 0;
+
 	cmd_data.size = 0;
 	if (bytes.empty())
-		return cmd_data;
+		return CRC;
 
-	cmd_data.size = 1 + bytes.size();
+	cmd_data.size = bytes.size() -2;
+	CRC += cmd_data.size;
 	
-	if (bytes.size() > 0)
+	if (bytes.size() > 0) {
 		cmd_data.address = bytes[0];
+		CRC += cmd_data.address;
+	}
 		
-	if (bytes.size() > 1)
+	if (bytes.size() > 1) {
 		cmd_data.command = bytes[1];
-
-	for (int8_t i = 2; i < bytes.size(); ++i) {
-		cmd_data.data[i] = bytes[i];
+		CRC += cmd_data.command;
 	}
 
-	return cmd_data;
+	for (int8_t i = 2; i < bytes.size()-1; ++i) {
+		cmd_data.data.push_back(bytes[i]);
+		CRC += bytes[i];
+	}
+	CRC += bytes[bytes.size() - 1];
+	return CRC;
 }
 
 std::vector<uint8_t> DeviceCommand::createCmdFrame(
@@ -134,45 +142,58 @@ uint8_t hexToByte(uint8_t asciiSymbol) {
 
 std::vector<uint8_t> DeviceCommand::parseASCIIFrameToBytes(const std::vector<uint8_t> & ascii_bytes) {
 
+	//find begin of the frame
+	int index = 0;
+	for (; index < ascii_bytes.size(); ++index) {
+		if (ascii_bytes[index] == ':') {
+			++index;
+			break;
+		}
+	}
+
 	// check LRC
 	uint8_t check_LRC = 0;
 	std::vector<uint8_t> bytes_array;
-	assert(ascii_bytes[0] == ':');
-	check_LRC = ascii_bytes[0];
-	bytes_array.push_back(ascii_bytes[0]);
-	for (int i = 0; i < ascii_bytes.size()-2; i+=2) {
-	
+
+	for (int i = index; i < ascii_bytes.size()-4; i+=2) {
+		if (ascii_bytes[i] == 0x0D && 0x0A == ascii_bytes[i + 1])
+			break;
 		uint8_t first_simbol = hexToByte(ascii_bytes[i+1]);
 		uint8_t second_simbol = hexToByte(ascii_bytes[i]) << 4;
 		uint8_t byte = second_simbol + first_simbol;
 		bytes_array.push_back(byte);
 		check_LRC += byte;
+		index = i + 2;
 	}
 
 	assert(check_LRC == 0);
-	bytes_array.push_back(0x0D);
-	bytes_array.push_back(0x0A);
+	assert(ascii_bytes[index] == 0x0D);
+	assert(ascii_bytes[index+1] == 0x0A);
 	return bytes_array;
 }
 
 
-std::vector<uint8_t> DeviceCommand::parseCmdFrame(const std::vector<std::uint8_t> & frame_array,
+std::uint8_t DeviceCommand::parseResponseFrame(const std::vector<std::uint8_t> & frame_array,
 	uint8_t & modbus_addr,
 	uint8_t & modbus_func,
 	DATA & data
 ) {
-	//std::vector<uint8_t> frame_array;
+
 	uint8_t crc = 0;
-	modbus_addr = frame_array[0];
-	crc += modbus_addr;
-	modbus_func = frame_array[1];
-	crc += modbus_func;
-	for (auto byte : dataToVector(data)) {
-		frame_array.push_back(byte);
-		crc += byte;
+	if (frame_array.size() > 0) {
+		modbus_addr = frame_array[0];
+		crc += modbus_addr;
 	}
-	crc = (unsigned char)(0x100 - crc);
-	frame_array.push_back(crc);
-	return frame_array;
+
+	if (frame_array.size() > 1) {
+		modbus_func = frame_array[1];
+		crc += modbus_func;
+	}
+
+	std::vector<std::uint8_t> data_sub_vector(frame_array.cbegin() + 2, frame_array.cend());
+
+	crc +=DeviceCommand::bytesToData(data_sub_vector, data);
+	assert(0 == crc);
+	return crc;
 }
 
