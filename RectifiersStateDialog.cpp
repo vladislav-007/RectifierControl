@@ -269,6 +269,86 @@ void sendCommand(const HANDLE & hSerial, const uint8_t * data, DWORD dwSize,
 
 }
 
+void sendReply(const HANDLE & hSerial, std::vector<uint8_t> frameSymbols, DWORD & dwBytesWritten, CEdit & m_CEditTestLog, CString &log) {
+
+	const uint8_t * data = frameSymbols.data();  
+	DWORD dwSize = frameSymbols.size();   // размер этой строки
+
+	BOOL iRet = WriteFile(hSerial, data, dwSize, &dwBytesWritten, &overlappedWR);
+	DWORD signal = WaitForSingleObject(overlappedWR.hEvent, 1000);	//приостановить поток, пока не завершится
+																	//перекрываемая операция WriteFile
+																	//если операция завершилась успешно, установить соответствующий флажок
+	std::wstringstream ss;
+	if ((signal == WAIT_OBJECT_0) && (GetOverlappedResult(hSerial, &overlappedWR, &dwBytesWritten, true))) {
+		ss << L"sent - OK \n/n" << std::endl;
+	}
+	else {
+		ss << L"Failed to send cm..." << std::endl;
+	}
+
+	ss << dwSize << L" Bytes in string. " << std::endl << dwBytesWritten << L" Bytes sended. " << std::endl;
+	std::wstring str1;
+	str1 = ss.str();
+	log += str1.c_str();
+	m_CEditTestLog.SetWindowText(log);
+	Sleep(150);
+
+}
+
+void sendReplyData(const HANDLE & hSerial, std::vector<uint8_t> frameSymbols, DWORD & dwBytesWritten, CEdit & m_CEditTestLog, CString &log) {
+
+	const uint8_t * data = frameSymbols.data();
+	DWORD dwSize = frameSymbols.size();   // размер этой строки
+
+	BOOL iRet = WriteFile(hSerial, data, dwSize, &dwBytesWritten, &overlappedWR);
+	DWORD signal = WaitForSingleObject(overlappedWR.hEvent, 1000);	//приостановить поток, пока не завершится
+																	//перекрываемая операция WriteFile
+																	//если операция завершилась успешно, установить соответствующий флажок
+	std::wstringstream ss;
+	if ((signal == WAIT_OBJECT_0) && (GetOverlappedResult(hSerial, &overlappedWR, &dwBytesWritten, true))) {
+		ss << L"sent - OK \n/n" << std::endl;
+	}
+	else {
+		ss << L"Failed to send cm..." << std::endl;
+	}
+
+	ss << dwSize << L" Bytes in string. " << std::endl << dwBytesWritten << L" Bytes sended. " << std::endl;
+	std::wstring str1;
+	str1 = ss.str();
+	log += str1.c_str();
+	m_CEditTestLog.SetWindowText(log);
+	Sleep(150);
+
+}
+
+void readPort(HANDLE hSerial, DWORD & mask, std::vector<std::uint8_t> & rdSymbols) {
+	DWORD temp, size;
+	COMSTAT comstat;
+	unsigned char bufrd[1024];
+	rdSymbols.clear();
+
+	if (GetOverlappedResult(hSerial, &overlappedRD, &temp, true)) { //проверяем, успешно ли завершилась
+																	//перекрываемая операция WaitCommEvent
+		if ((mask & EV_RXCHAR) != 0)				//если произошло именно событие прихода байта
+		{
+			ClearCommError(hSerial, &temp, &comstat);	//нужно заполнить структуру COMSTAT
+			DWORD btr = comstat.cbInQue;                //и получить из неё количество принятых байтов
+			if (btr)                         			//если действительно есть байты для чтения
+			{
+				ReadFile(hSerial, bufrd, btr, &size, &overlappedRD);     //прочитать байты из порта в буфер программы
+				if (size > 0) {   // если что-то принято, выводим
+					for (DWORD i = 0; i < size; ++i) {
+						rdSymbols.push_back(bufrd[i]);
+					}
+				}
+
+			}
+		}
+		
+		//sendCommand(hSerial, data, 1, dwBytesWritten, m_CEditTestLog, log);
+	}
+}
+
 
 void CRectifiersStateDialog::OnBnClickedButton2()
 {
@@ -322,6 +402,7 @@ void CRectifiersStateDialog::OnBnClickedButton2()
 				message += L"Comport doesn't exists";
 			}
 			AfxMessageBox(message, MB_YESNO | MB_ICONSTOP);
+			return;
 		}
 		DCB dcbSerialParams = { 0 };
 		dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
@@ -343,9 +424,6 @@ void CRectifiersStateDialog::OnBnClickedButton2()
 		DWORD dwSize = frameBytes.size();   // размер этой строки
 		DWORD dwBytesWritten;    // тут будет количество собственно переданных байт
 		overlappedWR.hEvent = CreateEvent(NULL, true, true, NULL);
-
-		unsigned char bufrd[1024];
-		overlappedRD.hEvent = CreateEvent(NULL, true, true, NULL);
 		SetCommMask(hSerial, EV_RXCHAR);
 		DWORD mask;
 		//ожидать события приёма байта (это и есть перекрываемая операция)
@@ -362,37 +440,44 @@ void CRectifiersStateDialog::OnBnClickedButton2()
 		log += str1.c_str();
 		m_CEditTestLog.SetWindowText(log);
 		COMSTAT comstat;
-		//OVERLAPPED overlapped;
-		DWORD btr, temp;
+		DWORD temp;
 		std::vector<std::uint8_t> rdSymbols;
 		while (true)
 		{
 			DWORD signal = WaitForSingleObject(overlappedRD.hEvent, 10000);	//приостановить поток до прихода байта
 			if (signal == WAIT_OBJECT_0)				        //если событие прихода байта произошло
 			{
-				if (GetOverlappedResult(hSerial, &overlappedRD, &temp, true)) { //проверяем, успешно ли завершилась
-																			  //перекрываемая операция WaitCommEvent
-					if ((mask & EV_RXCHAR) != 0)				//если произошло именно событие прихода байта
-					{
-						ClearCommError(hSerial, &temp, &comstat);		//нужно заполнить структуру COMSTAT
-						btr = comstat.cbInQue;                          	//и получить из неё количество принятых байтов
-						if (btr)                         			//если действительно есть байты для чтения
-						{
-							ReadFile(hSerial, bufrd, btr, &iSize, &overlappedRD);     //прочитать байты из порта в буфер программы
-							if (iSize > 0) {   // если что-то принято, выводим
-								for (DWORD i = 0; i < iSize; ++i) {
-									ss << std::hex << bufrd[i];
-									rdSymbols.push_back(bufrd[i]);
-								}
-							}
-							
-						}
-					}
+				readPort(hSerial, mask, rdSymbols);
+				if (!rdSymbols.empty()) {
 					std::vector<std::uint8_t> readBytes = DeviceCommand::parseASCIIFrameToBytes(rdSymbols);
 					std:uint8_t addr, modbus_func;
 					DeviceCommand::DATA cmd_data;
-					DeviceCommand::parseResponseFrame(readBytes, addr, modbus_func, cmd_data);
-					sendCommand(hSerial, data, 1, dwBytesWritten, m_CEditTestLog, log);
+					std::uint8_t replyCode;
+					static std::uint8_t lastFuncAddress;
+					//DeviceCommand::parseResponseCode(readBytes, addr, modbus_func, replyCode);
+					DeviceCommand::parseCommand(readBytes, addr, modbus_func, cmd_data);
+					if (cmd_data.address == 0x10) {
+						// asked for rectifier state. Send normal reply :014305B7 0D 0A
+						std::vector<uint8_t> replyBytes = DeviceCommand::createReplyFrame(
+							info.address, 0x43, 0x05, ReplyStatus::OK);
+						std::vector<uint8_t> frameSymbols = DeviceCommand::convertToASCIIFrame(replyBytes);
+						sendReply(hSerial, frameSymbols, dwBytesWritten, m_CEditTestLog, log);
+						
+						//sendCommand(hSerial, data, 1, dwBytesWritten, m_CEditTestLog, log);
+					}
+					else if(cmd_data.address == 0x01 && lastFuncAddress == 0x10) {
+						//asked for data itself
+						std::vector<uint8_t> serialNumber = {1,2,3,4,5,6,7,8,9,0,1,2};
+						std::vector<uint8_t> reply_data = DeviceCommand::createRectifierInfoF10(3, 5, 7, 9, 0x11, serialNumber);
+						std::vector<uint8_t> replyBytes = DeviceCommand::createReplyDataFrame(
+							info.address, 0x43, reply_data);
+						std::vector<uint8_t> frameSymbols = DeviceCommand::convertToASCIIFrame(replyBytes);
+						//sendReply(hSerial, frameSymbols, dwBytesWritten, m_CEditTestLog, log);
+						sendCommand(hSerial, frameSymbols.data(), 1, dwBytesWritten, m_CEditTestLog, log);
+					}
+
+					lastFuncAddress = cmd_data.address;
+
 				}
 			}
 			else {

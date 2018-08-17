@@ -554,7 +554,9 @@ void getRectifierState(RectifierInfo & info) {
 		{
 			message += L"Comport doesn't exists";
 		}
+		info.state = RectifierState::FAILED_TO_OPEN_COMPORT;
 		AfxMessageBox(message, MB_YESNO | MB_ICONSTOP);
+		return;
 	}
 	DCB dcbSerialParams = { 0 };
 	dcbSerialParams.DCBlength = sizeof(dcbSerialParams);

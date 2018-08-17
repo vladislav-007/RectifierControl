@@ -2,6 +2,11 @@
 #include <map>
 #include <vector>
 
+enum class ReplyStatus
+{
+	OK,
+	Error
+};
 
 
 class DeviceCommand
@@ -32,15 +37,25 @@ public:
 	static std::vector<uint8_t> dataToVector(DATA cmd_data);
 	static std::uint8_t DeviceCommand::bytesToData(const std::vector<uint8_t> & bytes, DATA & data);
 
+	static std::uint8_t parseReplyCode(const std::vector<uint8_t>& bytes, std::uint8_t & replayCode);
+
 	static std::vector<uint8_t> createCmdFrame(
 		const uint8_t modbus_addr,
 		const uint8_t modbus_func,
 		const DATA data
 	);
 
+	static std::vector<uint8_t> createReplyFrame(const uint8_t modbus_addr, const uint8_t modbus_func, const uint8_t code, const ReplyStatus status);
+
+	static std::vector<uint8_t> createReplyDataFrame(const uint8_t modbus_addr, const uint8_t modbus_func, const std::vector<uint8_t>& data);
+
+	static std::vector<uint8_t> createRectifierInfoF10(uint8_t lowA, uint8_t hiA, uint8_t lowU, uint8_t hiU, uint8_t configByte, const std::vector<uint8_t>& serialNumber);
+
 	static std::vector<uint8_t> convertToASCIIFrame(const std::vector<uint8_t>& frame_bytes);
 
 	static std::vector<uint8_t> parseASCIIFrameToBytes(const std::vector<uint8_t>& ascii_bytes);
+
+	static std::uint8_t parseCommand(const std::vector<std::uint8_t>& frame_array, uint8_t & modbus_addr, uint8_t & modbus_func, DATA & data);
 
 	static std::uint8_t parseResponseFrame(const std::vector<uint8_t> & bytes,
 		uint8_t & modbus_addr,
@@ -48,8 +63,8 @@ public:
 		DATA & data
 	);
 
-
-
+	static std::uint8_t parseResponseCode(const std::vector<std::uint8_t>& frame_array, uint8_t & modbus_addr, uint8_t & modbus_func, uint8_t & replyCode);
+	
 
 	DeviceCommand(const DATA & cmd_data) {
 		this->cmd_data_ = cmd_data;

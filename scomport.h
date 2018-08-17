@@ -63,6 +63,11 @@ enum class Stopbits : std::int8_t {
 	TWO_STOPBITS = 2
 };
 
+enum class RectifierState : std::int8_t {
+	OK = 0,
+	FAILED_TO_OPEN_COMPORT = 1
+};
+
 struct CmdsToSend {
 	int status;
 	std::int8_t cmd1[256];
@@ -76,6 +81,7 @@ struct RecivedData {
 
 
 struct RectifierInfo {
+	RectifierState state;
 	int id;
 	CString name;
 	int address;
