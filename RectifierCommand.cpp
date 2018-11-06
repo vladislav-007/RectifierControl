@@ -2,10 +2,15 @@
 #include <vector>
 #include "RectifierCommand.h"
 
-const DeviceCommand::DATA GIVE_PREPARED_DATA = { 0x01/*size*/,0x01/*addr*/,0/*cmd*/,std::vector<std::uint8_t>()/*data*/ };
+const DeviceCommand::DATA DeviceCommand::GIVE_PREPARED_DATA_01 = { 0x01/*size*/,0x01/*addr*/,0/*cmd*/,std::vector<std::uint8_t>()/*data*/ };
 const DeviceCommand::DATA CHECK_CONNECTION_WITH_CPU = { 0x01/*size*/,0x04/*addr*/,0/*cmd*/,std::vector<std::uint8_t>()/*data*/ };
 const DeviceCommand::DATA GET_CONCISE_DEVICE_STATE_07 = { 0x01/*size*/,0x07/*addr*/,0/*cmd*/,std::vector<std::uint8_t>()/*data*/ };
 const DeviceCommand::DATA GET_RECTIFIER_STATE_10 = { 0x01/*size*/,0x10/*addr*/,0/*cmd*/,std::vector<std::uint8_t>()/*data*/ };
+const DeviceCommand::DATA ACTIVATE_REMOTE_CONTROL_PANEL_06_01 = { 0x02/*size*/,0x06/*addr*/,0x01/*cmd*/,std::vector<std::uint8_t>()/*data*/ };
+const DeviceCommand::DATA ACTIVATE_LOCAL_CONTROL_PANEL_06_02 = { 0x02/*size*/,0x06/*addr*/,0x02/*cmd*/,std::vector<std::uint8_t>()/*data*/ };
+const DeviceCommand::DATA TEST_POWER_MODULES_02_82 = { 0x02/*size*/,0x02/*addr*/,0x82/*cmd*/,std::vector<std::uint8_t>()/*data*/ };
+const DeviceCommand::DATA SWITCH_OFF_POWER_MODULE_02_80 = { 0x02/*size*/,0x02/*addr*/,0x80/*cmd*/,std::vector<std::uint8_t>()/*data*/ };
+const DeviceCommand::DATA GET_DEVICE_STATE_05 = { 0x01/*size*/,0x05/*addr*/,0x0/* cmd*/,std::vector<std::uint8_t>()/*data*/ };
 
 DeviceCommand::DeviceCommand()
 {
@@ -41,7 +46,7 @@ std::vector<uint8_t> DeviceCommand::dataToVector(DATA cmd_data) {
 	return data_array;
 }
 
-std::uint8_t DeviceCommand::bytesToData(const std::vector<uint8_t> & bytes, DATA & cmd_data) {
+std::uint8_t DeviceCommand::commandBytesToData(const std::vector<uint8_t> & bytes, DATA & cmd_data) {
 	// TODO try to use move semantic
 	std::uint8_t CRC = 0;
 
@@ -65,13 +70,46 @@ std::uint8_t DeviceCommand::bytesToData(const std::vector<uint8_t> & bytes, DATA
 		CRC += cmd_data.command;
 	}
 
-	for (int8_t i = 3; i < bytes.size()-1; ++i) {
+	for (size_t i = 3; i < bytes.size()-1; ++i) {
 		cmd_data.data.push_back(bytes[i]);
 		CRC += bytes[i];
 	}
 	CRC += bytes[bytes.size() - 1];
 	return CRC;
 }
+
+std::uint8_t DeviceCommand::replyBytesToData(const std::vector<uint8_t> & bytes, DATA & cmd_data) {
+	// TODO try to use move semantic
+	std::uint8_t CRC = 0;
+
+	cmd_data.size = 0;
+	if (bytes.empty())
+		return CRC;
+
+
+	//if (bytes.size() > 0) {
+	//	cmd_data.size = bytes[0];
+	//	CRC += cmd_data.size;
+	//}
+
+	if (bytes.size() > 0) {
+		cmd_data.address = bytes[0];
+		CRC += cmd_data.address;
+	}
+
+	if (bytes.size() > 1) {
+		cmd_data.command = bytes[1];
+		CRC += cmd_data.command;
+	}
+
+	for (size_t i = 2; i < bytes.size() - 1; ++i) {
+		cmd_data.data.push_back(bytes[i]);
+		CRC += bytes[i];
+	}
+	CRC += bytes[bytes.size() - 1];
+	return CRC;
+}
+
 
 std::uint8_t DeviceCommand::parseReplyCode(const std::vector<uint8_t> & bytes, std::uint8_t & replyCode) {
 	// TODO try to use move semantic
@@ -159,15 +197,29 @@ std::vector<uint8_t> DeviceCommand::createRectifierInfoF10(
 	uint8_t lowA, uint8_t hiA,
 	uint8_t lowU, uint8_t hiU,
 	uint8_t configByte, const std::vector<uint8_t> & serialNumber) {
-	std::vector<uint8_t> data(0x10); // from 0x05 byte serial number is placed
+	std::vector<uint8_t> data(0x11); // from 0x05 byte serial number is placed
 	data[0] = lowA; // low byte of current
 	data[1] = hiA;	// hi byte of current
 	data[2] = lowU; // voltage
 	data[3] = hiU;
 	data[4] = configByte;
-	size_t limitSize = min(0x10 - 0x05, serialNumber.size());
+	size_t limitSize = min(0x11 - 0x05, serialNumber.size());
 	
 	std::copy(serialNumber.begin(), serialNumber.begin() + limitSize, data.begin() + 0x05);
+	return data;
+}
+
+std::vector<uint8_t> DeviceCommand::createRectifierStateF07(uint8_t controlByte, uint8_t chan1, uint8_t chan2, uint8_t chan3, uint8_t chan4, uint8_t lowA, uint8_t hiA, uint8_t V)
+{
+	std::vector<uint8_t> data(8);
+	data[0] = controlByte;
+	data[1] = chan1;
+	data[2] = chan2;
+	data[3] = chan3;
+	data[4] = chan4;
+	data[5] = lowA;
+	data[6] = hiA;
+	data[7] = V;
 	return data;
 }
 
@@ -222,7 +274,7 @@ uint8_t hexToByte(uint8_t asciiSymbol) {
 std::vector<uint8_t> DeviceCommand::parseASCIIFrameToBytes(const std::vector<uint8_t> & ascii_bytes) {
 
 	//find begin of the frame
-	int index = 0;
+	size_t index = 0;
 	for (; index < ascii_bytes.size(); ++index) {
 		if (ascii_bytes[index] == ':') {
 			++index;
@@ -234,7 +286,7 @@ std::vector<uint8_t> DeviceCommand::parseASCIIFrameToBytes(const std::vector<uin
 	uint8_t check_LRC = 0;
 	std::vector<uint8_t> bytes_array;
 
-	for (int i = index; i < ascii_bytes.size()-2; i+=2) {
+	for (size_t i = index; i < ascii_bytes.size()-2; i+=2) {
 		if (ascii_bytes[i] == 0x0D && 0x0A == ascii_bytes[i + 1])
 			break;
 		uint8_t first_simbol = hexToByte(ascii_bytes[i+1]);
@@ -245,10 +297,18 @@ std::vector<uint8_t> DeviceCommand::parseASCIIFrameToBytes(const std::vector<uin
 		index = i + 2;
 	}
 
+	if (0 != check_LRC) {
+		bytes_array.clear();
+		return bytes_array;
+	}
+
+#ifdef DEBUG
 	assert(check_LRC == 0);
 	assert(ascii_bytes[index] == 0x0D);
 	assert(ascii_bytes[index+1] == 0x0A);
+#endif
 	return bytes_array;
+
 }
 
 std::uint8_t DeviceCommand::parseCommand(const std::vector<std::uint8_t> & frame_array,
@@ -270,18 +330,28 @@ std::uint8_t DeviceCommand::parseCommand(const std::vector<std::uint8_t> & frame
 
 	std::vector<std::uint8_t> data_sub_vector(frame_array.cbegin() + 2, frame_array.cend());
 
-	crc += DeviceCommand::bytesToData(data_sub_vector, data);
-	assert(0 == crc);
+	crc += DeviceCommand::commandBytesToData(data_sub_vector, data);
+#ifdef DEBUG
+	//assert(0 == crc);
+#endif
 	return crc;
+
 }
 
 
-std::uint8_t DeviceCommand::parseResponseFrame(const std::vector<std::uint8_t> & frame_array,
+std::uint8_t DeviceCommand::parseResponseFrame(const std::vector<std::uint8_t> & rdSymbolsFrame,
 	uint8_t & modbus_addr,
 	uint8_t & modbus_func,
-	DATA & data
+	REPLY_DATA & data
 ) {
+	if (rdSymbolsFrame.empty()) {
+		modbus_addr = 0;
+		modbus_func = 0;
+		data.data = std::vector<uint8_t>();
+		return 0;
+	}
 
+	std::vector<std::uint8_t> frame_array = DeviceCommand::parseASCIIFrameToBytes(rdSymbolsFrame);
 	uint8_t crc = 0;
 	if (frame_array.size() > 0) {
 		modbus_addr = frame_array[0];
@@ -292,20 +362,38 @@ std::uint8_t DeviceCommand::parseResponseFrame(const std::vector<std::uint8_t> &
 		modbus_func = frame_array[1];
 		crc += modbus_func;
 	}
+	if (frame_array.size() > 2) {
+		data.data = std::vector<uint8_t>(frame_array.cbegin() + 2, frame_array.cend() - 1);
+		for (auto item : data.data) {
+			crc += item;
+		}
 
-	std::vector<std::uint8_t> data_sub_vector(frame_array.cbegin() + 2, frame_array.cend());
+		crc += frame_array.back();
+	}
 
-	crc +=DeviceCommand::bytesToData(data_sub_vector, data);
+	
+
+	//crc +=DeviceCommand::replyBytesToData(data_sub_vector, data.data);
+
+#ifdef DEBUG
 	assert(0 == crc);
+#endif
 	return crc;
 }
 
-std::uint8_t DeviceCommand::parseResponseCode(const std::vector<std::uint8_t> & frame_array,
+std::uint8_t DeviceCommand::parseResponseCode(const std::vector<std::uint8_t> & rdSymbolsFrame,
 	uint8_t & modbus_addr,
 	uint8_t & modbus_func,
 	uint8_t & replyCode
 ) {
+	if (rdSymbolsFrame.empty()) {
+		modbus_addr = 0;
+		modbus_func = 0;
+		replyCode = 0;
+		return 0;
+	}
 
+	std::vector<std::uint8_t> frame_array = DeviceCommand::parseASCIIFrameToBytes(rdSymbolsFrame);
 	uint8_t crc = 0;
 	if (frame_array.size() > 0) {
 		modbus_addr = frame_array[0];
@@ -317,10 +405,26 @@ std::uint8_t DeviceCommand::parseResponseCode(const std::vector<std::uint8_t> & 
 		crc += modbus_func;
 	}
 
-	std::vector<std::uint8_t> data_sub_vector(frame_array.cbegin() + 2, frame_array.cend());
+	if (frame_array.size() > 2) {
+		std::vector<std::uint8_t> data_sub_vector(frame_array.cbegin() + 2, frame_array.cend());
+		crc += DeviceCommand::parseReplyCode(data_sub_vector, replyCode);
+	}
 
-	crc += DeviceCommand::parseReplyCode(data_sub_vector, replyCode);
+#ifdef DEBUG
 	assert(0 == crc);
+#endif
 	return crc;
 }
 
+DeviceCommand::StateF07 DeviceCommand::parseDataForF07(const std::vector<std::uint8_t> & data) {
+	//assert(data.size() == 0x08);
+	StateF07 state;
+	state.control = data[0];
+	for (int channel = 0; channel < 4; ++channel) {
+		state.channel_state[channel] = data[channel + 1];
+	}
+	state.aLow = data[0x05];
+	state.aHi = data[0x06];
+	state.V = data[0x07];
+	return state;
+}

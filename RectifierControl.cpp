@@ -24,7 +24,6 @@ namespace fs = std::experimental::filesystem;
 #define new DEBUG_NEW
 #endif
 
-
 // CRectifierControlApp
 
 BEGIN_MESSAGE_MAP(CRectifierControlApp, CWinApp)
@@ -124,6 +123,9 @@ CString toString(Parity parity) {
 }
 
 // инициализация CRectifierControlApp
+OVERLAPPED overlappedRD;
+OVERLAPPED overlappedWR;
+DWORD glMask;
 
 BOOL CRectifierControlApp::InitInstance()
 {
@@ -180,10 +182,10 @@ BOOL CRectifierControlApp::InitInstance()
 	}
 	
 	fs::path dir(szPath);
-	fs::path file("RectifierControlConfig.xml");
+	fs::path file("RectifierControlConfig.rcf");
 	fs::path full_path = dir.parent_path() / file;
-	std::string s = full_path.string(); 
-	const char* filePath = s.c_str();
+	std::string filePathString = full_path.string(); 
+	const char* filePath = filePathString.c_str();
 	tinyxml2::XMLDocument doc;
 	doc.LoadFile(filePath);
 	if (doc.Error()) {
@@ -259,22 +261,26 @@ BOOL CRectifierControlApp::InitInstance()
 	// Разрешить использование расширенных символов в горячих клавишах меню
 	CMFCToolBar::m_bExtCharTranslation = TRUE;
 
-	param.wnd = m_pMainWnd->GetSafeHwnd();
-	param.m_rectifierConfigs = &m_rectifierConfigs;
-	//param.portPtr = portPtr;
-	m_threadState = 0;
-	param.statePtr = &m_threadState;
-	//param.portBlock = &portBlock;
-	//param.dwpByteTimeOut = &dwByteTimeOut;
-
-	AfxBeginThread(ThreadProc, &param, THREAD_PRIORITY_NORMAL);
 
 	// Синтаксический разбор командной строки на стандартные команды оболочки, DDE, открытие файлов
 	CCommandLineInfo cmdInfo;
 	ParseCommandLine(cmdInfo);
 
-	if (cmdInfo.m_nShellCommand == CCommandLineInfo::FileNew)   // actually none
-		cmdInfo.m_nShellCommand = CCommandLineInfo::FileNothing;
+	fs::path fileRcf("RectifierControlConfig.rcf");
+	full_path = dir.parent_path() / fileRcf;
+	filePathString = full_path.string();
+	if (cmdInfo.m_nShellCommand == CCommandLineInfo::FileNew) {   // actually none
+		struct stat info;
+
+		//std::string path = "shaders/color.vert"; // To not I get the same behavior with "shaders\\color.vert"
+		if (!filePathString.empty() && (0 == stat(filePathString.c_str(), &info))) {
+			cmdInfo.m_strFileName = filePathString.c_str();
+			cmdInfo.m_nShellCommand = CCommandLineInfo::FileOpen;
+		}
+		else {
+			cmdInfo.m_nShellCommand = CCommandLineInfo::FileNothing;
+		}
+	}
 
 	// Включить открытие выполнения DDE
 	EnableShellOpen();
@@ -288,6 +294,24 @@ BOOL CRectifierControlApp::InitInstance()
 	// Главное окно было инициализировано, поэтому отобразите и обновите его
 	pMainFrame->ShowWindow(m_nCmdShow);
 	pMainFrame->UpdateWindow();
+	
+	param.wnd = m_pMainWnd->GetSafeHwnd();
+	param.m_rectifierConfigs = &m_rectifierConfigs;
+	//param.portPtr = portPtr;
+	m_threadState = 0;
+	param.statePtr = &m_threadState;
+	//param.portBlock = &portBlock;
+	//param.dwpByteTimeOut = &dwByteTimeOut;
+	std::map<int, RectifierInfo> * rectInfos = param.m_rectifierConfigs;
+	RectifierInfo & info = (*rectInfos->begin()).second;
+
+	param.mainOverlappedRD = &overlappedRD;
+	param.mainOverlappedWR = &overlappedWR;
+	param.pMask = &glMask;
+
+
+	AfxBeginThread(ThreadProc, &param, THREAD_PRIORITY_NORMAL);
+
 
 	return TRUE;
 }
@@ -304,6 +328,8 @@ int CRectifierControlApp::ExitInstance()
 		}
 
 		if (m_threadState == 3) {
+			RectifierInfo & info = (*m_rectifierConfigs.begin()).second;
+			CloseHandle(info.hSerial);
 			//AfxMessageBox(CA2T("Поток остановлен", CP_UTF8));
 		}
 	}

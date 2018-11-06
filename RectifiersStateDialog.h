@@ -28,8 +28,17 @@ public:
 	afx_msg void OnCbnSelchangeRectifiersCombo();
 private:
 	CStatic m_addressText;
+	int state;
 public:
 	afx_msg void OnBnClickedButton1();
 	CEdit m_CEditTestLog;
+	CString m_log;
 	afx_msg void OnBnClickedButton2();
+	static void modelateRectifier(OVERLAPPED * const stateDialogOverlappedRD, DWORD * pMask, OVERLAPPED * const stateDialogOverlappedWR,
+		RectifierInfo & info, CEdit & m_CEditTestLog, CString & log, int * state);
+	afx_msg void OnBnClickedButton3();
+	virtual void OnCancel();
+	afx_msg void OnClose();
 };
+
+UINT StateThreadProc(LPVOID par);

@@ -136,6 +136,12 @@ void CRectifierControlDoc::Dump(CDumpContext& dc) const
 	CDocument::Dump(dc);
 }
 
+
+#endif //_DEBUG
+
+
+// команды CRectifierControlDoc
+
 RectifierInfo & CRectifierControlDoc::getRectifierInfo()
 {
 	return m_rectifierInfo;
@@ -191,10 +197,6 @@ void CRectifierControlDoc::parseRectifierCfg(CString & rectifierCfgPath)
 		}
 	}
 }
-#endif //_DEBUG
-
-
-// команды CRectifierControlDoc
 
 
 BOOL CRectifierControlDoc::OnOpenDocument(LPCTSTR lpszPathName)
