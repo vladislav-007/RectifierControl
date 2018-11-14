@@ -11,6 +11,9 @@
 //OVERLAPPED overlappedWR;
 //OVERLAPPED overlappedRD;
 
+std::map<CString, HANDLE> Device::openedPorts;
+std::map<HANDLE, int> Device::openedPortsCount;
+
 char * taskStateStr[] = { "Нет задания","Ожидание запроса на загрузку программы",
 	"Загрузка программы",
 	"Загрузка программы завершена", "","" };
@@ -35,23 +38,33 @@ std::vector<std::uint8_t> Device::getFrameFromTail(std::vector<std::uint8_t> & s
 		return symbolsTail;
 
 	std::vector<std::uint8_t> tailOrBeginOfTail;
+	std::vector<std::uint8_t>::const_iterator lastBeginOfFrame = symbolsTail.cend();
 	for (auto & iter = symbolsTail.cbegin(); iter != symbolsTail.cend(); ++iter) {
+		if (':' == *iter) {
+			lastBeginOfFrame = iter;
+		}
 		// 0D 0A
-		if (0x0A == *iter) {
+		if (0x0A == *iter && (symbolsTail.cend() != lastBeginOfFrame)) {
 			// check that previouse symbol was a 0x0D
 			if (!tailOrBeginOfTail.empty() && 0x0D == tailOrBeginOfTail.back()) {
 				tailOrBeginOfTail.push_back(*iter);
 				std::vector<std::uint8_t> newTail(++iter, symbolsTail.cend());
 				symbolsTail.swap(newTail);
-				return tailOrBeginOfTail;
+				// cut off garbage from begin of the frame 
+				std::vector<std::uint8_t> frame(lastBeginOfFrame, iter);
+				return frame;
 			}
 			else {
-				throw std::exception("Frame tail is invalid!");
+				std::vector<std::uint8_t> newTail(++iter, symbolsTail.cend());
+				symbolsTail.swap(newTail);
+				// it's not a valid frame so clear it and return empty result without updatting of tailSymbols
+				tailOrBeginOfTail.clear();
+				return tailOrBeginOfTail;
 			}
 		}
 		tailOrBeginOfTail.push_back(*iter);
 	}
-	// it's not a valid frame so clear it and retur empty result without updatting of tailSymbols
+	// it's not a full valid frame so clear it and return empty result without updatting of tailSymbols
 	tailOrBeginOfTail.clear();
 	return tailOrBeginOfTail;
 }
@@ -85,132 +98,94 @@ bool Device::trimLeftSymbolsSequenceAsFrame(std::vector<std::uint8_t> & framePre
 	return false;
 }
 
-
-//Device::Device(RectifierInfo & info)
-//{
-//	LPCTSTR sPortName = info.comport;
-//	HANDLE hSerial = ::CreateFile(sPortName, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, 0);
-//	if (hSerial == INVALID_HANDLE_VALUE)
-//	{
-//		CString message;
-//		message.Format(L"Failed to open comport %s.", info.comport);
-//		if (GetLastError() == ERROR_FILE_NOT_FOUND)
-//		{
-//			message += L"Comport doesn't exists";
-//		}
-//		info.state = RectifierState::FAILED_TO_OPEN_COMPORT;
-//		AfxMessageBox(message, MB_YESNO | MB_ICONSTOP);
-//		//return;
-//	}
-//	else {
-//		info.hSerial = hSerial;
-//	}
-//
-//	DCB dcbSerialParams = { 0 };
-//	dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
-//	if (!GetCommState(hSerial, &dcbSerialParams))
-//	{
-//		AfxMessageBox(L"getting state error", MB_YESNO | MB_ICONSTOP);
-//	}
-//	dcbSerialParams.BaudRate = info.modeBoundRate;
-//	dcbSerialParams.ByteSize = info.modeByteSize;
-//	dcbSerialParams.StopBits = (BYTE)info.modeStopbits;
-//	dcbSerialParams.Parity = (BYTE)info.modeParity;
-//	if (!SetCommState(hSerial, &dcbSerialParams))
-//	{
-//		//log += L"error setting serial port state\n";
-//		//m_CEditTestLog.SetWindowText(log);
-//		AfxMessageBox(L"got state error", MB_YESNO | MB_ICONSTOP);
-//	}
-//
-//	SetCommMask(hSerial, EV_RXCHAR);
-//	this->hSerial = hSerial;
-//	SetCommMask(hSerial, EV_RXCHAR);
-//	
-//	overlappedWR_.hEvent = CreateEvent(NULL, true, false, L"scomportWR");
-//	overlappedRD_.hEvent = CreateEvent(NULL, true, false, L"scomportRD");
-//	overlappedRDPtr = &overlappedRD_;
-//	overlappedWRPtr = &overlappedWR_;
-//	//ожидать события приёма байта (это и есть перекрываемая операция)
-//	WaitCommEvent(hSerial, &mask, overlappedRDPtr);
-//	
-//}
 Device::Device(RectifierInfo & info, OVERLAPPED * const stateDialogOverlappedRD, DWORD * pMask, OVERLAPPED * const stateDialogOverlappedWR)
 {
 	LPCTSTR sPortName = info.comport;
-	HANDLE hSerial = ::CreateFile(sPortName, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, 0);
-	if (hSerial == INVALID_HANDLE_VALUE)
-	{
-		CString message;
-		message.Format(L"Failed to open comport %s.", info.comport);
-		if (GetLastError() == ERROR_FILE_NOT_FOUND)
+	int openedCount = Device::openedPorts.count(sPortName);
+	if (0 == openedCount) {
+		hSerial = ::CreateFile(sPortName, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, 0);
+		if (hSerial == INVALID_HANDLE_VALUE)
 		{
-			message += L"Comport doesn't exists";
+			CString message;
+			message.Format(L"Failed to open comport %s.", info.comport);
+			if (GetLastError() == ERROR_FILE_NOT_FOUND)
+			{
+				message += L"Comport doesn't exists";
+			}
+			info.state = RectifierState::FAILED_TO_OPEN_COMPORT;
+			AfxMessageBox(message, MB_YESNO | MB_ICONSTOP);
+			//return;
 		}
-		info.state = RectifierState::FAILED_TO_OPEN_COMPORT;
-		AfxMessageBox(message, MB_YESNO | MB_ICONSTOP);
-		//return;
+		else {
+			info.hSerial = hSerial;
+			Device::openedPorts[sPortName] = hSerial;
+			Device::openedPortsCount[hSerial] = 1;
+		
+		}
+
+		DCB dcbSerialParams = { 0 };
+		dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
+		if (!GetCommState(hSerial, &dcbSerialParams))
+		{
+			AfxMessageBox(L"getting state error", MB_YESNO | MB_ICONSTOP);
+		}
+		dcbSerialParams.BaudRate = info.modeBoundRate;
+		dcbSerialParams.ByteSize = info.modeByteSize;
+		dcbSerialParams.StopBits = (BYTE)info.modeStopbits;
+		dcbSerialParams.Parity = (BYTE)info.modeParity;
+		if (!SetCommState(hSerial, &dcbSerialParams))
+		{
+			//log += L"error setting serial port state\n";
+			//m_CEditTestLog.SetWindowText(log);
+			AfxMessageBox(L"got state error", MB_YESNO | MB_ICONSTOP);
+			return;
+		}
+
+		BOOL fSuccess = SetCommMask(hSerial, EV_RXCHAR | EV_TXEMPTY);
+
+		if (!fSuccess)
+		{
+			// Handle the error. 
+			CString message;
+			message.Format(L"SetCommMask failed with error %d.\n", GetLastError());
+			AfxMessageBox(message, MB_YESNO | MB_ICONSTOP);
+			return;
+		}
+
+		this->hSerial = hSerial;
+
+		COMMTIMEOUTS commTimeouts;
+		GetCommTimeouts(hSerial, &commTimeouts);
+		commTimeouts.ReadIntervalTimeout = 10;
+		commTimeouts.ReadTotalTimeoutConstant = 5000;
+		commTimeouts.ReadTotalTimeoutMultiplier = 10;
+		commTimeouts.WriteTotalTimeoutConstant = 5000;
+		commTimeouts.WriteTotalTimeoutMultiplier = 10;
+
+		SetCommTimeouts(hSerial, &commTimeouts);
+
+		overlappedRDPtr = stateDialogOverlappedRD;
+		overlappedWRPtr = stateDialogOverlappedWR;
+		overlappedWRPtr->hEvent = CreateEvent(NULL, true, false, NULL);
+		overlappedWRPtr->Internal = 0;
+		overlappedWRPtr->InternalHigh = 0;
+		overlappedWRPtr->Offset = 0;
+		overlappedWRPtr->OffsetHigh = 0;
+
+		overlappedRDPtr->hEvent = CreateEvent(NULL, true, false, NULL);
+		overlappedRDPtr->Internal = 0;
+		overlappedRDPtr->InternalHigh = 0;
+		overlappedRDPtr->Offset = 0;
+		overlappedRDPtr->OffsetHigh = 0;
+
+		mask = pMask;
 	}
 	else {
+		// port already opened
+		hSerial = Device::openedPorts[sPortName];
 		info.hSerial = hSerial;
+		openedPortsCount[hSerial] = openedPortsCount[hSerial] + 1;
 	}
-
-	DCB dcbSerialParams = { 0 };
-	dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
-	if (!GetCommState(hSerial, &dcbSerialParams))
-	{
-		AfxMessageBox(L"getting state error", MB_YESNO | MB_ICONSTOP);
-	}
-	dcbSerialParams.BaudRate = info.modeBoundRate;
-	dcbSerialParams.ByteSize = info.modeByteSize;
-	dcbSerialParams.StopBits = (BYTE)info.modeStopbits;
-	dcbSerialParams.Parity = (BYTE)info.modeParity;
-	if (!SetCommState(hSerial, &dcbSerialParams))
-	{
-		//log += L"error setting serial port state\n";
-		//m_CEditTestLog.SetWindowText(log);
-		AfxMessageBox(L"got state error", MB_YESNO | MB_ICONSTOP);
-		return;
-	}
-
-	BOOL fSuccess = SetCommMask(hSerial, EV_RXCHAR | EV_TXEMPTY);
-
-	if (!fSuccess)
-	{
-		// Handle the error. 
-		CString message;
-		message.Format(L"SetCommMask failed with error %d.\n", GetLastError());
-		AfxMessageBox(message, MB_YESNO | MB_ICONSTOP);
-		return;
-	}
-
-	this->hSerial = hSerial;
-
-	COMMTIMEOUTS commTimeouts;
-	GetCommTimeouts(hSerial, &commTimeouts);
-	commTimeouts.ReadIntervalTimeout = 10;
-	commTimeouts.ReadTotalTimeoutConstant = 5000;
-	commTimeouts.ReadTotalTimeoutMultiplier = 10;
-	commTimeouts.WriteTotalTimeoutConstant = 5000;
-	commTimeouts.WriteTotalTimeoutMultiplier = 10;
-
-	SetCommTimeouts(hSerial, &commTimeouts);
-
-	overlappedRDPtr = stateDialogOverlappedRD;
-	overlappedWRPtr = stateDialogOverlappedWR;
-	overlappedWRPtr->hEvent = CreateEvent(NULL, true, false, NULL);
-	overlappedWRPtr->Internal = 0;
-	overlappedWRPtr->InternalHigh = 0;
-	overlappedWRPtr->Offset = 0;
-	overlappedWRPtr->OffsetHigh = 0;
-
-	overlappedRDPtr->hEvent = CreateEvent(NULL, true, false, NULL);
-	overlappedRDPtr->Internal = 0;
-	overlappedRDPtr->InternalHigh = 0;
-	overlappedRDPtr->Offset = 0;
-	overlappedRDPtr->OffsetHigh = 0;
-
-	mask = pMask;
 }
 
 DWORD Device::WaitForReadSingleObject(DWORD timeout) {	//приостановить поток до прихода байта
@@ -224,9 +199,15 @@ BOOL Device::resetReadEvent() {
 
 Device::~Device()
 {
-	CloseHandle(overlappedWRPtr->hEvent);
-	CloseHandle(overlappedRDPtr->hEvent);
-	CloseHandle(hSerial);
+	if (openedPortsCount[hSerial] > 1) {
+		openedPortsCount[hSerial] = openedPortsCount[hSerial] - 1;
+	}
+	else {
+		CloseHandle(overlappedWRPtr->hEvent);
+		CloseHandle(overlappedRDPtr->hEvent);
+		CloseHandle(hSerial);
+		openedPortsCount[hSerial] = 0;
+	}
 }
 
 void Device::getFrameFromBuffer(std::vector<std::uint8_t> & rdSymbols) {
@@ -369,30 +350,33 @@ void Device::sendReplyData(std::vector<uint8_t> frameSymbols, DWORD & dwBytesWri
 
 
 RectifierState Device::readFromPort(std::vector<std::uint8_t> & rdSymbols) {
-
+	rdSymbols.clear();
 	unsigned char bufrd[1024];
 	DWORD numberOfBytesTransfered;
 	BOOL res = ReadFile(hSerial, bufrd, 1024, NULL, overlappedRDPtr);
 	DWORD lastError = GetLastError();
 	if (res || (!res && (lastError == ERROR_IO_PENDING))) {
 		GetOverlappedResult(hSerial, overlappedRDPtr, &numberOfBytesTransfered, true);
+		lastError = GetLastError();
 		if (numberOfBytesTransfered > 0) {   // если что-то принято, выводим
 			for (DWORD i = 0; i < numberOfBytesTransfered; ++i) {
 				symbolsTail.push_back(bufrd[i]);
 			}
 		}
-		GetOverlappedResult(hSerial, overlappedRDPtr, &numberOfBytesTransfered, true);
-		if (numberOfBytesTransfered > 0) {   // если что-то принято, выводим
-			for (DWORD i = 0; i < numberOfBytesTransfered; ++i) {
-				symbolsTail.push_back(bufrd[i]);
-			}
+		else {
+			return RectifierState::UNKNOWN_ERROR;
 		}
+
 		if (!symbolsTail.empty()) {
 			//Device::trimLeftSymbolsSequenceAsFrame(rdSymbolsFrame);
 			std::vector<std::uint8_t> beginOfOrWholeFrame = getFrameFromTail(symbolsTail);
 			rdSymbols.insert(rdSymbols.end(), beginOfOrWholeFrame.cbegin(), beginOfOrWholeFrame.cend());
-			while (!rdSymbols.empty() && !isValidFrame(rdSymbols)) {
+			while (!symbolsTail.empty() && !isValidFrame(rdSymbols)) {
 				beginOfOrWholeFrame = getFrameFromTail(symbolsTail);
+				if (beginOfOrWholeFrame.empty()) {
+					// cann't extract from tail anything
+					break;
+				}
 				rdSymbols.insert(rdSymbols.end(), beginOfOrWholeFrame.cbegin(), beginOfOrWholeFrame.cend());
 			}
 		}
@@ -500,9 +484,10 @@ void Device::getRectifierState(RectifierInfo & info) {
 	ss.clear();
 	ss << L"Started reading replay..." << std::endl;
 	std::vector<std::uint8_t> rdSymbols;
+	Sleep(1000);
 	getFrameFromBuffer(rdSymbols);
 	if (!isValidFrame(rdSymbols)) {
-		
+		readFromPort(rdSymbols);
 	}
 	
 	str1 = ss.str();
@@ -532,7 +517,10 @@ void Device::getRectifierState(RectifierInfo & info) {
 		ss << dwBytesWritten << L" Bytes in string. " << std::endl << dwBytesWritten << L" Bytes sended. " << std::endl;
 		str1 = ss.str();
 		log += str1.c_str();
-		readFromPort(rdSymbols);
+		getFrameFromBuffer(rdSymbols);
+		if (!isValidFrame(rdSymbols)) {
+			readFromPort(rdSymbols);
+		}
 		for (auto symbol : rdSymbols) {
 			ss << std::hex << symbol;
 		}

@@ -327,7 +327,6 @@ void CRectifiersStateDialog::modelateRectifier(
 		if (state[0] == 2) {
 			break;
 		}
-		Sleep(100);
 
 		device.getFrameFromBuffer(rdSymbolsFrame);
 		if (!Device::isValidFrame(rdSymbolsFrame)) {

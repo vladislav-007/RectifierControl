@@ -118,6 +118,8 @@ struct RectifierInfo {
 
 
 class Device {
+	static std::map<CString, HANDLE> openedPorts;
+	static std::map<HANDLE, int> openedPortsCount;
 public:
 	//Device(RectifierInfo & info);
 	Device(RectifierInfo & info, OVERLAPPED * const stateDialogOverlappedRD, DWORD * pMask, OVERLAPPED * const stateDialogOverlappedWR);
