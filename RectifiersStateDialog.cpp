@@ -324,10 +324,6 @@ void CRectifiersStateDialog::modelateRectifier(
 	Device device(info, stateDialogOverlappedRD, pMask, stateDialogOverlappedWR);
 	while (true)
 	{
-		if (state[0] == 2) {
-			break;
-		}
-
 		device.getFrameFromBuffer(rdSymbolsFrame);
 		if (!Device::isValidFrame(rdSymbolsFrame)) {
 			device.readFromPort(rdSymbolsFrame);
@@ -446,6 +442,10 @@ void CRectifiersStateDialog::modelateRectifier(
 			prev_cmd_data.data = cmd_data.data;
 
 		}
+		if (state[0] == 2) {
+			break;
+		}
+
 	}
 	ss << std::endl;
 	str1 = ss.str();
