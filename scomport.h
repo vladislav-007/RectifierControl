@@ -2,7 +2,9 @@
 #define _SCOM_PORT
 #include "stdafx.h"
 #include <map>
+#include <vector>
 #include <afxmt.h>
+#include "rectifiercommand.h"
 
 const BYTE READ_MACHINE_STATE=0;
 const BYTE WRITE_MACHINE_STATE=0x80;
@@ -63,6 +65,27 @@ enum class Stopbits : std::int8_t {
 	TWO_STOPBITS = 2
 };
 
+enum class RectifierState : std::int8_t {
+	OK = 0,
+	FAILED_TO_OPEN_COMPORT = 1,
+	FAILED_TO_GET_STATE_F07 = 2,
+	INVALID_USER_BUFFER = 3,
+	UNKNOWN_ERROR = 4
+};
+
+//template<class T>
+//std::ostream& operator<<(std::ostream& os, T enumValue)
+//{
+//	return os << toString(enumValue);
+//}
+
+CString toString(RectifierState state);
+
+//std::ostream& operator<<(std::ostream& os, RectifierState enumValue)
+//{
+//	return os << toString(enumValue);
+//}
+
 struct CmdsToSend {
 	int status;
 	std::int8_t cmd1[256];
@@ -74,12 +97,14 @@ struct RecivedData {
 	std::int8_t buffer[256];
 };
 
-
 struct RectifierInfo {
+	RectifierState state;
+	DeviceCommand::StateF07 stateF07;
 	int id;
 	CString name;
 	int address;
 	CString comport;
+	HANDLE hSerial;
 	int modeID;
 	CString modeName;
 	int modeBoundRate;
@@ -91,22 +116,53 @@ struct RectifierInfo {
 	CDocument * doc;
 };
 
-//typedef struct tagNMHDROBJECT
-//{
-//	NMHDR nmHdr;
-//	CNotifyObject * pObject;
-//} NMHDROBJECT;
-//
-//typedef NMHDROBJECT * LPNMHDROBJECT;
+
+class Device {
+	static std::map<CString, HANDLE> openedPorts;
+	static std::map<HANDLE, int> openedPortsCount;
+public:
+	//Device(RectifierInfo & info);
+	Device(RectifierInfo & info, OVERLAPPED * const stateDialogOverlappedRD, DWORD * pMask, OVERLAPPED * const stateDialogOverlappedWR);
+	DWORD WaitForReadSingleObject(DWORD timeout);
+	BOOL resetReadEvent();
+	~Device();
+	void getFrameFromBuffer(std::vector<std::uint8_t>& rdSymbols);
+private:
+	Device() = delete;
+	Device & operator=(Device&) = delete;
+
+public:
+	RectifierState readFromPort(std::vector<std::uint8_t>& rdSymbols);
+	void getReadFrameFromPort(DWORD signal, std::vector<std::uint8_t> & rdSymbols);
+	void sendCommand(std::vector<uint8_t> & frameSymbols, DWORD & dwBytesWritten, CString &log);
+	void sendReplyData(std::vector<uint8_t> frameSymbols, DWORD & dwBytesWritten, CString & log);
+	static bool isValidFrame(std::vector<std::uint8_t> & symbols);
+	static bool trimLeftSymbolsSequenceAsFrame(std::vector<std::uint8_t>& framePretenders);
+	static std::vector<std::uint8_t> Device::getFrameFromTail(std::vector<std::uint8_t> & symbolsTail);
+	void getRectifierState(RectifierInfo & info);
+
+	void clearReciveBuffer();
+private:
+	HANDLE hSerial;
+	//OVERLAPPED overlappedRD_;
+	//OVERLAPPED overlappedWR_;
+	OVERLAPPED * overlappedRDPtr;
+	OVERLAPPED * overlappedWRPtr;
+	DWORD * mask;
+	std::vector<std::uint8_t> symbolsTail;
+	
+};
 
 struct SThread_param {
 	HWND wnd;
-	//HANDLE * portPtr;
 	WORD * statePtr;
 	//CCriticalSection * portBlock;
 	//DWORD * dwpByteTimeOut;
 	std::map<int, RectifierInfo> * m_rectifierConfigs;
 	//OVERLAPPED * Sync;
+	OVERLAPPED * mainOverlappedRD;
+	DWORD * pMask;
+	OVERLAPPED * mainOverlappedWR;
 };
 
 
@@ -120,37 +176,42 @@ struct MachineTaskState {
 	bool shouldInitByFF;
 	};
 
-class CSComPort{
+class ComPort{
 public:
-	CSComPort();
-	//CSComPort( HANDLE port );
-	//~CSComPort();
+	ComPort();
+	ComPort( HANDLE port );
+	~ComPort();
+
 	void setPortHandle( HANDLE port ){
+		portBlock.Lock();
 		portHandle = port;
-		}
+		portBlock.Unlock();
+	}
+
 	HANDLE getPortHandle(){
 		return portHandle;
 		}
+
 	void setWnd( HWND aWnd){
 		wnd = aWnd;
 		}
-	WORD makeDataBurst( BYTE address, BYTE cmd, const BYTE * data, BYTE length , BYTE burst[136] );
-	WORD parseMachineBurst( const BYTE * burst, BYTE length, BYTE & address, BYTE * data );
-	BYTE getMachineState( BYTE address );
-	BYTE setMachineState( BYTE address, BYTE state=0 );
-	BYTE writeDataToMachine( const BYTE address, const BYTE * aData, const UINT aLength );
-	WORD readPort( BYTE * buff, DWORD size, BYTE endByte = STOP_BYTE );
-	//BYTE getMachineState( BYTE address );
+
 	void clearError(){
 		error = 0;
 		}
 	WORD getError();
+
 private:
+	BOOL lock();
+private:
+	CCriticalSection portBlock;
 	HANDLE portHandle;
 	HWND wnd;
 	DWORD dwByteTimeOut; 
 	WORD error;
 };
+
+
 
 UINT ThreadProc(LPVOID par );
 

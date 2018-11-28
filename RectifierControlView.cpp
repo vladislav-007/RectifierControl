@@ -63,27 +63,59 @@ void CRectifierControlView::OnDraw(CDC* pDC)
 	CString rectifierName(CA2T("Выпрямитель: ", CP_UTF8));
 	// MessageBox(rectifierName);
 	CFont font;
-	font.CreateFont(16, 0, 0, 0, 400, FALSE, FALSE, 0, ANSI_CHARSET,
+	int fontHeight = 32;
+	font.CreateFont(fontHeight, 0, 0, 0, 400, FALSE, FALSE, 0, RUSSIAN_CHARSET,
 		OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
 		ANTIALIASED_QUALITY, DEFAULT_PITCH | FF_SWISS,
-		L"Tahoma");
+		L"Arial");
 	pDC->SelectObject(font);
+	pDC->SetTextColor(RGB(0, 0, 0));
 	int rectifierID = pDoc->getRectifierInfo().id;
 	rectifierName += pDoc->getRectifierInfo().name;
+	rectifierName += "(";
+	rectifierName += pDoc->getRectifierInfo().comport;
+	rectifierName += ")";
 	std::map<int, RectifierInfo> & actualRectifiesInfos = theApp.getRectifierInfos();
 	pDC->TextOutW(10, 10, rectifierName);
-	CString rectifierState(CA2T("Reciver state: ", CP_UTF8));
+	CString rectifierState(CA2T("Состояние выпрямителя: ", CP_UTF8));
 	std::wstringstream ss;
 	const RectifierInfo & info = actualRectifiesInfos.at(rectifierID);
-	ss << info.recivedData.status;
-	rectifierState += ss.str().c_str();
-	pDC->TextOutW(10, 25, rectifierState);
-	CString recivedData(CA2T("Recived data: ", CP_UTF8));
-	ss.clear();
-	for (DWORD i = 0; i < 20; ++i)
-		ss << std::hex << " " << info.recivedData.buffer[i];
-	recivedData += ss.str().c_str();
-	pDC->TextOutW(10, 50, recivedData);
+	rectifierState += toString(info.state);
+	pDC->TextOutW(10, 10 + fontHeight, rectifierState);
+	CString recivedData(CA2T("Напряжение: ", CP_UTF8));
+	CFont headerFont;
+	headerFont.CreateFont(2 * fontHeight, 0, 0, 0, 400, FALSE, FALSE, 0, RUSSIAN_CHARSET,
+		OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+		ANTIALIASED_QUALITY, DEFAULT_PITCH | FF_SWISS,
+		L"Arial");
+	pDC->SelectObject(headerFont);
+	pDC->TextOutW(10, 10 + 2 * fontHeight, recivedData);
+	ss.str(std::wstring());
+	
+	ss << info.stateF07.V / 10.0;
+	ss << " V";
+	recivedData = ss.str().c_str();
+	
+	CFont valuesFont;
+	valuesFont.CreateFont(2 * fontHeight, 0, 0, 0, 600, FALSE, FALSE, 0, RUSSIAN_CHARSET,
+		OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+		ANTIALIASED_QUALITY, DEFAULT_PITCH | FF_SWISS,
+		L"Arial");
+	pDC->SelectObject(valuesFont);
+	pDC->SetTextColor(RGB(0,0,255));
+	pDC->TextOutW(350, 10 + 2 * fontHeight, recivedData);
+
+	pDC->SelectObject(headerFont);
+	pDC->SetTextColor(RGB(0, 0, 0));
+	CString currentData(CA2T("Ток: ", CP_UTF8));
+	pDC->TextOutW(230, 10 + 4 * fontHeight, currentData);
+	ss.str(std::wstring());
+	ss << (info.stateF07.aHi * 255 + info.stateF07.aLow);
+	ss << " A";
+	currentData = ss.str().c_str();
+	pDC->SelectObject(valuesFont);
+	pDC->SetTextColor(RGB(0, 255, 0));
+	pDC->TextOutW(350, 10 + 4 * fontHeight, currentData);
 }
 
 

@@ -16,6 +16,7 @@
 #include "tinyxml2.h"
 #include <filesystem>
 #include <cstdint>
+#include <fstream>
 #include "RectifiersStateDialog.h"
 
 namespace fs = std::experimental::filesystem;
@@ -23,7 +24,6 @@ namespace fs = std::experimental::filesystem;
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
-
 
 // CRectifierControlApp
 
@@ -124,6 +124,9 @@ CString toString(Parity parity) {
 }
 
 // инициализация CRectifierControlApp
+OVERLAPPED overlappedRD;
+OVERLAPPED overlappedWR;
+DWORD glMask;
 
 BOOL CRectifierControlApp::InitInstance()
 {
@@ -172,63 +175,12 @@ BOOL CRectifierControlApp::InitInstance()
 	commconfig.dcb.StopBits = ONESTOPBIT;
 	m_comportProperties[CString("DefaultPort")] = commconfig;
 
-	//try to find config file
+	
 	TCHAR szPath[MAX_PATH];
 	if (!GetModuleFileName(NULL, szPath, MAX_PATH))
 	{
 		DWORD error = GetLastError();
 	}
-	
-	fs::path dir(szPath);
-	fs::path file("RectifierControlConfig.xml");
-	fs::path full_path = dir.parent_path() / file;
-	std::string s = full_path.string(); 
-	const char* filePath = s.c_str();
-	tinyxml2::XMLDocument doc;
-	doc.LoadFile(filePath);
-	if (doc.Error()) {
-		const char * msg = doc.ErrorStr();
-		DWORD error = GetLastError();
-	}
-	else {
-		tinyxml2::XMLElement * rectifiers = doc.FirstChildElement("RectifierController")->FirstChildElement("Rectifiers");
-		tinyxml2::XMLElement * rectifier = rectifiers->FirstChildElement("Rectifier");
-		while (rectifier != nullptr) {
-			RectifierInfo rectifierInfo;
-			if (tinyxml2::XML_SUCCESS != rectifier->QueryIntAttribute("id", &rectifierInfo.id))
-				throw std::exception("Can't read 'id' if rectifier");
-			const char * str;
-			rectifier->QueryStringAttribute("name", &str);
-			rectifierInfo.name = CA2T(str, CP_UTF8);
-			if(tinyxml2::XML_SUCCESS != rectifier->QueryStringAttribute("comport", &str))
-				throw std::exception("Can't read 'comport' if rectifier's mode");
-			rectifierInfo.comport = CA2T(str, CP_UTF8);
-
-			rectifier->QueryIntAttribute("address", &rectifierInfo.address);
-			tinyxml2::XMLElement * mode = rectifier->FirstChildElement("Mode");
-			if (tinyxml2::XML_SUCCESS != mode->QueryIntAttribute("id", &rectifierInfo.modeID))
-				throw std::exception("Can't read 'id' if rectifier's mode");
-			
-			mode->QueryStringAttribute("name", &str);
-			rectifierInfo.modeName = CA2T(str, CP_UTF8);
-			tinyxml2::XMLElement * valueElement = mode->FirstChildElement("BaudRate");
-			valueElement->QueryIntAttribute("value", &rectifierInfo.modeBoundRate);
-			valueElement = mode->FirstChildElement("ByteSize");
-			valueElement->QueryIntAttribute("value", &rectifierInfo.modeByteSize);
-			valueElement = mode->FirstChildElement("Parity");
-			valueElement->QueryStringAttribute("value", &str);
-			CString valueStr = CA2T(str, CP_UTF8);
-			rectifierInfo.modeParity = parityFromString(valueStr);
-			valueElement = mode->FirstChildElement("StopBits");
-			valueElement->QueryStringAttribute("value", &str);
-			valueStr = CA2T(str, CP_UTF8);
-			rectifierInfo.modeStopbits = stopbitsFromString(valueStr);
-
-			m_rectifierConfigs.insert(std::pair<int, RectifierInfo>(rectifierInfo.id, rectifierInfo));
-			rectifier = rectifier->NextSiblingElement();
-		}
-	}
-
 
 
 	// Зарегистрируйте шаблоны документов приложения.  Шаблоны документов
@@ -259,6 +211,157 @@ BOOL CRectifierControlApp::InitInstance()
 	// Разрешить использование расширенных символов в горячих клавишах меню
 	CMFCToolBar::m_bExtCharTranslation = TRUE;
 
+	// Включить открытие выполнения DDE
+	EnableShellOpen();
+	RegisterShellFileTypes(TRUE);
+
+	// Синтаксический разбор командной строки на стандартные команды оболочки, DDE, открытие файлов
+	CCommandLineInfo cmdInfo;
+	ParseCommandLine(cmdInfo);
+	if (cmdInfo.m_nShellCommand == CCommandLineInfo::FileNew) {   // actually none
+																  // try to find app config file 
+		const fs::path app_dir(fs::path(szPath).parent_path());
+		fs::path applicationConfigFile("RectifierControlConfig.xml");
+		fs::path full_app_cfg_path = app_dir / applicationConfigFile;
+		tinyxml2::XMLDocument app_cfg_doc;
+		app_cfg_doc.LoadFile(full_app_cfg_path.string().c_str());
+		std::vector<CString> rectifiersDocuments;
+		if (app_cfg_doc.Error()) {
+			const char * msg = app_cfg_doc.ErrorStr();
+			DWORD error = GetLastError();
+		}
+		else {
+			tinyxml2::XMLElement * rectifiers = app_cfg_doc.FirstChildElement("RectifierController")->FirstChildElement("RectifierDocuments");
+			tinyxml2::XMLElement * rectifierDocument = rectifiers->FirstChildElement("Document");
+			while (rectifierDocument != nullptr) {
+				const char * str;
+				if (tinyxml2::XML_SUCCESS != rectifierDocument->QueryStringAttribute("filename", &str))
+					throw std::exception("Can't read 'filename' of rectifier document");
+				CString filename = CA2T(str, CP_UTF8);
+				rectifiersDocuments.push_back(filename);
+				rectifierDocument = rectifierDocument->NextSiblingElement();
+			}
+		}
+
+		for (CString filename : rectifiersDocuments) {
+			struct stat info;
+			fs::path file(filename.GetString());
+			fs::path full_path = app_dir / file;
+			std::string filePathString = full_path.u8string();
+			CA2CT str(filePathString.c_str(), CP_UTF8);
+			CString myString(CA2CT(filePathString.c_str(), CP_UTF8));
+			//CString myString(filePathString);
+			std::ifstream iFileStream(myString, std::ifstream::in | std::ifstream::binary);
+			if (iFileStream.is_open())
+			{
+				iFileStream.close();
+				//Do the work here.
+			}
+			else
+			{
+
+			}
+
+			long     length = 0;
+			TCHAR*   buffer = NULL;
+
+			// First obtain the size needed by passing NULL and 0.
+
+			length = GetShortPathName(str.m_psz, NULL, 0);
+
+			// Dynamically allocate the correct size 
+			// (terminating null char was included in length)
+
+			buffer = new TCHAR[length];
+
+			// Now simply call again using same long path.
+
+			length = GetShortPathName(str.m_psz, buffer, length);
+			FILE * file1;
+			_wfopen_s(&file1, myString.GetString(), L"rb");
+
+			delete[] buffer;
+
+			tinyxml2::XMLDocument doc;
+			doc.LoadFile(file1);
+			if (doc.Error()) {
+				const char * msg = doc.ErrorStr();
+				DWORD error = GetLastError();
+			}
+
+			if (!filePathString.empty() && fs::exists(full_path)) {
+				cmdInfo.m_strFileName = myString;
+				cmdInfo.m_nShellCommand = CCommandLineInfo::FileOpen;
+			}
+			else {
+				cmdInfo.m_nShellCommand = CCommandLineInfo::FileNothing;
+			}
+			// Команды диспетчеризации, указанные в командной строке.  Значение FALSE будет возвращено, если
+			// приложение было запущено с параметром /RegServer, /Register, /Unregserver или /Unregister.
+			if (!ProcessShellCommand(cmdInfo))
+				return FALSE;
+			/*fs::path file("RectifierControlConfig.rcf");
+			fs::path full_path = app_dir / file;
+			std::string filePathString = full_path.string();
+			const char* filePath = filePathString.c_str();
+			tinyxml2::XMLDocument doc;
+			doc.LoadFile(filePath);
+			if (doc.Error()) {
+				const char * msg = doc.ErrorStr();
+				DWORD error = GetLastError();
+			}
+			else {
+				tinyxml2::XMLElement * rectifiers = doc.FirstChildElement("RectifierController")->FirstChildElement("Rectifiers");
+				tinyxml2::XMLElement * rectifier = rectifiers->FirstChildElement("Rectifier");
+				while (rectifier != nullptr) {
+					RectifierInfo rectifierInfo;
+					if (tinyxml2::XML_SUCCESS != rectifier->QueryIntAttribute("id", &rectifierInfo.id))
+						throw std::exception("Can't read 'id' if rectifier");
+					const char * str;
+					rectifier->QueryStringAttribute("name", &str);
+					rectifierInfo.name = CA2T(str, CP_UTF8);
+					if (tinyxml2::XML_SUCCESS != rectifier->QueryStringAttribute("comport", &str))
+						throw std::exception("Can't read 'comport' if rectifier's mode");
+					rectifierInfo.comport = CA2T(str, CP_UTF8);
+
+					rectifier->QueryIntAttribute("address", &rectifierInfo.address);
+					tinyxml2::XMLElement * mode = rectifier->FirstChildElement("Mode");
+					if (tinyxml2::XML_SUCCESS != mode->QueryIntAttribute("id", &rectifierInfo.modeID))
+						throw std::exception("Can't read 'id' if rectifier's mode");
+
+					mode->QueryStringAttribute("name", &str);
+					rectifierInfo.modeName = CA2T(str, CP_UTF8);
+					tinyxml2::XMLElement * valueElement = mode->FirstChildElement("BaudRate");
+					valueElement->QueryIntAttribute("value", &rectifierInfo.modeBoundRate);
+					valueElement = mode->FirstChildElement("ByteSize");
+					valueElement->QueryIntAttribute("value", &rectifierInfo.modeByteSize);
+					valueElement = mode->FirstChildElement("Parity");
+					valueElement->QueryStringAttribute("value", &str);
+					CString valueStr = CA2T(str, CP_UTF8);
+					rectifierInfo.modeParity = parityFromString(valueStr);
+					valueElement = mode->FirstChildElement("StopBits");
+					valueElement->QueryStringAttribute("value", &str);
+					valueStr = CA2T(str, CP_UTF8);
+					rectifierInfo.modeStopbits = stopbitsFromString(valueStr);
+
+					m_rectifierConfigs.insert(std::pair<int, RectifierInfo>(rectifierInfo.id, rectifierInfo));
+					rectifier = rectifier->NextSiblingElement();
+				}
+			}*/
+		}
+	}
+	else {
+		// Команды диспетчеризации, указанные в командной строке.  Значение FALSE будет возвращено, если
+		// приложение было запущено с параметром /RegServer, /Register, /Unregserver или /Unregister.
+		if (!ProcessShellCommand(cmdInfo))
+			return FALSE;
+	}
+
+	// Главное окно было инициализировано, поэтому отобразите и обновите его
+	pMainFrame->MDITile(MDITILE_HORIZONTAL);
+	pMainFrame->ShowWindow(m_nCmdShow);
+	pMainFrame->UpdateWindow();
+	
 	param.wnd = m_pMainWnd->GetSafeHwnd();
 	param.m_rectifierConfigs = &m_rectifierConfigs;
 	//param.portPtr = portPtr;
@@ -266,28 +369,16 @@ BOOL CRectifierControlApp::InitInstance()
 	param.statePtr = &m_threadState;
 	//param.portBlock = &portBlock;
 	//param.dwpByteTimeOut = &dwByteTimeOut;
+	std::map<int, RectifierInfo> * rectInfos = param.m_rectifierConfigs;
+	RectifierInfo & info = (*rectInfos->begin()).second;
+
+	param.mainOverlappedRD = &overlappedRD;
+	param.mainOverlappedWR = &overlappedWR;
+	param.pMask = &glMask;
+
 
 	AfxBeginThread(ThreadProc, &param, THREAD_PRIORITY_NORMAL);
 
-	// Синтаксический разбор командной строки на стандартные команды оболочки, DDE, открытие файлов
-	CCommandLineInfo cmdInfo;
-	ParseCommandLine(cmdInfo);
-
-	if (cmdInfo.m_nShellCommand == CCommandLineInfo::FileNew)   // actually none
-		cmdInfo.m_nShellCommand = CCommandLineInfo::FileNothing;
-
-	// Включить открытие выполнения DDE
-	EnableShellOpen();
-	RegisterShellFileTypes(TRUE);
-
-
-	// Команды диспетчеризации, указанные в командной строке.  Значение FALSE будет возвращено, если
-	// приложение было запущено с параметром /RegServer, /Register, /Unregserver или /Unregister.
-	if (!ProcessShellCommand(cmdInfo))
-		return FALSE;
-	// Главное окно было инициализировано, поэтому отобразите и обновите его
-	pMainFrame->ShowWindow(m_nCmdShow);
-	pMainFrame->UpdateWindow();
 
 	return TRUE;
 }
@@ -304,6 +395,8 @@ int CRectifierControlApp::ExitInstance()
 		}
 
 		if (m_threadState == 3) {
+			RectifierInfo & info = (*m_rectifierConfigs.begin()).second;
+			CloseHandle(info.hSerial);
 			//AfxMessageBox(CA2T("Поток остановлен", CP_UTF8));
 		}
 	}

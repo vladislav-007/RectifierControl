@@ -136,6 +136,12 @@ void CRectifierControlDoc::Dump(CDumpContext& dc) const
 	CDocument::Dump(dc);
 }
 
+
+#endif //_DEBUG
+
+
+// команды CRectifierControlDoc
+
 RectifierInfo & CRectifierControlDoc::getRectifierInfo()
 {
 	return m_rectifierInfo;
@@ -147,10 +153,12 @@ void CRectifierControlDoc::parseRectifierCfg(CString & rectifierCfgPath)
 	//fs::path file("RectifierControlConfig.xml");
 	//fs::path full_path = dir.parent_path() / file;
 	//std::string s = full_path.string();
-	CT2A str(rectifierCfgPath, CP_UTF8);
+	CT2A str(rectifierCfgPath);
 	const char* filePath = str.m_psz;
 	tinyxml2::XMLDocument doc;
-	doc.LoadFile(filePath);
+	FILE * file1;
+	_wfopen_s(&file1, rectifierCfgPath.GetString(), L"rb");
+	doc.LoadFile(file1);
 	if (doc.Error()) {
 		const char * msg = doc.ErrorStr();
 		DWORD error = GetLastError();
@@ -191,10 +199,6 @@ void CRectifierControlDoc::parseRectifierCfg(CString & rectifierCfgPath)
 		}
 	}
 }
-#endif //_DEBUG
-
-
-// команды CRectifierControlDoc
 
 
 BOOL CRectifierControlDoc::OnOpenDocument(LPCTSTR lpszPathName)
