@@ -244,7 +244,6 @@ BOOL CRectifierControlApp::InitInstance()
 		}
 
 		for (CString filename : rectifiersDocuments) {
-			struct stat info;
 			fs::path file(filename.GetString());
 			fs::path full_path = app_dir / file;
 			std::string filePathString = full_path.u8string();

@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "scomport.h"
 #include "RectifierCommand.h"
 #include <vector>
@@ -14,7 +14,7 @@
 std::map<CString, HANDLE> Device::openedPorts;
 std::map<HANDLE, int> Device::openedPortsCount;
 
-char * taskStateStr[] = { "Нет задания","Ожидание запроса на загрузку программы",
+char * taskStateStr[] = { ("Нет задания"),"Ожидание запроса на загрузку программы",
 	"Загрузка программы",
 	"Загрузка программы завершена", "","" };
 
@@ -88,7 +88,7 @@ bool Device::trimLeftSymbolsSequenceAsFrame(std::vector<std::uint8_t> & framePre
 Device::Device(RectifierInfo & info, OVERLAPPED * const stateDialogOverlappedRD, DWORD * pMask, OVERLAPPED * const stateDialogOverlappedWR)
 {
 	LPCTSTR sPortName = info.comport;
-	int openedCount = Device::openedPorts.count(sPortName);
+	size_t openedCount = Device::openedPorts.count(sPortName);
 	if (0 == openedCount) {
 		hSerial = ::CreateFile(sPortName, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, 0);
 		if (hSerial == INVALID_HANDLE_VALUE)
@@ -198,9 +198,6 @@ Device::~Device()
 }
 
 void Device::getFrameFromBuffer(std::vector<std::uint8_t> & rdSymbols) {
-	DWORD temp, size;
-	COMSTAT comstat;
-	unsigned char bufrd[1024];
 	rdSymbols.clear();
 	if (!symbolsTail.empty()) {
 		std::vector<std::uint8_t> beginOfOrWholeFrame = getFrameFromTail(symbolsTail);
@@ -217,7 +214,6 @@ void Device::getFrameFromBuffer(std::vector<std::uint8_t> & rdSymbols) {
 
 void Device::getReadFrameFromPort(DWORD signal, std::vector<std::uint8_t> & rdSymbols) {
 	DWORD temp, size;
-	COMSTAT comstat;
 	unsigned char bufrd[1024];
 	rdSymbols.clear();
 
@@ -225,18 +221,8 @@ void Device::getReadFrameFromPort(DWORD signal, std::vector<std::uint8_t> & rdSy
 		return;
 	}
 
-	//if (!symbolsTail.empty()) {
-	//	std::vector<std::uint8_t> beginOfOrWholeFrame = getFrameFromTail(symbolsTail);
-	//	rdSymbols.insert(rdSymbols.end(), beginOfOrWholeFrame.cbegin(), beginOfOrWholeFrame.cend());
-	//	if (isValidFrame(rdSymbols)) {
-	//		return;
-	//	}
-	//	else {
-	//		rdSymbols.clear();
-	//	}
-	//}
 
-	bool res = WaitCommEvent(hSerial, mask, overlappedRDPtr);
+	BOOL res = WaitCommEvent(hSerial, mask, overlappedRDPtr);
 
 	if (GetOverlappedResult(hSerial, overlappedRDPtr, &temp, true)) { //проверяем, успешно ли завершилась
 																	//перекрываемая операция WaitCommEvent
@@ -289,7 +275,7 @@ void Device::getReadFrameFromPort(DWORD signal, std::vector<std::uint8_t> & rdSy
 
 void Device::sendCommand(std::vector<uint8_t> & frameSymbols, DWORD & dwBytesWritten, CString &log) {
 	const uint8_t * data = frameSymbols.data();
-	DWORD dwSize = frameSymbols.size();
+	DWORD dwSize = static_cast<DWORD>(frameSymbols.size());
 
 	BOOL iRet = WriteFile(hSerial, data, dwSize, NULL, overlappedWRPtr);
 	DWORD signal = WaitForSingleObject(overlappedWRPtr->hEvent, 1000);	//приостановить поток, пока не завершится
@@ -315,7 +301,7 @@ void Device::sendCommand(std::vector<uint8_t> & frameSymbols, DWORD & dwBytesWri
 void Device::sendReplyData(std::vector<uint8_t> frameSymbols, DWORD & dwBytesWritten, CString &log) {
 
 	const uint8_t * data = frameSymbols.data();
-	DWORD dwSize = frameSymbols.size();   // размер этой строки
+	DWORD dwSize = static_cast<DWORD>(frameSymbols.size());   // размер этой строки
 
 	BOOL iRet = WriteFile(hSerial, data, dwSize, &dwBytesWritten, overlappedWRPtr);
 	DWORD signal = WaitForSingleObject(overlappedWRPtr->hEvent, 1000);	//приостановить поток, пока не завершится
