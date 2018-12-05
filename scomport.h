@@ -70,7 +70,8 @@ enum class RectifierState : std::int8_t {
 	FAILED_TO_OPEN_COMPORT = 1,
 	FAILED_TO_GET_STATE_F07 = 2,
 	INVALID_USER_BUFFER = 3,
-	UNKNOWN_ERROR = 4
+	UNKNOWN_ERROR = 4,
+	NOT_INITIALIZED = 5
 };
 
 //template<class T>
@@ -79,7 +80,7 @@ enum class RectifierState : std::int8_t {
 //	return os << toString(enumValue);
 //}
 
-CString toString(RectifierState state);
+
 
 //std::ostream& operator<<(std::ostream& os, RectifierState enumValue)
 //{
@@ -98,7 +99,7 @@ struct RecivedData {
 };
 
 struct RectifierInfo {
-	RectifierState state;
+	RectifierState state = RectifierState::NOT_INITIALIZED;
 	DeviceCommand::StateF07 stateF07;
 	int id;
 	CString name;
@@ -127,6 +128,7 @@ public:
 	BOOL resetReadEvent();
 	~Device();
 	void getFrameFromBuffer(std::vector<std::uint8_t>& rdSymbols);
+	static const CString & toString(RectifierState state);
 private:
 	Device() = delete;
 	Device & operator=(Device&) = delete;

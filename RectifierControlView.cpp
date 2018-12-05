@@ -52,8 +52,37 @@ BOOL CRectifierControlView::PreCreateWindow(CREATESTRUCT& cs)
 
 // рисование CRectifierControlView
 
+const CString STATE_UNDEFINED = CString(CA2T("UNDEFINED", CP_UTF8));
+const CString STATE_OK = CString(CA2T("OK", CP_UTF8));
+const CString STATE_FAILED_TO_GET_STATE_F07 = CString(CA2T("Не удалось получить состояние выпрямителя", CP_UTF8));
+const CString STATE_INVALID_USER_BUFFER = CString(CA2T("Ошибка работы программы (не валидный буфер)", CP_UTF8));
+const CString STATE_UNKNOWN_ERROR = CString(CA2T("Не известная ошибка", CP_UTF8));
+const CString STATE_FAILED_TO_OPEN_COMPORT = CString(CA2T("Ошибка открытия COM порта", CP_UTF8));
+const CString STATE_NOT_INITIALIZED = CString(CA2T("Нет связи с выпрямителем", CP_UTF8));
+
+const CString & toString(RectifierState state) {
+	switch (state) {
+	default:
+		return STATE_UNDEFINED;
+	case RectifierState::OK:
+		return STATE_OK;
+	case RectifierState::FAILED_TO_GET_STATE_F07:
+		return STATE_FAILED_TO_GET_STATE_F07;
+	case RectifierState::INVALID_USER_BUFFER:
+		return STATE_INVALID_USER_BUFFER;
+	case RectifierState::UNKNOWN_ERROR:
+		return STATE_UNKNOWN_ERROR;
+	case RectifierState::FAILED_TO_OPEN_COMPORT:
+		return STATE_FAILED_TO_OPEN_COMPORT;
+	case RectifierState::NOT_INITIALIZED:
+		return STATE_NOT_INITIALIZED;
+	}
+}
+
+
 void CRectifierControlView::OnDraw(CDC* pDC)
 {
+	
 	CRectifierControlDoc* pDoc = GetDocument();
 	ASSERT_VALID(pDoc);
 	if (!pDoc)
@@ -62,17 +91,17 @@ void CRectifierControlView::OnDraw(CDC* pDC)
 	// TODO: добавьте здесь код отрисовки для собственных данных
 	CString rectifierName(CA2T("Выпрямитель: ", CP_UTF8));
 	// MessageBox(rectifierName);
-	CFont font;
 	int fontHeight = 32;
-	font.CreateFont(fontHeight, 0, 0, 0, 400, FALSE, FALSE, 0, RUSSIAN_CHARSET,
+	CFont normalFont;
+	normalFont.CreateFont(fontHeight, 0, 0, 0, 400, FALSE, FALSE, 0, RUSSIAN_CHARSET,
 		OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
 		ANTIALIASED_QUALITY, DEFAULT_PITCH | FF_SWISS,
 		L"Arial");
-	pDC->SelectObject(font);
+	pDC->SelectObject(normalFont);
 	pDC->SetTextColor(RGB(0, 0, 0));
 	int rectifierID = pDoc->getRectifierInfo().id;
 	rectifierName += pDoc->getRectifierInfo().name;
-	rectifierName += "(";
+	rectifierName += " (";
 	rectifierName += pDoc->getRectifierInfo().comport;
 	rectifierName += ")";
 	std::map<int, RectifierInfo> & actualRectifiesInfos = theApp.getRectifierInfos();
@@ -80,7 +109,10 @@ void CRectifierControlView::OnDraw(CDC* pDC)
 	CString rectifierState(CA2T("Состояние выпрямителя: ", CP_UTF8));
 	std::wstringstream ss;
 	const RectifierInfo & info = actualRectifiesInfos.at(rectifierID);
-	rectifierState += toString(info.state);
+	const CString & strState = toString(info.state);
+	CString val1(strState);
+	CString val(CA2T("Состояние", CP_UTF8));
+	rectifierState += val1;
 	pDC->TextOutW(10, 10 + fontHeight, rectifierState);
 	CString recivedData(CA2T("Напряжение: ", CP_UTF8));
 	CFont headerFont;

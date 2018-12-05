@@ -20,19 +20,6 @@ char * taskStateStr[] = { "Нет задания","Ожидание запрос
 
 char * machStateStr[] = { " Режим ожидания","Старт фотоввода","", NULL };
 
-
-CString toString(RectifierState state) {
-	switch (state) {
-	default:
-		return CString("UNDEFINED");
-	case RectifierState::OK:
-		return CString("OK");
-	case RectifierState::FAILED_TO_OPEN_COMPORT:
-		return CString("TWOSTOPBITS");
-	}
-}
-
-
 std::vector<std::uint8_t> Device::getFrameFromTail(std::vector<std::uint8_t> & symbolsTail) {
 	if (symbolsTail.empty())
 		return symbolsTail;

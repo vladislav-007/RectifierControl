@@ -25,6 +25,13 @@ public:
 	} REPLY_DATA, *LPREPLY_DATA;
 
 	typedef struct _StateF07 {
+		_StateF07::_StateF07() {
+			control = 0;
+			aLow = -1; // current
+			aHi = -1; // current
+			V = -1;
+		}
+
 		uint8_t control;
 		uint8_t channel_state[4];
 		uint8_t aLow; // current
@@ -32,6 +39,7 @@ public:
 		uint8_t V;
 	} StateF07;
 
+	
 
 	static const DeviceCommand::DATA GIVE_PREPARED_DATA_01;
 
