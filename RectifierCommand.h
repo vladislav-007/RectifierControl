@@ -39,6 +39,59 @@ public:
 		uint8_t V;
 	} StateF07;
 
+	typedef struct _StateF05 {
+		static const uint8_t hoursIndex = 0x13;
+		static const uint8_t minutesIndex = 0x14;
+		static const uint8_t secondsIndex = 0x15;
+		static const uint8_t lowAByteIndex = 0x16;
+		static const uint8_t hiAByteIndex = 0x17;
+		static const uint8_t vByteIndex = 0x18;
+		_StateF05::_StateF05() {
+			stateBytes.resize(27);
+		}
+		std::vector<uint8_t> stateBytes;
+
+		void setHours(uint8_t value) {
+			stateBytes[hoursIndex] = value;
+		}
+		uint8_t getHours() const {
+			return stateBytes[hoursIndex];
+		}
+
+		void setMinutes(uint8_t value) {
+			stateBytes[minutesIndex] = value;
+		}
+		uint8_t getMinutes() const {
+			return stateBytes[minutesIndex];
+		}
+		void setSeconds(uint8_t value) {
+			stateBytes[secondsIndex] = value;
+		}
+		uint8_t getSeconds() const {
+			return stateBytes[secondsIndex];
+		}
+
+		void setLowA(uint8_t lowA) {
+			stateBytes[lowAByteIndex] = lowA;
+		}
+		uint8_t getLowA() const {
+			return stateBytes[lowAByteIndex];
+		}
+		void setHiA(uint8_t hiA) {
+			stateBytes[hiAByteIndex] = hiA;
+		}
+		uint8_t getHiA() const {
+			return stateBytes[hiAByteIndex];
+		}
+		void setV(uint8_t v) {
+			stateBytes[lowAByteIndex] = v;
+		}
+		uint8_t getV() const {
+			return stateBytes[vByteIndex];
+		}
+
+	} StateF05;
+
 	
 
 	static const DeviceCommand::DATA GIVE_PREPARED_DATA_01;
@@ -70,12 +123,17 @@ public:
 		const DATA data
 	);
 
+	static std::vector<uint8_t> createReplyOKFrameSymbols(const uint8_t modbus_addr);
+
 	static std::vector<uint8_t> createReplyFrame(const uint8_t modbus_addr, const uint8_t modbus_func, const uint8_t code, const ReplyStatus status);
 
 	static std::vector<uint8_t> createReplyDataFrame(const uint8_t modbus_addr, const uint8_t modbus_func, const std::vector<uint8_t>& data);
 
 	static std::vector<uint8_t> createRectifierInfoF10(uint8_t lowA, uint8_t hiA, uint8_t lowU, uint8_t hiU, uint8_t configByte, const std::vector<uint8_t>& serialNumber);
 	static std::vector<uint8_t> createRectifierStateF07(uint8_t controlByte, uint8_t chan1, uint8_t chan2, uint8_t chan3, uint8_t chan4, uint8_t lowA, uint8_t hiA, uint8_t U);
+
+	static std::vector<uint8_t> createRectifierStateF05(uint8_t hours, uint8_t minutes, uint8_t seconds,
+		uint8_t controlByte, uint8_t chan1, uint8_t chan2, uint8_t chan3, uint8_t chan4, uint8_t lowA, uint8_t hiA, uint8_t V);
 
 	static std::vector<uint8_t> convertToASCIIFrame(const std::vector<uint8_t>& frame_bytes);
 
@@ -92,6 +150,8 @@ public:
 	static std::uint8_t parseResponseCode(const std::vector<std::uint8_t>& frame_array, uint8_t & modbus_addr, uint8_t & modbus_func, uint8_t & replyCode);
 
 	static StateF07 parseDataForF07(const std::vector<std::uint8_t>& rdSymbolsFrame);
+
+	static DeviceCommand::StateF05 parseDataForF05(const std::vector<std::uint8_t>& data);
 	
 
 	DeviceCommand(const DATA & cmd_data) {
@@ -114,4 +174,5 @@ public:
 };
 
 extern const DeviceCommand::DATA GET_CONCISE_DEVICE_STATE_07;
+extern const DeviceCommand::DATA GET_DEVICE_STATE_05;
 extern const DeviceCommand::DATA GET_RECTIFIER_STATE_10;

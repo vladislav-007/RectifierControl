@@ -144,9 +144,9 @@ Device::Device(RectifierInfo & info, OVERLAPPED * const stateDialogOverlappedRD,
 		COMMTIMEOUTS commTimeouts;
 		GetCommTimeouts(hSerial, &commTimeouts);
 		commTimeouts.ReadIntervalTimeout = 10;
-		commTimeouts.ReadTotalTimeoutConstant = 5000;
+		commTimeouts.ReadTotalTimeoutConstant = 1000;
 		commTimeouts.ReadTotalTimeoutMultiplier = 10;
-		commTimeouts.WriteTotalTimeoutConstant = 5000;
+		commTimeouts.WriteTotalTimeoutConstant = 1000;
 		commTimeouts.WriteTotalTimeoutMultiplier = 10;
 
 		SetCommTimeouts(hSerial, &commTimeouts);
@@ -438,15 +438,93 @@ RectifierState Device::readFromPort(std::vector<std::uint8_t> & rdSymbols) {
 //}
 
 
-void Device::getRectifierState(RectifierInfo & info) {
-	//HANDLE hSerial = info.hSerial;
+//void Device::getRectifierState(RectifierInfo & info) {
+//	//HANDLE hSerial = info.hSerial;
+//
+//	DWORD dwBytesWritten;    // тут будет количество собственно переданных байт
+//	CString log;
+//
+//	// L"Send command 0x07";
+//	std::vector<uint8_t> frameBytes = DeviceCommand::createCmdFrame(
+//		info.address, 0x43, GET_CONCISE_DEVICE_STATE_07);
+//	std::vector<uint8_t> frameSymbols = DeviceCommand::convertToASCIIFrame(frameBytes);
+//	Device::sendCommand(frameSymbols, dwBytesWritten, log);
+//	std::wstringstream ss;
+//	ss << dwBytesWritten << L" Bytes in string. " << std::endl << dwBytesWritten << L" Bytes sended. " << std::endl;
+//	std::wstring str1;
+//	str1 = ss.str();
+//	log += str1.c_str();
+//	ss.clear();
+//	ss << L"Started reading replay..." << std::endl;
+//	std::vector<std::uint8_t> rdSymbols;
+//	Sleep(1000);
+//	getFrameFromBuffer(rdSymbols);
+//	if (!isValidFrame(rdSymbols)) {
+//		readFromPort(rdSymbols);
+//	}
+//	
+//	str1 = ss.str();
+//	for (auto symbol : rdSymbols) {
+//		ss << std::hex << symbol;
+//	}
+//	ss << std::endl;
+//	str1 = ss.str();
+//	log += str1.c_str();
+//
+//	std::uint8_t modbus_addr;
+//	std::uint8_t modbus_func;
+//	std::uint8_t reply_code;
+//
+//	if (!rdSymbols.empty()) {
+//		DeviceCommand::parseResponseCode(rdSymbols, modbus_addr, modbus_func, reply_code);
+//		if (reply_code != 5) {
+//			info.state = RectifierState::FAILED_TO_GET_STATE;
+//			return;
+//		}
+//		// L"Send command 0x01";
+//		frameBytes = DeviceCommand::createCmdFrame(
+//			info.address, 0x43, DeviceCommand::GIVE_PREPARED_DATA_01);
+//		frameSymbols = DeviceCommand::convertToASCIIFrame(frameBytes);
+//		Device::sendCommand(frameSymbols, dwBytesWritten, log);
+//		ss.clear();
+//		ss << dwBytesWritten << L" Bytes in string. " << std::endl << dwBytesWritten << L" Bytes sended. " << std::endl;
+//		str1 = ss.str();
+//		log += str1.c_str();
+//		getFrameFromBuffer(rdSymbols);
+//		if (!isValidFrame(rdSymbols)) {
+//			readFromPort(rdSymbols);
+//		}
+//		for (auto symbol : rdSymbols) {
+//			ss << std::hex << symbol;
+//		}
+//		ss << std::endl;
+//		str1 = ss.str();
+//		log += str1.c_str();
+//		DeviceCommand::REPLY_DATA data;
+//		DeviceCommand::parseResponseFrame(rdSymbols, modbus_addr, modbus_func, data);
+//		if (data.data.size() > 0) {
+//			DeviceCommand::StateF07 state = DeviceCommand::parseDataForF07(data.data);
+//			info.stateF05 = state;
+//			info.state = RectifierState::OK;
+//		}
+//		else {
+//			info.state = RectifierState::FAILED_TO_GET_STATE;
+//		}
+//	}
+//	else {
+//		info.state = RectifierState::FAILED_TO_GET_STATE;
+//	}
+//	
+//	//CloseHandle(hSerial);
+//}
 
+void Device::getRectifierState(RectifierInfo & info, bool plusTime) {
 	DWORD dwBytesWritten;    // тут будет количество собственно переданных байт
 	CString log;
 
 	// L"Send command 0x07";
 	std::vector<uint8_t> frameBytes = DeviceCommand::createCmdFrame(
-		info.address, 0x43, GET_CONCISE_DEVICE_STATE_07);
+		info.address, 0x43, plusTime ? GET_DEVICE_STATE_05 : GET_CONCISE_DEVICE_STATE_07);
 	std::vector<uint8_t> frameSymbols = DeviceCommand::convertToASCIIFrame(frameBytes);
 	Device::sendCommand(frameSymbols, dwBytesWritten, log);
 	std::wstringstream ss;
@@ -462,7 +540,7 @@ void Device::getRectifierState(RectifierInfo & info) {
 	if (!isValidFrame(rdSymbols)) {
 		readFromPort(rdSymbols);
 	}
-	
+
 	str1 = ss.str();
 	for (auto symbol : rdSymbols) {
 		ss << std::hex << symbol;
@@ -478,7 +556,11 @@ void Device::getRectifierState(RectifierInfo & info) {
 	if (!rdSymbols.empty()) {
 		DeviceCommand::parseResponseCode(rdSymbols, modbus_addr, modbus_func, reply_code);
 		if (reply_code != 5) {
-			info.state = RectifierState::FAILED_TO_GET_STATE_F07;
+			info.state = RectifierState::FAILED_TO_GET_STATE;
+			return;
+		}
+		if (modbus_addr != info.address) {
+			info.state = RectifierState::ADDRESS_DOESNT_MATCH;
 			return;
 		}
 		// L"Send command 0x01";
@@ -502,19 +584,26 @@ void Device::getRectifierState(RectifierInfo & info) {
 		log += str1.c_str();
 		DeviceCommand::REPLY_DATA data;
 		DeviceCommand::parseResponseFrame(rdSymbols, modbus_addr, modbus_func, data);
-		if (data.data.size() > 0) {
-			DeviceCommand::StateF07 state = DeviceCommand::parseDataForF07(data.data);
-			info.stateF07 = state;
+		if (data.data.size() > 0 && info.address == modbus_addr) {
+			if (plusTime) {
+				DeviceCommand::StateF05 state = DeviceCommand::parseDataForF05(data.data);
+				info.stateF05 = state;
+			}
+			else {
+				DeviceCommand::StateF07 state = DeviceCommand::parseDataForF07(data.data);
+				info.stateF05.setHiA(state.aHi);
+				info.stateF05.setLowA(state.aLow);
+				info.stateF05.setV(state.V);
+			}
+			info.state = RectifierState::OK;
 		}
 		else {
-			info.state = RectifierState::FAILED_TO_GET_STATE_F07;
+			info.state = RectifierState::FAILED_TO_GET_STATE;
 		}
 	}
 	else {
-		info.state = RectifierState::FAILED_TO_GET_STATE_F07;
+		info.state = RectifierState::FAILED_TO_GET_STATE;
 	}
-	
-	//CloseHandle(hSerial);
 }
 
 void Device::clearReciveBuffer()
@@ -550,7 +639,7 @@ UINT ThreadProc(LPVOID par) {
 		Sleep(1000);
 		for (auto & rectInfo : param->m_rectifierConfigs[0]) {
 			RectifierInfo & info = rectInfo.second;
-			device.getRectifierState(info);
+			device.getRectifierState(info, true);
 			info.recivedData.status = ++cnt;
 			PostMessage((HWND)param->wnd, WM_COMMAND, 7, 7);
 		}

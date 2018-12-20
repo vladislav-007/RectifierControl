@@ -318,7 +318,7 @@ void CRectifiersStateDialog::modelateRectifier(
 	//std::vector<std::uint8_t> symbolsTail;
 	std::vector<uint8_t> replyOKBytes = DeviceCommand::createReplyFrame(
 		0x01, 0x43, 0x05, ReplyStatus::OK);
-	std::vector<uint8_t> replyOKSymbols = DeviceCommand::convertToASCIIFrame(replyOKBytes);
+	//std::vector<uint8_t> replyOKSymbols = DeviceCommand::convertToASCIIFrame(replyOKBytes);
 
 	state[0] = 1;
 	Device device(info, stateDialogOverlappedRD, pMask, stateDialogOverlappedWR);
@@ -351,34 +351,35 @@ void CRectifiersStateDialog::modelateRectifier(
 				continue;
 			if (0x10 == cmd_data.address) {
 				// asked for rectifier state. Send normal reply :014305B7 0D 0A
-				device.sendReplyData(replyOKSymbols, dwBytesWritten, log);
+				
+				device.sendReplyData(DeviceCommand::createReplyOKFrameSymbols(addr), dwBytesWritten, log);
 				//sendCommand(hSerial, data, 1, dwBytesWritten, m_CEditTestLog, log);
 			}
 			else if (0x06 == cmd_data.address) {
 				// f0601 activate remote panel
 				// f0602 activate local control panel
-				device.sendReplyData(replyOKSymbols, dwBytesWritten, log);
+				device.sendReplyData(DeviceCommand::createReplyOKFrameSymbols(addr), dwBytesWritten, log);
 				//sendCommand(hSerial, data, 1, dwBytesWritten, m_CEditTestLog, log);
 			}
 			else if (0x02 == cmd_data.address) {
 				// asked  state. Send normal reply :014305B7 0D 0A
-				device.sendReplyData(replyOKSymbols, dwBytesWritten, log);
+				device.sendReplyData(DeviceCommand::createReplyOKFrameSymbols(addr), dwBytesWritten, log);
 				//sendCommand(hSerial, data, 1, dwBytesWritten, m_CEditTestLog, log);
 			}
 			else if (0x03 == cmd_data.address) {
 				// asked for rectifier state. Send normal reply :014305B7 0D 0A
 				Sleep(50);
-				device.sendReplyData(replyOKSymbols, dwBytesWritten, log);
+				device.sendReplyData(DeviceCommand::createReplyOKFrameSymbols(addr), dwBytesWritten, log);
 				//sendCommand(hSerial, data, 1, dwBytesWritten, m_CEditTestLog, log);
 			}
 			else if (0x05 == cmd_data.address) {
 				// asked for rectifier state. Send normal reply :014305B7 0D 0A
-				device.sendReplyData(replyOKSymbols, dwBytesWritten, log);
+				device.sendReplyData(DeviceCommand::createReplyOKFrameSymbols(addr), dwBytesWritten, log);
 				//sendCommand(hSerial, data, 1, dwBytesWritten, m_CEditTestLog, log);
 			}
 			else if (0x07 == cmd_data.address) {
 				// asked for rectifier state. Send normal reply :014305B7 0D 0A
-				device.sendReplyData(replyOKSymbols, dwBytesWritten, log);
+				device.sendReplyData(DeviceCommand::createReplyOKFrameSymbols(addr), dwBytesWritten, log);
 				//sendCommand(hSerial, data, 1, dwBytesWritten, m_CEditTestLog, log);
 			}
 			else if (cmd_data.address == 0x01) {
@@ -390,7 +391,7 @@ void CRectifiersStateDialog::modelateRectifier(
 					//	info.address, 0x43, reply_data);
 					//std::vector<uint8_t> frameSymbols = DeviceCommand::convertToASCIIFrame(replyBytes);
 					////sendReply(hSerial, frameSymbols, dwBytesWritten, m_CEditTestLog, log);
-					std::vector<uint8_t> rectifierStateFrame = { 0x3A, 0x30, 0x31, 0x34, 0x33, 0x45, 0x38, 0x30, 0x33, 0x37, 0x38, 0x30, 0x30, 0x34, 0x31, 0x33, 0x30, 0x33, 0x31, 0x33, 0x31, 0x33, 0x38, 0x32, 0x44, 0x33, 0x33, 0x33, 0x31, 0x33, 0x31, 0x33, 0x32, 0x33, 0x37, 0x33, 0x32, 0x33, 0x34, 0x42, 0x44, 0x0D, 0x0A };
+					std::vector<uint8_t> rectifierStateFrame = { 0x3A, 0x30, (uint8_t)(addr + 0x30), 0x34, 0x33, 0x45, 0x38, 0x30, 0x33, 0x37, 0x38, 0x30, 0x30, 0x34, 0x31, 0x33, 0x30, 0x33, 0x31, 0x33, 0x31, 0x33, 0x38, 0x32, 0x44, 0x33, 0x33, 0x33, 0x31, 0x33, 0x31, 0x33, 0x32, 0x33, 0x37, 0x33, 0x32, 0x33, 0x34, 0x42, 0x44, 0x0D, 0x0A };
 					device.sendReplyData(rectifierStateFrame, dwBytesWritten, log);
 				}
 				if (0x07 == prev_cmd_data.address) {
@@ -404,15 +405,24 @@ void CRectifiersStateDialog::modelateRectifier(
 					}
 
 					std::vector<uint8_t> reply_data = DeviceCommand::createRectifierStateF07(3, 0x11, 0x11, 0, 0, 0xE8, 0x03, v);
-					std::vector<uint8_t> replyBytes = DeviceCommand::createReplyDataFrame(info.address, 0x43, reply_data);
+					std::vector<uint8_t> replyBytes = DeviceCommand::createReplyDataFrame(addr, 0x43, reply_data);
 					std::vector<uint8_t> frameSymbols = DeviceCommand::convertToASCIIFrame(replyBytes);
-					////sendReply(hSerial, frameSymbols, dwBytesWritten, m_CEditTestLog, log);
 					//std::vector<uint8_t> rectifierStateFrame = { 0x3A, 0x30, 0x31, 0x34, 0x33, 0x45, 0x38, 0x30, 0x33, 0x37, 0x38, 0x30, 0x30, 0x34, 0x31, 0x33, 0x30, 0x33, 0x31, 0x33, 0x31, 0x33, 0x38, 0x32, 0x44, 0x33, 0x33, 0x33, 0x31, 0x33, 0x31, 0x33, 0x32, 0x33, 0x37, 0x33, 0x32, 0x33, 0x34, 0x42, 0x44, 0x0D, 0x0A };
 					device.sendReplyData(frameSymbols, dwBytesWritten, log);
 				}
-				else if (0x05 == prev_cmd_data.address && 0x01 == cmd_data.command) {
-					std::vector<uint8_t> deviceStateFrame = { 0x3A,0x30,0x31,0x34,0x33,0x46,0x46,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x44,0x41,0x30,0x36,0x30,0x30,0x30,0x30,0x30,0x31,0x31,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x38,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x31,0x30,0x30,0x30,0x30,0x30,0x30,0x35,0x35,0x41,0x41,0x34,0x43,0x0D,0x0A };
-					device.sendReplyData(deviceStateFrame, dwBytesWritten, log);
+				else if (0x05 == prev_cmd_data.address) {
+					static uint8_t v = 0x78;
+					if (v < 0x250) {
+						v = v + 1;
+					}
+					else {
+						v = 0x20;
+					}
+					std::vector<uint8_t> reply_data = DeviceCommand::createRectifierStateF05(1, 2, 3, 3, 0x11, 0x11, 0, 0, addr, 0x0, v);
+					std::vector<uint8_t> replyBytes = DeviceCommand::createReplyDataFrame(addr, 0x43, reply_data);
+					std::vector<uint8_t> frameSymbols = DeviceCommand::convertToASCIIFrame(replyBytes);
+					//std::vector<uint8_t> deviceStateFrame = { 0x3A,0x30,(uint8_t)(addr + 0x30),0x34,0x33,0x46,0x46,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x44,0x41,0x30,0x36,0x30,0x30,0x30,0x30,0x30,0x31,0x31,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x38,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x31,0x30,0x30,0x30,0x30,0x30,0x30,0x35,0x35,0x41,0x41,0x34,0x43,0x0D,0x0A };
+					device.sendReplyData(frameSymbols, dwBytesWritten, log);
 				}
 				else if (0x03 == prev_cmd_data.address && 0x00 == prev_cmd_data.command) {
 					if (cmd_data.data[0] == 0x00 && cmd_data.data[1] == 0x00 && cmd_data.data[2] == 0x20) {
@@ -434,7 +444,7 @@ void CRectifiersStateDialog::modelateRectifier(
 				}
 			}
 			else {
-				device.sendReplyData(replyOKSymbols, dwBytesWritten, log);
+				device.sendReplyData(DeviceCommand::createReplyOKFrameSymbols(addr), dwBytesWritten, log);
 			}
 
 			prev_cmd_data.address = cmd_data.address;

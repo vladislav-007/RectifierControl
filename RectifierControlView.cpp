@@ -13,6 +13,7 @@
 #include "RectifierControlView.h"
 
 #include <sstream>
+#include <iomanip>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -55,10 +56,12 @@ BOOL CRectifierControlView::PreCreateWindow(CREATESTRUCT& cs)
 const CString STATE_UNDEFINED = CString(CA2T("UNDEFINED", CP_UTF8));
 const CString STATE_OK = CString(CA2T("OK", CP_UTF8));
 const CString STATE_FAILED_TO_GET_STATE_F07 = CString(CA2T("Не удалось получить состояние выпрямителя", CP_UTF8));
-const CString STATE_INVALID_USER_BUFFER = CString(CA2T("Ошибка работы программы (не валидный буфер)", CP_UTF8));
-const CString STATE_UNKNOWN_ERROR = CString(CA2T("Не известная ошибка", CP_UTF8));
+const CString STATE_INVALID_USER_BUFFER = CString(CA2T("Ошибка работы программы (невалидный буфер)", CP_UTF8));
+const CString STATE_UNKNOWN_ERROR = CString(CA2T("Неизвестная ошибка", CP_UTF8));
 const CString STATE_FAILED_TO_OPEN_COMPORT = CString(CA2T("Ошибка открытия COM порта", CP_UTF8));
-const CString STATE_NOT_INITIALIZED = CString(CA2T("Нет связи с выпрямителем", CP_UTF8));
+const CString STATE_NOT_INITIALIZED = CString(CA2T("Запрос состояния выпрямителя", CP_UTF8));
+const CString STATE_DEVICE_IS_NOT_READY = CString(CA2T("Выпрямитель не готов к работе", CP_UTF8));
+const CString STATE_ADDRESS_DOESNT_MATCH = CString(CA2T("Неверный адрес устройства", CP_UTF8));
 
 const CString & toString(RectifierState state) {
 	switch (state) {
@@ -66,7 +69,7 @@ const CString & toString(RectifierState state) {
 		return STATE_UNDEFINED;
 	case RectifierState::OK:
 		return STATE_OK;
-	case RectifierState::FAILED_TO_GET_STATE_F07:
+	case RectifierState::FAILED_TO_GET_STATE:
 		return STATE_FAILED_TO_GET_STATE_F07;
 	case RectifierState::INVALID_USER_BUFFER:
 		return STATE_INVALID_USER_BUFFER;
@@ -76,6 +79,10 @@ const CString & toString(RectifierState state) {
 		return STATE_FAILED_TO_OPEN_COMPORT;
 	case RectifierState::NOT_INITIALIZED:
 		return STATE_NOT_INITIALIZED;
+	case RectifierState::DEVICE_ISNT_READY:
+		return STATE_DEVICE_IS_NOT_READY;
+	case RectifierState::ADDRESS_DOESNT_MATCH:
+		return STATE_ADDRESS_DOESNT_MATCH;
 	}
 }
 
@@ -102,6 +109,10 @@ void CRectifierControlView::OnDraw(CDC* pDC)
 	int rectifierID = pDoc->getRectifierInfo().id;
 	rectifierName += pDoc->getRectifierInfo().name;
 	rectifierName += " (";
+	CString strAddr;
+	strAddr.Format(L"%d", pDoc->getRectifierInfo().address);
+	rectifierName += strAddr;
+	rectifierName += ", ";
 	rectifierName += pDoc->getRectifierInfo().comport;
 	rectifierName += ")";
 	std::map<int, RectifierInfo> & actualRectifiesInfos = theApp.getRectifierInfos();
@@ -114,18 +125,24 @@ void CRectifierControlView::OnDraw(CDC* pDC)
 	CString val(CA2T("Состояние", CP_UTF8));
 	rectifierState += val1;
 	pDC->TextOutW(10, 10 + fontHeight, rectifierState);
-	CString recivedData(CA2T("Напряжение: ", CP_UTF8));
+	
 	CFont headerFont;
 	headerFont.CreateFont(2 * fontHeight, 0, 0, 0, 400, FALSE, FALSE, 0, RUSSIAN_CHARSET,
 		OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
 		ANTIALIASED_QUALITY, DEFAULT_PITCH | FF_SWISS,
 		L"Arial");
 	pDC->SelectObject(headerFont);
+
+	CString recivedData(CA2T("Напряжение: ", CP_UTF8));
 	pDC->TextOutW(10, 10 + 2 * fontHeight, recivedData);
 	ss.str(std::wstring());
-	
-	ss << info.stateF07.V / 10.0;
-	ss << " V";
+	if (info.state != RectifierState::OK) {
+		ss << " -- ";
+	}
+	else {
+		ss << ((short)info.stateF05.getV()) / 10.0;
+	}
+	ss << ", V";
 	recivedData = ss.str().c_str();
 	
 	CFont valuesFont;
@@ -140,18 +157,42 @@ void CRectifierControlView::OnDraw(CDC* pDC)
 	pDC->SelectObject(headerFont);
 	pDC->SetTextColor(RGB(0, 0, 0));
 	CString currentData(CA2T("Ток: ", CP_UTF8));
-	pDC->TextOutW(230, 10 + 4 * fontHeight, currentData);
+	pDC->TextOutW(240, 10 + 4 * fontHeight, currentData);
 	ss.str(std::wstring());
-	ss << (info.stateF07.aHi * 255 + info.stateF07.aLow);
-	ss << " A";
+	if (info.state != RectifierState::OK) {
+		ss << " -- ";
+	}
+	else {
+		ss << (info.stateF05.getHiA() * 255 + info.stateF05.getLowA());
+	}
+	ss << ", A";
 	currentData = ss.str().c_str();
 	pDC->SelectObject(valuesFont);
 	pDC->SetTextColor(RGB(0, 255, 0));
 	pDC->TextOutW(350, 10 + 4 * fontHeight, currentData);
+
+	//=================================
+	pDC->SelectObject(headerFont);
+	pDC->SetTextColor(RGB(0, 0, 0));
+
+	currentData = CString(CA2T("Время: ", CP_UTF8));
+	pDC->TextOutW(160, 10 + 6 * fontHeight, currentData);
+	ss.str(std::wstring());
+	if (info.state != RectifierState::OK) {
+		ss << "--:--:--";
+	}
+	else {
+		ss << std::setfill(L'0') << std::setw(2) << info.stateF05.getHours();
+		ss << ":";
+		ss << std::setfill(L'0') << std::setw(2) << info.stateF05.getMinutes();
+		ss << ":";
+		ss << std::setfill(L'0') << std::setw(2) << info.stateF05.getSeconds();
+	}
+	currentData = ss.str().c_str();
+	pDC->SelectObject(valuesFont);
+	pDC->SetTextColor(RGB(0, 255, 0));
+	pDC->TextOutW(350, 10 + 6 * fontHeight, currentData);
 }
-
-
-// печать CRectifierControlView
 
 BOOL CRectifierControlView::OnPreparePrinting(CPrintInfo* pInfo)
 {

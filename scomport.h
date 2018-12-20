@@ -68,10 +68,12 @@ enum class Stopbits : std::int8_t {
 enum class RectifierState : std::int8_t {
 	OK = 0,
 	FAILED_TO_OPEN_COMPORT = 1,
-	FAILED_TO_GET_STATE_F07 = 2,
+	FAILED_TO_GET_STATE = 2,
 	INVALID_USER_BUFFER = 3,
 	UNKNOWN_ERROR = 4,
-	NOT_INITIALIZED = 5
+	NOT_INITIALIZED = 5,
+	ADDRESS_DOESNT_MATCH = 6,
+	DEVICE_ISNT_READY = 7
 };
 
 //template<class T>
@@ -100,7 +102,8 @@ struct RecivedData {
 
 struct RectifierInfo {
 	RectifierState state = RectifierState::NOT_INITIALIZED;
-	DeviceCommand::StateF07 stateF07;
+	//DeviceCommand::StateF07 stateF07;
+	DeviceCommand::StateF05 stateF05;
 	int id;
 	CString name;
 	int address;
@@ -141,13 +144,13 @@ public:
 	static bool isValidFrame(std::vector<std::uint8_t> & symbols);
 	static bool trimLeftSymbolsSequenceAsFrame(std::vector<std::uint8_t>& framePretenders);
 	static std::vector<std::uint8_t> Device::getFrameFromTail(std::vector<std::uint8_t> & symbolsTail);
-	void getRectifierState(RectifierInfo & info);
+	//void getRectifierState(RectifierInfo & info);
+
+	void getRectifierState(RectifierInfo & info, bool plusTime);
 
 	void clearReciveBuffer();
 private:
 	HANDLE hSerial;
-	//OVERLAPPED overlappedRD_;
-	//OVERLAPPED overlappedWR_;
 	OVERLAPPED * overlappedRDPtr;
 	OVERLAPPED * overlappedWRPtr;
 	DWORD * mask;

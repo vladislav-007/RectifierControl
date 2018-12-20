@@ -150,6 +150,10 @@ std::vector<uint8_t> DeviceCommand::createCmdFrame(
 	return frame_array;
 }
 
+std::vector<uint8_t> DeviceCommand::createReplyOKFrameSymbols(const uint8_t modbus_addr) {
+	return convertToASCIIFrame(createReplyFrame(modbus_addr, 0x43, 0x05, ReplyStatus::OK));
+}
+
 std::vector<uint8_t> DeviceCommand::createReplyFrame(
 	const uint8_t modbus_addr,
 	const uint8_t modbus_func,
@@ -220,6 +224,26 @@ std::vector<uint8_t> DeviceCommand::createRectifierStateF07(uint8_t controlByte,
 	data[5] = lowA;
 	data[6] = hiA;
 	data[7] = V;
+	return data;
+}
+
+std::vector<uint8_t> DeviceCommand::createRectifierStateF05(
+	uint8_t hours, uint8_t minutes, uint8_t seconds,
+	uint8_t controlByte, uint8_t chan1, uint8_t chan2, uint8_t chan3, uint8_t chan4,
+	uint8_t lowA, uint8_t hiA, uint8_t V)
+{
+	std::vector<uint8_t> data(0x1B);
+	data[0x0A] = controlByte;
+	data[0x0B] = chan1;
+	data[0x0C] = chan2;
+	data[0x0D] = chan3;
+	data[0x0E] = chan4;
+	data[0x13] = hours;
+	data[0x14] = minutes;
+	data[0x15] = seconds;
+	data[0x16] = lowA;
+	data[0x17] = hiA;
+	data[0x18] = V;
 	return data;
 }
 
@@ -426,5 +450,17 @@ DeviceCommand::StateF07 DeviceCommand::parseDataForF07(const std::vector<std::ui
 	state.aLow = data[0x05];
 	state.aHi = data[0x06];
 	state.V = data[0x07];
+	return state;
+}
+
+DeviceCommand::StateF05 DeviceCommand::parseDataForF05(const std::vector<std::uint8_t> & data) {
+	//assert(data.size() == 0x08);
+	StateF05 state;
+	state.stateBytes[StateF05::hoursIndex] = data[StateF05::hoursIndex];
+	state.stateBytes[StateF05::minutesIndex] = data[StateF05::minutesIndex];
+	state.stateBytes[StateF05::secondsIndex] = data[StateF05::secondsIndex];
+	state.stateBytes[StateF05::lowAByteIndex] = data[StateF05::lowAByteIndex];
+	state.stateBytes[StateF05::hiAByteIndex] = data[StateF05::hiAByteIndex];
+	state.stateBytes[StateF05::vByteIndex] = data[StateF05::vByteIndex];
 	return state;
 }
