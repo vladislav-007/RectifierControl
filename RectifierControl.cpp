@@ -369,7 +369,9 @@ BOOL CRectifierControlApp::InitInstance()
 	//param.portBlock = &portBlock;
 	//param.dwpByteTimeOut = &dwByteTimeOut;
 	std::map<int, RectifierInfo> * rectInfos = param.m_rectifierConfigs;
-	RectifierInfo & info = (*rectInfos->begin()).second;
+	if (rectInfos->begin() != rectInfos->begin()) {
+		RectifierInfo & info = (*rectInfos->begin()).second;
+	}
 
 	param.mainOverlappedRD = &overlappedRD;
 	param.mainOverlappedWR = &overlappedWR;

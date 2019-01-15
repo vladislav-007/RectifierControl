@@ -61,7 +61,8 @@ const CString STATE_UNKNOWN_ERROR = CString(CA2T("Неизвестная оши�
 const CString STATE_FAILED_TO_OPEN_COMPORT = CString(CA2T("Ошибка открытия COM порта", CP_UTF8));
 const CString STATE_NOT_INITIALIZED = CString(CA2T("Запрос состояния выпрямителя", CP_UTF8));
 const CString STATE_DEVICE_IS_NOT_READY = CString(CA2T("Выпрямитель не готов к работе", CP_UTF8));
-const CString STATE_ADDRESS_DOESNT_MATCH = CString(CA2T("Неверный адрес устройства", CP_UTF8));
+const CString STATE_ADDRESS_DOESNT_MATCH = CString(CA2T("Неверный адрес устройства (готовность)", CP_UTF8));
+const CString STATE_DATA_ADDRESS_DOESNT_MATCH = CString(CA2T("Неверный адрес устройства (данные)", CP_UTF8));
 
 const CString & toString(RectifierState state) {
 	switch (state) {
@@ -83,6 +84,8 @@ const CString & toString(RectifierState state) {
 		return STATE_DEVICE_IS_NOT_READY;
 	case RectifierState::ADDRESS_DOESNT_MATCH:
 		return STATE_ADDRESS_DOESNT_MATCH;
+	case RectifierState::DATA_ADDRESS_DOESNT_MATCH:
+		return STATE_DATA_ADDRESS_DOESNT_MATCH;
 	}
 }
 

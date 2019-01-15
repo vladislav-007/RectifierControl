@@ -136,7 +136,8 @@ void CRectifiersStateDialog::OnBnClickedButton1()
 		log += L"Send command 0x07";
 		m_CEditTestLog.SetWindowText(log);
 
-		Device device(testRectirierInfo, &stateDialogOverlappedRD1, &mask1, &stateDialogOverlappedWR1);
+		Device device(&stateDialogOverlappedRD1, &mask1, &stateDialogOverlappedWR1);
+		device.registerRectifier(testRectirierInfo);
 
 		std::vector<uint8_t> frameBytes = DeviceCommand::createCmdFrame(
 			info.address, 0x43, GET_CONCISE_DEVICE_STATE_07);
@@ -145,14 +146,20 @@ void CRectifiersStateDialog::OnBnClickedButton1()
 			frameBytes);
 
 		DWORD dwBytesWritten;    // тут будет количество собственно переданных байт
-		device.sendCommand(frameBytes, dwBytesWritten, log);
+		//device.sendCommand(
+		Sleep(150);
+				
+		//COMSTAT comstat;
+		//OVERLAPPED overlapped;
+		state = 1;
+		std::vector<uint8_t> rdSymbols;
+		device.readFromPort(rdSymbols, frameBytes, dwBytesWritten, log);
 		std::wstringstream ss;
 		ss << frameBytes.size() << L" Bytes in string. " << std::endl << dwBytesWritten << L" Bytes sended. " << std::endl;
 		std::wstring str1;
 		str1 = ss.str();
 		log += str1.c_str();
 		m_CEditTestLog.SetWindowText(log);
-		Sleep(150);
 
 		ss.clear();
 		//DWORD iSize;
@@ -161,11 +168,7 @@ void CRectifiersStateDialog::OnBnClickedButton1()
 		str1 = ss.str();
 		log += str1.c_str();
 		m_CEditTestLog.SetWindowText(log);
-		//COMSTAT comstat;
-		//OVERLAPPED overlapped;
-		state = 1;
-		std::vector<uint8_t> rdSymbols;
-		device.readFromPort(rdSymbols);
+
 		for (auto symbol : rdSymbols) {
 			ss << std::hex << symbol;
 		}
@@ -321,7 +324,8 @@ void CRectifiersStateDialog::modelateRectifier(
 	//std::vector<uint8_t> replyOKSymbols = DeviceCommand::convertToASCIIFrame(replyOKBytes);
 
 	state[0] = 1;
-	Device device(info, stateDialogOverlappedRD, pMask, stateDialogOverlappedWR);
+	Device device(stateDialogOverlappedRD, pMask, stateDialogOverlappedWR);
+	device.registerRectifier(info);
 	while (true)
 	{
 		device.getFrameFromBuffer(rdSymbolsFrame);

@@ -73,7 +73,8 @@ enum class RectifierState : std::int8_t {
 	UNKNOWN_ERROR = 4,
 	NOT_INITIALIZED = 5,
 	ADDRESS_DOESNT_MATCH = 6,
-	DEVICE_ISNT_READY = 7
+	DATA_ADDRESS_DOESNT_MATCH = 7,
+	DEVICE_ISNT_READY = 8
 };
 
 //template<class T>
@@ -126,7 +127,8 @@ class Device {
 	static std::map<HANDLE, int> openedPortsCount;
 public:
 	//Device(RectifierInfo & info);
-	Device(RectifierInfo & info, OVERLAPPED * const stateDialogOverlappedRD, DWORD * pMask, OVERLAPPED * const stateDialogOverlappedWR);
+	Device(OVERLAPPED * const stateDialogOverlappedRD, DWORD * pMask, OVERLAPPED * const stateDialogOverlappedWR);
+	bool registerRectifier(RectifierInfo & info);
 	DWORD WaitForReadSingleObject(DWORD timeout);
 	BOOL resetReadEvent();
 	~Device();
@@ -137,10 +139,12 @@ private:
 	Device & operator=(Device&) = delete;
 
 public:
-	RectifierState readFromPort(std::vector<std::uint8_t>& rdSymbols);
+	//RectifierState readFromPort(std::vector<std::uint8_t>& rdSymbols);
 	void getReadFrameFromPort(DWORD signal, std::vector<std::uint8_t> & rdSymbols);
 	void sendCommand(std::vector<uint8_t> & frameSymbols, DWORD & dwBytesWritten, CString &log);
 	void sendReplyData(std::vector<uint8_t> frameSymbols, DWORD & dwBytesWritten, CString & log);
+	RectifierState readFromPort(std::vector<std::uint8_t>& rdSymbols, std::vector<uint8_t>& sendSymbols, DWORD & dwBytesWritten, CString & log);
+	RectifierState readFromPort(std::vector<std::uint8_t>& rdSymbols);
 	static bool isValidFrame(std::vector<std::uint8_t> & symbols);
 	static bool trimLeftSymbolsSequenceAsFrame(std::vector<std::uint8_t>& framePretenders);
 	static std::vector<std::uint8_t> Device::getFrameFromTail(std::vector<std::uint8_t> & symbolsTail);
@@ -155,7 +159,7 @@ private:
 	OVERLAPPED * overlappedWRPtr;
 	DWORD * mask;
 	std::vector<std::uint8_t> symbolsTail;
-	
+	std::map<int, int> registeredRectifiers;
 };
 
 struct SThread_param {
