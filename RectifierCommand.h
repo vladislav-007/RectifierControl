@@ -46,6 +46,10 @@ public:
 		static const uint8_t lowAByteIndex = 0x16;
 		static const uint8_t hiAByteIndex = 0x17;
 		static const uint8_t vByteIndex = 0x18;
+		static const uint8_t chan1Index = 0xb;
+		static const uint8_t chan2Index = 0xc;
+		static const uint8_t chan3Index = 0xd;
+		static const uint8_t chan4Index = 0xe;
 		_StateF05::_StateF05() {
 			stateBytes.resize(27);
 		}
@@ -89,7 +93,12 @@ public:
 		uint8_t getV() const {
 			return stateBytes[vByteIndex];
 		}
-
+		void setChan1(uint8_t v) {
+			stateBytes[chan1Index] = v;
+		}
+		uint8_t getChan1() const {
+			return stateBytes[chan1Index];
+		}
 	} StateF05;
 
 	
