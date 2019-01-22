@@ -703,6 +703,7 @@ UINT ThreadProc(LPVOID par) {
 	std::wstringstream ss;
 	ss << ++cnt;
 
+
 	Device device(param->mainOverlappedRD, param->pMask, param->mainOverlappedWR);
 	
 	while (1) {
