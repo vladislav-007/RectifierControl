@@ -285,26 +285,6 @@ void CRectifiersStateDialog::modelateRectifier(
 	DWORD * pMask,
 	OVERLAPPED * const stateDialogOverlappedWR,
 	RectifierInfo & info, CEdit & m_CEditTestLog, CString & log, int * state) {
-	//DCB dcbSerialParams = { 0 };
-	//dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
-	//if (!GetCommState(hSerial, &dcbSerialParams))
-	//{
-	//	//AfxMessageBox(L"getting state error", MB_YESNO | MB_ICONSTOP);
-	//	state[0] = 5;
-	//	CloseHandle(hSerial);
-	//	return;
-	//}
-	//dcbSerialParams.BaudRate = info.modeBoundRate;
-	//dcbSerialParams.ByteSize = info.modeByteSize;
-	//dcbSerialParams.StopBits = (BYTE)info.modeStopbits;
-	//dcbSerialParams.Parity = (BYTE)info.modeParity;
-	//if (!SetCommState(hSerial, &dcbSerialParams))
-	//{
-	//	log += L"error setting serial port state\n";
-	//	//m_CEditTestLog.SetWindowText(log);
-	//	//AfxMessageBox(L"getting state error", MB_YESNO | MB_ICONSTOP);
-	//}
-	
 	
 	std::wstringstream ss;
 	ss.clear();
@@ -314,9 +294,6 @@ void CRectifiersStateDialog::modelateRectifier(
 	std::wstring str1;
 	str1 = ss.str();
 	log += str1.c_str();
-	//m_CEditTestLog.SetWindowText(log);
-	//COMSTAT comstat;
-	//DWORD temp;
 	std::vector<std::uint8_t> rdSymbolsFrame;
 	//std::vector<std::uint8_t> symbolsTail;
 	std::vector<uint8_t> replyOKBytes = DeviceCommand::createReplyFrame(
@@ -422,10 +399,15 @@ void CRectifiersStateDialog::modelateRectifier(
 					else {
 						v = 0x20;
 					}
-					std::vector<uint8_t> reply_data = DeviceCommand::createRectifierStateF05(1, 2, 3, 3, 0x11, 0x11, 0, 0, addr, 0x0, v);
+					uint8_t channelState = 0x11;
+					if (v > 0x10) {
+						// overheat of module
+						channelState = 0x11 | 0x02;
+					} 
+
+					std::vector<uint8_t> reply_data = DeviceCommand::createRectifierStateF05(1, 2, 3, 3, channelState, 0x11, 0, 0, addr, 0x0, v);
 					std::vector<uint8_t> replyBytes = DeviceCommand::createReplyDataFrame(addr, 0x43, reply_data);
 					std::vector<uint8_t> frameSymbols = DeviceCommand::convertToASCIIFrame(replyBytes);
-					//std::vector<uint8_t> deviceStateFrame = { 0x3A,0x30,(uint8_t)(addr + 0x30),0x34,0x33,0x46,0x46,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x44,0x41,0x30,0x36,0x30,0x30,0x30,0x30,0x30,0x31,0x31,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x38,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x31,0x30,0x30,0x30,0x30,0x30,0x30,0x35,0x35,0x41,0x41,0x34,0x43,0x0D,0x0A };
 					device.sendReplyData(frameSymbols, dwBytesWritten, log);
 				}
 				else if (0x03 == prev_cmd_data.address && 0x00 == prev_cmd_data.command) {

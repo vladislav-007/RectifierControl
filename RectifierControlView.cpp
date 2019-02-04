@@ -99,7 +99,7 @@ void CRectifierControlView::OnDraw(CDC* pDC)
 		return;
 
 	// TODO: добавьте здесь код отрисовки для собственных данных
-	CString rectifierName(CA2T("Выпрямитель: ", CP_UTF8));
+	CString rectifierName(CA2T("", CP_UTF8));
 	// MessageBox(rectifierName);
 	int fontHeight = 32;
 	CFont normalFont;
