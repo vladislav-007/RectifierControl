@@ -39,6 +39,8 @@ BEGIN_MESSAGE_MAP(CRectifierControlApp, CWinApp)
 END_MESSAGE_MAP()
 
 SThread_param param;
+Reading_thread_param reading_param;
+
 // создание CRectifierControlApp
 
 CRectifierControlApp::CRectifierControlApp()
@@ -372,6 +374,9 @@ BOOL CRectifierControlApp::InitInstance()
 	if (rectInfos->begin() != rectInfos->begin()) {
 		RectifierInfo & info = (*rectInfos->begin()).second;
 	}
+	else {
+	}
+
 
 	param.mainOverlappedRD = &overlappedRD;
 	param.mainOverlappedWR = &overlappedWR;
@@ -380,6 +385,11 @@ BOOL CRectifierControlApp::InitInstance()
 
 	AfxBeginThread(ThreadProc, &param, THREAD_PRIORITY_NORMAL);
 
+	
+	reading_param.m_rectifierConfigs = &m_rectifierConfigs;
+	m_readThreadState = 0;
+	reading_param.state = &m_readThreadState;
+	AfxBeginThread(ReadingComPortThread, &reading_param, THREAD_PRIORITY_NORMAL);
 
 	return TRUE;
 }
@@ -387,15 +397,16 @@ BOOL CRectifierControlApp::InitInstance()
 int CRectifierControlApp::ExitInstance()
 {
 	//TODO: обработайте дополнительные ресурсы, которые могли быть добавлены
-	if (m_threadState > 0) {
+	if (m_threadState > 0 || m_readThreadState > 0) {
 		m_threadState = 2;
-		for (int i = 0; i < 10; ++i) {
-			Sleep(1);
-			if (m_threadState > 2)
+		m_readThreadState = 2;
+		for (int i = 1; i <= 100; ++i) {
+			Sleep(i);
+			if (m_threadState > 2 || m_readThreadState > 2)
 				break;
 		}
 
-		if (m_threadState == 3) {
+		if (m_threadState == 3 && m_readThreadState == 3) {
 			RectifierInfo & info = (*m_rectifierConfigs.begin()).second;
 			CloseHandle(info.hSerial);
 			//AfxMessageBox(CA2T("Поток остановлен", CP_UTF8));

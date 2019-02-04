@@ -80,6 +80,7 @@ private:
 	std::map<CString, COMMCONFIG> m_comportProperties;
 	std::map<int, RectifierInfo> m_rectifierConfigs;
 	WORD m_threadState;
+	WORD m_readThreadState;
 public:
 	void registerRectifier(CRectifierControlDoc * rectifierDoc);
 	std::map<int, RectifierInfo> & getRectifierInfos();

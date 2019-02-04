@@ -77,6 +77,24 @@ enum class RectifierState : std::int8_t {
 	DEVICE_ISNT_READY = 8
 };
 
+enum class PortState : std::int8_t {
+	PORT_UNKNOWN = 0,
+	PORT_READY = 1,
+	FRAME_SENDED = 2,
+	READ_TIMEOUT = 4,
+	READ_EMPTY_BUFFER = 5,
+	READ_SUCCEEDED = 7,
+	READ_ERROR = 4,
+};
+
+enum class DeviceCommunicationState : std::int8_t {
+	INIT_STATE = 0,
+	FRAME_SENDED = 2,
+	REPAY_FRAME_RECEIVED = 3,
+	REPLY_READ_TIMEOUT = 4,
+	READ_SUCCEEDED = 7
+};
+
 //template<class T>
 //std::ostream& operator<<(std::ostream& os, T enumValue)
 //{
@@ -98,12 +116,16 @@ struct CmdsToSend {
 
 struct RecivedData {
 	int status;
-	std::int8_t buffer[256];
+	std::vector<std::int8_t> buffer;
 };
 
 struct RectifierInfo {
 	RectifierState state = RectifierState::NOT_INITIALIZED;
-	//DeviceCommand::StateF07 stateF07;
+	DeviceCommunicationState communcationState = DeviceCommunicationState::INIT_STATE;
+	PortState portState = PortState::PORT_UNKNOWN;
+	OVERLAPPED * overlappedRD;
+	OVERLAPPED * overlappedWR;
+	DWORD * mask;
 	DeviceCommand::StateF05 stateF05;
 	int id;
 	CString name;
@@ -119,6 +141,7 @@ struct RectifierInfo {
 	CmdsToSend cmdToSend;
 	RecivedData recivedData;
 	CDocument * doc;
+	
 };
 
 
@@ -162,6 +185,30 @@ private:
 	std::map<int, int> registeredRectifiers;
 };
 
+class Comport {
+public:
+private:
+	Comport() = delete;
+	Comport & operator=(Comport&) = delete;
+
+public:
+	static PortState readPort(
+		HANDLE hSerial,
+		OVERLAPPED * const stateDialogOverlappedRD,
+		DWORD * pMask,
+		std::vector<std::uint8_t>& rdSymbols);
+	static PortState writePort(
+		HANDLE hSerial,
+		DWORD * pMask,
+		OVERLAPPED * const stateDialogOverlappedWR,
+		std::vector<std::uint8_t>& rdSymbols);
+private:
+	static std::vector<std::uint8_t> symbolsTail;
+	static bool isValidFrame(std::vector<std::uint8_t> & symbols);
+
+};
+
+
 struct SThread_param {
 	HWND wnd;
 	WORD * statePtr;
@@ -172,6 +219,12 @@ struct SThread_param {
 	OVERLAPPED * mainOverlappedRD;
 	DWORD * pMask;
 	OVERLAPPED * mainOverlappedWR;
+};
+
+struct Reading_thread_param {
+	HWND wnd;
+	WORD * state;
+	std::map<int, RectifierInfo> * m_rectifierConfigs;
 };
 
 
@@ -221,7 +274,7 @@ private:
 };
 
 
-
-UINT ThreadProc(LPVOID par );
+UINT ThreadProc(LPVOID par);
+UINT ReadingComPortThread(LPVOID par);
 
 #endif

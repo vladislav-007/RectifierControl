@@ -111,7 +111,7 @@ bool Device::registerRectifier(RectifierInfo & info)
 	LPCTSTR sPortName = info.comport;
 	size_t openedCount = Device::openedPorts.count(sPortName);
 	if (0 == openedCount) {
-		hSerial = ::CreateFile(sPortName, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, 0);
+		hSerial = ::CreateFile(sPortName, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING, NULL/*FILE_FLAG_OVERLAPPED*/, 0);
 		if (hSerial == INVALID_HANDLE_VALUE)
 		{
 			CString message;
@@ -178,7 +178,9 @@ bool Device::registerRectifier(RectifierInfo & info)
 		info.hSerial = hSerial;
 		openedPortsCount[hSerial] = openedPortsCount[hSerial] + 1;
 		registeredRectifiers[info.id] = info.id;
+		
 	}
+	info.communcationState = DeviceCommunicationState::INIT_STATE;
 	return true;
 }
 
@@ -286,17 +288,18 @@ void Device::sendCommand(std::vector<uint8_t> & frameSymbols, DWORD & dwBytesWri
 	const uint8_t * data = frameSymbols.data();
 	DWORD dwSize = static_cast<DWORD>(frameSymbols.size());
 
-	BOOL iRet = WriteFile(hSerial, data, dwSize, NULL, overlappedWRPtr);
-	DWORD signal = WaitForSingleObject(overlappedWRPtr->hEvent, 1000);	//приостановить поток, пока не завершится
+	//BOOL iRet = WriteFile(hSerial, data, dwSize, NULL, overlappedWRPtr);
+	BOOL iRet = WriteFile(hSerial, data, dwSize, &dwBytesWritten, NULL);
+	//DWORD signal = WaitForSingleObject(overlappedWRPtr->hEvent, 1000);	//приостановить поток, пока не завершится
 																	//перекрываемая операция WriteFile
 																	//если операция завершилась успешно, установить соответствующий флажок
 	std::wstringstream ss;
-	if ((signal == WAIT_OBJECT_0) && (GetOverlappedResult(hSerial, overlappedWRPtr, &dwBytesWritten, true))) {
-		ss << L"sent - OK \n/n" << std::endl;
-	}
-	else {
-		ss << L"Failed to send cm..." << std::endl;
-	}
+	//if ((signal == WAIT_OBJECT_0) && (GetOverlappedResult(hSerial, overlappedWRPtr, &dwBytesWritten, true))) {
+	//	ss << L"sent - OK \n/n" << std::endl;
+	//}
+	//else {
+	//	ss << L"Failed to send cm..." << std::endl;
+	//}
 
 	ss << dwSize << L" Bytes in string. " << std::endl << dwBytesWritten << L" Bytes sended. " << std::endl;
 	std::wstring str1;
@@ -600,12 +603,81 @@ void Device::getRectifierState(RectifierInfo & info, bool plusTime) {
 	std::vector<uint8_t> frameBytes = DeviceCommand::createCmdFrame(
 		info.address, 0x43, plusTime ? GET_DEVICE_STATE_05 : GET_CONCISE_DEVICE_STATE_07);
 	std::vector<uint8_t> frameSymbols = DeviceCommand::convertToASCIIFrame(frameBytes);
-	//Device::sendCommand(frameSymbols, dwBytesWritten, log);
-	//Sleep(500);
+	info.recivedData.buffer.clear();
+	Device::sendCommand(frameSymbols, dwBytesWritten, log);
+	Sleep(10);
+	if (dwBytesWritten > 0) {
+		info.communcationState = DeviceCommunicationState::FRAME_SENDED;
+	}
+	Sleep(10);
+
 	std::uint8_t modbus_addr;
 	std::uint8_t modbus_func;
 	std::uint8_t reply_code;
-	readFromPort(rdSymbols, frameSymbols, dwBytesWritten, log);
+
+	// wait for replay (should be read in separate  thread)
+	int count = 0;
+	while (info.communcationState == DeviceCommunicationState::FRAME_SENDED) {
+		Sleep(++count);
+		if (count > 100) {
+			break;
+		}
+	}
+
+	if (info.communcationState == DeviceCommunicationState::FRAME_SENDED) {
+		info.communcationState = DeviceCommunicationState::INIT_STATE;
+		info.state = RectifierState::FAILED_TO_GET_STATE;
+		return;
+	}
+
+	if (info.communcationState == DeviceCommunicationState::REPLY_READ_TIMEOUT) {
+		info.communcationState = DeviceCommunicationState::INIT_STATE;
+		info.state = RectifierState::FAILED_TO_GET_STATE;
+		return;
+	}
+
+	if (info.communcationState == DeviceCommunicationState::READ_SUCCEEDED) {
+		// check the whole frame received
+		rdSymbols.insert(rdSymbols.begin(), info.recivedData.buffer.begin(), info.recivedData.buffer.end());
+		if (!Device::isValidFrame(rdSymbols)) {
+			// try read again
+			info.communcationState = DeviceCommunicationState::FRAME_SENDED;
+			Sleep(1);
+			if (info.communcationState == DeviceCommunicationState::FRAME_SENDED) {
+				info.communcationState = DeviceCommunicationState::INIT_STATE;
+				info.state = RectifierState::FAILED_TO_GET_STATE;
+				return;
+			}
+
+			if (info.communcationState == DeviceCommunicationState::REPLY_READ_TIMEOUT) {
+				info.communcationState = DeviceCommunicationState::INIT_STATE;
+				info.state = RectifierState::FAILED_TO_GET_STATE;
+				return;
+			}
+			if (info.communcationState == DeviceCommunicationState::READ_SUCCEEDED) {
+				rdSymbols.insert(rdSymbols.end(), info.recivedData.buffer.begin(), info.recivedData.buffer.end());
+				if (!Device::isValidFrame(rdSymbols)) {
+					info.communcationState = DeviceCommunicationState::INIT_STATE;
+					info.state = RectifierState::FAILED_TO_GET_STATE;
+					return;
+				}
+			}
+			else {
+				info.communcationState = DeviceCommunicationState::INIT_STATE;
+				info.state = RectifierState::FAILED_TO_GET_STATE;
+				return;
+			}
+		}
+		else {
+			// OK
+		}
+
+	}
+	else {
+		info.state = RectifierState::FAILED_TO_GET_STATE;
+		return;
+	}
+
 	std::wstringstream ss;
 	ss << dwBytesWritten << L" Bytes in string. " << std::endl << dwBytesWritten << L" Bytes sended. " << std::endl;
 	std::wstring str1;
@@ -636,42 +708,77 @@ void Device::getRectifierState(RectifierInfo & info, bool plusTime) {
 		frameBytes = DeviceCommand::createCmdFrame(
 			info.address, 0x43, DeviceCommand::GIVE_PREPARED_DATA_01);
 		frameSymbols = DeviceCommand::convertToASCIIFrame(frameBytes);
-		// Device::sendCommand(frameSymbols, dwBytesWritten, log);
-		getFrameFromBuffer(rdSymbols);
-		if (!isValidFrame(rdSymbols)) {
-			readFromPort(rdSymbols, frameSymbols, dwBytesWritten, log);
-			ss.clear();
-			ss << dwBytesWritten << L" Bytes in string. " << std::endl << dwBytesWritten << L" Bytes sended. " << std::endl;
+		info.recivedData.buffer.clear();
+		Device::sendCommand(frameSymbols, dwBytesWritten, log);
+		Sleep(100);
+		if (dwBytesWritten > 0) {
+			info.communcationState = DeviceCommunicationState::FRAME_SENDED;
+		}
+		Sleep(1);
+		std::uint8_t modbus_addr;
+		std::uint8_t modbus_func;
+		std::uint8_t reply_code;
+
+		// wait for replay (should be read in separate  thread)
+		int count = 0;
+		while (info.communcationState == DeviceCommunicationState::FRAME_SENDED) {
+			Sleep(100);
+			if (count++ > 100) {
+				break;
+			}
+		}
+
+		if (info.communcationState == DeviceCommunicationState::FRAME_SENDED) {
+			info.communcationState = DeviceCommunicationState::INIT_STATE;
+			info.state = RectifierState::FAILED_TO_GET_STATE;
+			return;
+		}
+
+		if (info.communcationState == DeviceCommunicationState::REPLY_READ_TIMEOUT) {
+			info.communcationState = DeviceCommunicationState::INIT_STATE;
+			info.state = RectifierState::FAILED_TO_GET_STATE;
+			return;
+		}
+
+		if (info.communcationState == DeviceCommunicationState::READ_SUCCEEDED) {
+			// check the whole frame received
+			rdSymbols.clear();
+			rdSymbols.insert(rdSymbols.begin(), info.recivedData.buffer.begin(), info.recivedData.buffer.end());
+			if (!isValidFrame(rdSymbols)) {
+				readFromPort(rdSymbols, frameSymbols, dwBytesWritten, log);
+				ss.clear();
+				ss << dwBytesWritten << L" Bytes in string. " << std::endl << dwBytesWritten << L" Bytes sended. " << std::endl;
+				str1 = ss.str();
+				log += str1.c_str();
+			}
+			for (auto symbol : rdSymbols) {
+				ss << std::hex << symbol;
+			}
+			ss << std::endl;
 			str1 = ss.str();
 			log += str1.c_str();
-		}
-		for (auto symbol : rdSymbols) {
-			ss << std::hex << symbol;
-		}
-		ss << std::endl;
-		str1 = ss.str();
-		log += str1.c_str();
-		DeviceCommand::REPLY_DATA data;
-		DeviceCommand::parseResponseFrame(rdSymbols, modbus_addr, modbus_func, data);
-		if (data.data.size() > 0 && info.address == modbus_addr) {
-			if (plusTime) {
-				DeviceCommand::StateF05 state = DeviceCommand::parseDataForF05(data.data);
-				info.stateF05 = state;
+			DeviceCommand::REPLY_DATA data;
+			DeviceCommand::parseResponseFrame(rdSymbols, modbus_addr, modbus_func, data);
+			if (data.data.size() > 0 && info.address == modbus_addr) {
+				if (plusTime) {
+					DeviceCommand::StateF05 state = DeviceCommand::parseDataForF05(data.data);
+					info.stateF05 = state;
+				}
+				else {
+					DeviceCommand::StateF07 state = DeviceCommand::parseDataForF07(data.data);
+					info.stateF05.setHiA(state.aHi);
+					info.stateF05.setLowA(state.aLow);
+					info.stateF05.setV(state.V);
+				}
+				info.state = RectifierState::OK;
 			}
 			else {
-				DeviceCommand::StateF07 state = DeviceCommand::parseDataForF07(data.data);
-				info.stateF05.setHiA(state.aHi);
-				info.stateF05.setLowA(state.aLow);
-				info.stateF05.setV(state.V);
-			}
-			info.state = RectifierState::OK;
-		}
-		else {
-			if (info.address == modbus_addr) {
-				info.state = RectifierState::DATA_ADDRESS_DOESNT_MATCH;
-			}
-			else {
-				info.state = RectifierState::FAILED_TO_GET_STATE;
+				if (info.address == modbus_addr) {
+					info.state = RectifierState::DATA_ADDRESS_DOESNT_MATCH;
+				}
+				else {
+					info.state = RectifierState::FAILED_TO_GET_STATE;
+				}
 			}
 		}
 	}
@@ -697,8 +804,6 @@ UINT ThreadProc(LPVOID par) {
 	param = (SThread_param *)par;
 	param->statePtr[0] = 1;//выставили флаг, что поток работы с ком портом запущен
 	
-	
-
 	int cnt = 0;
 	std::wstringstream ss;
 	ss << ++cnt;
@@ -716,7 +821,7 @@ UINT ThreadProc(LPVOID par) {
 			RectifierInfo & info = rectInfo.second;
 			// for now only one port for all rectifiers
 			device.registerRectifier(info);
-			device.clearReciveBuffer();
+			//device.clearReciveBuffer();
 			device.getRectifierState(info, true);
 			info.recivedData.status = ++cnt;
 			PostMessage((HWND)param->wnd, WM_COMMAND, 7, 7);
@@ -724,6 +829,128 @@ UINT ThreadProc(LPVOID par) {
 		Sleep(1000);
 	}
 	param->statePtr[0] = 3;
+	AfxEndThread(0);
+	return 0;
+}
+
+UINT ReadingComPortThread(LPVOID par) {
+	Reading_thread_param * param = (Reading_thread_param *)par;
+	param->state[0] = 1; // thread reading port started
+	int cnt = 0;
+	std::wstringstream ss;
+	ss << ++cnt;
+	OVERLAPPED overlappedRD;
+	overlappedRD.hEvent = CreateEvent(NULL, true, false, NULL);
+	overlappedRD.Internal = 0;
+	overlappedRD.InternalHigh = 0;
+	overlappedRD.Offset = 0;
+	overlappedRD.OffsetHigh = 0;
+	DWORD mask;
+
+
+	while (1) {
+		if (param->state[0] == 2) {
+			//команда на выход из потока работы с ком портом
+			break;
+		}
+		// for now only one port for all rectifiers
+		for (auto & rectInfo : param->m_rectifierConfigs[0]) {
+			RectifierInfo & info = rectInfo.second;
+			if (info.communcationState == DeviceCommunicationState::FRAME_SENDED) {
+				// command sended try to read replay
+				std::vector<std::uint8_t> symbols;
+				DWORD trans;
+				DWORD rdBytes;
+				PortState portState;
+				unsigned char bufrd[1024];
+				BOOL res1 = ReadFile(info.hSerial, bufrd, 1024, &rdBytes, NULL);
+				if (res1) {
+					if (rdBytes > 0) {   // если что-то принято, выводим
+						for (DWORD i = 0; i < rdBytes; ++i) {
+							symbols.push_back(bufrd[i]);
+						}
+						portState = PortState::READ_SUCCEEDED;
+					}
+				}
+				else {
+					DWORD lastError = GetLastError();
+//					if (portState == PortState::READ_TIMEOUT) {
+					info.communcationState = DeviceCommunicationState::REPLY_READ_TIMEOUT;
+				}
+
+				if (portState == PortState::READ_SUCCEEDED) {
+						// put read bytes in buffer
+						info.recivedData.status += 1;
+						info.recivedData.buffer.insert(
+							info.recivedData.buffer.end(),
+							symbols.begin(),
+							symbols.end());
+						info.communcationState = DeviceCommunicationState::READ_SUCCEEDED;
+				}
+				else if (portState == PortState::READ_TIMEOUT) {
+					info.communcationState = DeviceCommunicationState::REPLY_READ_TIMEOUT;
+				}
+
+
+
+				//BOOL waitRes = WaitCommEvent(info.hSerial, &mask, &overlappedRD);
+				//if (waitRes) {
+
+				//}else {
+				//	DWORD lastError = GetLastError();
+				//	if (lastError == ERROR_IO_PENDING) {
+				//		//проверяем маску эвентов на эвент принятия байт
+				//		//unsigned char bufrd[1024];
+				//		//DWORD rdBytes;
+				//		//BOOL rdRes = ReadFile(info.hSerial, bufrd, 1024, NULL, &overlappedRD);
+				//		//if (rdRes != 0) {
+				//		//	DWORD lastError = GetLastError();
+				//		//}
+				//		//BOOL getRes = GetOverlappedResult(info.hSerial, &overlappedRD, &trans, false);
+				//		if (WaitForSingleObject(overlappedRD.hEvent, INFINITE) == WAIT_OBJECT_0) {
+				//			BOOL getRes = GetOverlappedResult(info.hSerial, &overlappedRD, &trans, true);
+				//		}
+				//	}
+				//}
+				//DWORD errors;
+				//COMSTAT stat;
+				////выполняем очищение ошибок с получением статуса порта
+				//ClearCommError(info.hSerial, &errors, &stat);
+				////проверяем маску эвентов на эвент принятия байт
+				//
+
+				//
+				//if ((mask & EV_RXCHAR) == EV_RXCHAR) {
+				//	//пытаемся прочитать максимальное количество байт
+				//	BOOL res1 = ReadFile(info.hSerial, bufrd, 1024, &rdBytes, &overlappedRD);
+				//	BOOL getRes = GetOverlappedResult(info.hSerial, &overlappedRD, &trans, false);
+				//	if (rdBytes > 0) {   // если что-то принято, выводим
+				//		for (DWORD i = 0; i < rdBytes; ++i) {
+				//			symbols.push_back(bufrd[i]);
+				//		}
+				//		portState = PortState::READ_SUCCEEDED;
+				//	}
+				//}
+				////portState = Comport::readPort(info.hSerial, &overlappedRD, &mask, symbols);
+				//if (portState == PortState::READ_SUCCEEDED) {
+				//	// put read bytes in buffer
+				//	info.recivedData.status += 1;
+				//	//a.insert(a.end(), b.begin(), b.end());
+				//	info.recivedData.buffer.insert(
+				//		info.recivedData.buffer.end(),
+				//		symbols.begin(),
+				//		symbols.end());
+				//	info.communcationState = DeviceCommunicationState::READ_SUCCEEDED;
+				//} else if (portState == PortState::READ_TIMEOUT){
+				//	info.communcationState = DeviceCommunicationState::REPLY_READ_TIMEOUT;
+				//}
+				info.recivedData.status = ++cnt;
+			}
+			//PostMessage((HWND)param->wnd, WM_COMMAND, 7, 7);
+		}
+		Sleep(10);
+	}
+	param->state[0] = 3;
 	AfxEndThread(0);
 	return 0;
 }
@@ -748,4 +975,47 @@ ComPort::~ComPort()
 BOOL ComPort::lock()
 {
 	return portBlock.Lock();
+}
+
+PortState Comport::readPort(HANDLE hSerial, OVERLAPPED * const overlappedRD, DWORD * pMask, std::vector<std::uint8_t>& rdSymbols)
+{
+	rdSymbols.clear();
+	unsigned char bufrd[1024];
+	DWORD numberOfBytesTransfered;
+	BOOL res = ReadFile(hSerial, bufrd, 1024, NULL, overlappedRD);
+	DWORD lastError = GetLastError();
+	if (res || (!res && (lastError == ERROR_IO_PENDING))) {
+		bool waitRes = GetOverlappedResult(hSerial, overlappedRD, &numberOfBytesTransfered, true);
+		if (waitRes == 0) {
+			lastError = GetLastError();
+			return PortState::READ_TIMEOUT;
+		}
+
+		if (numberOfBytesTransfered > 0) {   // если что-то принято, выводим
+			for (DWORD i = 0; i < numberOfBytesTransfered; ++i) {
+				rdSymbols.push_back(bufrd[i]);
+			}
+			PortState::READ_SUCCEEDED;
+		}
+		else {
+			return PortState::READ_EMPTY_BUFFER;
+		}
+	}
+	return PortState::READ_ERROR;
+}
+
+bool Comport::isValidFrame(std::vector<std::uint8_t> & symbols) {
+	if (symbols.empty() || symbols.size() < 3)
+		return false;
+
+	if (*symbols.cbegin() != ':' || symbols.back() != 0x0A)
+		return false;
+
+	if (symbols[symbols.size() - 2] != 0x0D)
+		return false;
+
+	if (std::find(symbols.begin() + 1, symbols.end(), ':') != symbols.end())
+		return false;
+
+	return true;
 }
