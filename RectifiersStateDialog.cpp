@@ -48,6 +48,7 @@ BEGIN_MESSAGE_MAP(CRectifiersStateDialog, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON2, &CRectifiersStateDialog::OnBnClickedButton2)
 	ON_BN_CLICKED(IDC_BUTTON3, &CRectifiersStateDialog::OnBnClickedButton3)
 	ON_WM_CLOSE()
+	ON_BN_CLICKED(IDC_CHECK1, &CRectifiersStateDialog::OnBnClickedCheck1)
 END_MESSAGE_MAP()
 
 
@@ -299,6 +300,13 @@ void CRectifiersStateDialog::modelateRectifier(
 	std::vector<uint8_t> replyOKBytes = DeviceCommand::createReplyFrame(
 		0x01, 0x43, 0x05, ReplyStatus::OK);
 	//std::vector<uint8_t> replyOKSymbols = DeviceCommand::convertToASCIIFrame(replyOKBytes);
+	//conrol byte
+	std::uint8_t controlByte = 0x01; // not defined pult
+	static uint8_t voltage = 0x78;
+	static uint8_t current = 0x10;
+	static bool testing = false;
+	const int memorySize = 512;
+	static std::vector<uint8_t> memory = std::vector<uint8_t>(memorySize);
 
 	state[0] = 1;
 	Device device(stateDialogOverlappedRD, pMask, stateDialogOverlappedWR);
@@ -339,16 +347,56 @@ void CRectifiersStateDialog::modelateRectifier(
 			else if (0x06 == cmd_data.address) {
 				// f0601 activate remote panel
 				// f0602 activate local control panel
+				if (cmd_data.command == 1) {
+					controlByte |= 0x03;
+				}
+				if (cmd_data.command == 2) {
+					controlByte &= (0xff&(~0x03));
+					controlByte |= 0x02;
+				}				
+				if (cmd_data.command == 3) {
+					// start program from 
+					controlByte |= 0x04;
+				}
+				if (cmd_data.command == 0x09) {
+					// stop program 
+					controlByte &= (0xff&(~0x04));
+				}
 				device.sendReplyData(DeviceCommand::createReplyOKFrameSymbols(addr), dwBytesWritten, log);
 				//sendCommand(hSerial, data, 1, dwBytesWritten, m_CEditTestLog, log);
 			}
 			else if (0x02 == cmd_data.address) {
-				// asked  state. Send normal reply :014305B7 0D 0A
+				// drive power module
+				if (cmd_data.command == 0x83) {
+					current = (cmd_data.data[1] << 8) + cmd_data.data[0];
+					voltage = cmd_data.data[2];
+					testing = false;
+				}
+				if (cmd_data.command == 0x80) {
+					current = 0;
+					voltage = 0;
+					testing = false;
+				}
+				if (cmd_data.command == 0x82) {
+					// start testing procedure
+					testing = true;
+				}
 				device.sendReplyData(DeviceCommand::createReplyOKFrameSymbols(addr), dwBytesWritten, log);
 				//sendCommand(hSerial, data, 1, dwBytesWritten, m_CEditTestLog, log);
 			}
 			else if (0x03 == cmd_data.address) {
-				// asked for rectifier state. Send normal reply :014305B7 0D 0A
+				// write programm in to the FRAM Send normal reply :014305B7 0D 0A
+				if (0x01 == cmd_data.command) {
+					// write program into the FRAM
+					int startAddress = cmd_data.data[0] + (cmd_data.data[1] << 8);
+					int numberOfBytes = cmd_data.data[2];
+					for (int i = 0; i < numberOfBytes; ++i) {
+						int addr = startAddress + i;
+						if (addr < memorySize) {
+							memory[addr] = cmd_data.data[3 + i];
+						}
+					}
+				}
 				Sleep(50);
 				device.sendReplyData(DeviceCommand::createReplyOKFrameSymbols(addr), dwBytesWritten, log);
 				//sendCommand(hSerial, data, 1, dwBytesWritten, m_CEditTestLog, log);
@@ -377,51 +425,61 @@ void CRectifiersStateDialog::modelateRectifier(
 				}
 				if (0x07 == prev_cmd_data.address) {
 					//std::vector<uint8_t> serialNumber = { 1,2,3,4,5,6,7,8,9,0,1,2 };
-					static uint8_t v = 0x78;
-					if (v < 0x250) {
-						v = v + 1;
+					
+					if (voltage < 0x250) {
+						voltage = voltage + 1;
 					}
 					else {
-						v = 0x20;
+						voltage = 0x20;
 					}
 
-					std::vector<uint8_t> reply_data = DeviceCommand::createRectifierStateF07(3, 0x11, 0x11, 0, 0, 0xE8, 0x03, v);
+					std::vector<uint8_t> reply_data = DeviceCommand::createRectifierStateF07(3, 0x11, 0x11, 0, 0, 0xE8, 0x03, voltage);
 					std::vector<uint8_t> replyBytes = DeviceCommand::createReplyDataFrame(addr, 0x43, reply_data);
 					std::vector<uint8_t> frameSymbols = DeviceCommand::convertToASCIIFrame(replyBytes);
 					//std::vector<uint8_t> rectifierStateFrame = { 0x3A, 0x30, 0x31, 0x34, 0x33, 0x45, 0x38, 0x30, 0x33, 0x37, 0x38, 0x30, 0x30, 0x34, 0x31, 0x33, 0x30, 0x33, 0x31, 0x33, 0x31, 0x33, 0x38, 0x32, 0x44, 0x33, 0x33, 0x33, 0x31, 0x33, 0x31, 0x33, 0x32, 0x33, 0x37, 0x33, 0x32, 0x33, 0x34, 0x42, 0x44, 0x0D, 0x0A };
 					device.sendReplyData(frameSymbols, dwBytesWritten, log);
 				}
 				else if (0x05 == prev_cmd_data.address) {
-					static uint8_t v = 0x78;
-					if (v < 0x250) {
-						v = v + 1;
+					//static uint8_t v = 0x78;
+					if (voltage < 0x250) {
+						voltage = voltage + 1;
 					}
 					else {
-						v = 0x20;
+						voltage = 0x20;
 					}
 					uint8_t channelState = 0x11;
-					if (v > 0x10) {
+					if (voltage > 0x10) {
 						// overheat of module
 						channelState = 0x11 | 0x02;
 					} 
-
-					std::vector<uint8_t> reply_data = DeviceCommand::createRectifierStateF05(1, 2, 3, 3, channelState, 0x11, 0, 0, addr, 0x0, v);
+					uint8_t currCurrent = current + addr;
+					uint8_t currVoltage = voltage;
+					currCurrent = testing ? 0 : currCurrent;
+					currVoltage = testing ? 0 : currVoltage;
+					std::vector<uint8_t> reply_data = DeviceCommand::createRectifierStateF05(
+						1, 2, 3, controlByte, channelState, 0x11, 0, 0, currCurrent&0xff, (currCurrent & 0xff00) >> 8, currVoltage);
 					std::vector<uint8_t> replyBytes = DeviceCommand::createReplyDataFrame(addr, 0x43, reply_data);
 					std::vector<uint8_t> frameSymbols = DeviceCommand::convertToASCIIFrame(replyBytes);
 					device.sendReplyData(frameSymbols, dwBytesWritten, log);
 				}
 				else if (0x03 == prev_cmd_data.address && 0x00 == prev_cmd_data.command) {
-					if (cmd_data.data[0] == 0x00 && cmd_data.data[1] == 0x00 && cmd_data.data[2] == 0x20) {
-						std::vector<uint8_t> deviceStateOn05Frame = { 0x3A,0x30,0x31,0x34,0x33,0x46,0x46,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x44,0x41,0x30,0x36,0x30,0x30,0x30,0x30,0x30,0x31,0x31,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x38,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x31,0x30,0x30,0x30,0x30,0x30,0x30,0x35,0x35,0x41,0x41,0x34,0x43,0x0D,0x0A };
-						device.sendReplyData(deviceStateOn05Frame, dwBytesWritten, log);
-					}
-					else if (cmd_data.data[0] == 0x20 && cmd_data.data[1] == 0x00 && cmd_data.data[2] == 0x20) {
-						std::vector<uint8_t> deviceMemoryFrom20 = { 0x3A,0x30,0x31,0x34,0x33,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x42,0x43,0x0D,0x0A };
-						device.sendReplyData(deviceMemoryFrom20, dwBytesWritten, log);
-					}
-					else {
-						std::vector<uint8_t> deviceMemoryFromAnyOther = { 0x3A,0x30,0x31,0x34,0x33,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x42,0x43,0x0D,0x0A };
-						device.sendReplyData(deviceMemoryFromAnyOther, dwBytesWritten, log);
+					// read FRAM
+					int startAddress = cmd_data.data[0] + (cmd_data.data[1] << 8);
+					int numberOfBytes = cmd_data.data[2];
+					std::vector<uint8_t> reply_data = DeviceCommand::createRectifierMemoryData(memory, startAddress, numberOfBytes);
+					std::vector<uint8_t> replyBytes = DeviceCommand::createReplyDataFrame(addr, 0x43, reply_data);
+					std::vector<uint8_t> frameSymbols = DeviceCommand::convertToASCIIFrame(replyBytes);
+					device.sendReplyData(frameSymbols, dwBytesWritten, log);
+				}
+				else if (0x03 == prev_cmd_data.address && 0x01 == prev_cmd_data.command) {
+					// write program into the FRAM
+					int startAddress = cmd_data.data[0] + (cmd_data.data[1] << 8);
+					int numberOfBytes = cmd_data.data[2];
+					for (int i = 0; i < numberOfBytes; ++i) {
+						int addr = startAddress + i;
+						if (addr < memorySize) {
+							memory[addr] = cmd_data.data[3 + i];
+						}
 					}
 				}
 				else {
@@ -477,4 +535,10 @@ void CRectifiersStateDialog::OnClose()
 	// TODO: Add your message handler code here and/or call default
 
 	CDialogEx::OnClose();
+}
+
+
+void CRectifiersStateDialog::OnBnClickedCheck1()
+{
+	// TODO: Add your control notification handler code here
 }

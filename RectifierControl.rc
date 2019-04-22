@@ -21,7 +21,7 @@
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_RUS)
 LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
-#pragma code_page(65001)
+#pragma code_page(1251)
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -109,80 +109,81 @@ END
 
 IDR_MAINFRAME MENU
 BEGIN
-    POPUP "&Р¤Р°Р№Р»"
+    POPUP "&Файл"
     BEGIN
-        MENUITEM "РЎРѕР·Рґ&Р°С‚СЊ\tCtrl+N",            ID_FILE_NEW
-        MENUITEM "&РћС‚РєСЂС‹С‚СЊ...\tCtrl+O",         ID_FILE_OPEN
-        MENUITEM "&Р—Р°РєСЂС‹С‚СЊ",                    ID_FILE_CLOSE
+        MENUITEM "Созд&ать\tCtrl+N",            ID_FILE_NEW
+        MENUITEM "&Открыть...\tCtrl+O",         ID_FILE_OPEN
+        MENUITEM "&Закрыть",                    ID_FILE_CLOSE
         MENUITEM SEPARATOR
-        MENUITEM "РќР°СЃ&С‚СЂРѕР№РєР° РїРµС‡Р°С‚Рё...",        ID_FILE_PRINT_SETUP
+        MENUITEM "Нас&тройка печати...",        ID_FILE_PRINT_SETUP
         MENUITEM SEPARATOR
-        MENUITEM "РџРѕСЃР»РµРґРЅРёР№ С„Р°Р№Р»",              ID_FILE_MRU_FILE1, GRAYED
+        MENUITEM "Последний файл",              ID_FILE_MRU_FILE1, GRAYED
         MENUITEM SEPARATOR
-        MENUITEM "Р’&С‹С…РѕРґ",                      ID_APP_EXIT
+        MENUITEM "В&ыход",                      ID_APP_EXIT
     END
-    POPUP "&Р’РёРґ"
+    POPUP "&Вид"
     BEGIN
-        MENUITEM "&РџР°РЅРµР»СЊ РёРЅСЃС‚СЂСѓРјРµРЅС‚РѕРІ",        ID_VIEW_TOOLBAR
-        MENUITEM "&РЎС‚СЂРѕРєР° СЃРѕСЃС‚РѕСЏРЅРёСЏ",           ID_VIEW_STATUS_BAR
+        MENUITEM "&Панель инструментов",        ID_VIEW_TOOLBAR
+        MENUITEM "&Строка состояния",           ID_VIEW_STATUS_BAR
     END
-    POPUP "РќР°СЃС‚СЂРѕР№РєРё"
+    POPUP "Настройки"
     BEGIN
-        MENUITEM "Р›РёРЅРёСЏ СЃРІСЏР·Рё",                 ID_LINK_OPTIONS
-        MENUITEM "&Р’С‹РїСЂСЏРјРёС‚РµР»Рё",                ID_RECTIFIER_STATE
+        MENUITEM "Линия связи",                 ID_LINK_OPTIONS
+        MENUITEM "&Выпрямители",                ID_RECTIFIER_STATE
     END
-    POPUP "&РЎРїСЂР°РІРєР°"
+    POPUP "&Справка"
     BEGIN
-        MENUITEM "&Рћ РїСЂРѕРµРєС‚Рµ RectifierControl...", ID_APP_ABOUT
+        MENUITEM "&О проекте RectifierControl...", ID_APP_ABOUT
     END
 END
 
 IDR_RectifierControTYPE MENU
 BEGIN
-    POPUP "&Р¤Р°Р№Р»"
+    POPUP "&Файл"
     BEGIN
-        MENUITEM "РЎРѕР·Рґ&Р°С‚СЊ\tCtrl+N",            ID_FILE_NEW
-        MENUITEM "&РћС‚РєСЂС‹С‚СЊ...\tCtrl+O",         ID_FILE_OPEN
-        MENUITEM "&Р—Р°РєСЂС‹С‚СЊ",                    ID_FILE_CLOSE
-        MENUITEM "РЎРѕ&С…СЂР°РЅРёС‚СЊ\tCtrl+S",          ID_FILE_SAVE
-        MENUITEM "РЎРѕС…СЂР°РЅРёС‚СЊ &РєР°Рє...",           ID_FILE_SAVE_AS
+        MENUITEM "Созд&ать\tCtrl+N",            ID_FILE_NEW
+        MENUITEM "&Открыть...\tCtrl+O",         ID_FILE_OPEN
+        MENUITEM "&Закрыть",                    ID_FILE_CLOSE
+        MENUITEM "Со&хранить\tCtrl+S",          ID_FILE_SAVE
+        MENUITEM "Сохранить &как...",           ID_FILE_SAVE_AS
         MENUITEM SEPARATOR
-        MENUITEM "&РџРµС‡Р°С‚СЊ...\tCtrl+P",          ID_FILE_PRINT
-        MENUITEM "РџСЂРµРґ&РІР°СЂРёС‚РµР»СЊРЅС‹Р№ РїСЂРѕСЃРјРѕС‚СЂ",   ID_FILE_PRINT_PREVIEW
-        MENUITEM "РќР°СЃ&С‚СЂРѕР№РєР° РїРµС‡Р°С‚Рё...",        ID_FILE_PRINT_SETUP
+        MENUITEM "&Печать...\tCtrl+P",          ID_FILE_PRINT
+        MENUITEM "Пред&варительный просмотр",   ID_FILE_PRINT_PREVIEW
+        MENUITEM "Нас&тройка печати...",        ID_FILE_PRINT_SETUP
         MENUITEM SEPARATOR
-        MENUITEM "РџРѕСЃР»РµРґРЅРёР№ С„Р°Р№Р»",              ID_FILE_MRU_FILE1, GRAYED
+        MENUITEM "Последний файл",              ID_FILE_MRU_FILE1, GRAYED
         MENUITEM SEPARATOR
-        MENUITEM "Р’&С‹С…РѕРґ",                      ID_APP_EXIT
+        MENUITEM "В&ыход",                      ID_APP_EXIT
     END
-    POPUP "&РџСЂР°РІРєР°"
+    POPUP "&Правка"
     BEGIN
-        MENUITEM "&РћС‚РјРµРЅРёС‚СЊ\tCtrl+Z",           ID_EDIT_UNDO
+        MENUITEM "&Отменить\tCtrl+Z",           ID_EDIT_UNDO
         MENUITEM SEPARATOR
-        MENUITEM "&Р’С‹СЂРµР·Р°С‚СЊ\tCtrl+X",           ID_EDIT_CUT
-        MENUITEM "&РљРѕРїРёСЂРѕРІР°С‚СЊ\tCtrl+C",         ID_EDIT_COPY
-        MENUITEM "Р’СЃС‚&Р°РІРёС‚СЊ\tCtrl+V",           ID_EDIT_PASTE
+        MENUITEM "&Вырезать\tCtrl+X",           ID_EDIT_CUT
+        MENUITEM "&Копировать\tCtrl+C",         ID_EDIT_COPY
+        MENUITEM "Вст&авить\tCtrl+V",           ID_EDIT_PASTE
     END
-    POPUP "&Р’РёРґ"
+    POPUP "&Вид"
     BEGIN
-        MENUITEM "&РџР°РЅРµР»СЊ РёРЅСЃС‚СЂСѓРјРµРЅС‚РѕРІ",        ID_VIEW_TOOLBAR
-        MENUITEM "&РЎС‚СЂРѕРєР° СЃРѕСЃС‚РѕСЏРЅРёСЏ",           ID_VIEW_STATUS_BAR
+        MENUITEM "&Панель инструментов",        ID_VIEW_TOOLBAR
+        MENUITEM "&Строка состояния",           ID_VIEW_STATUS_BAR
     END
-    POPUP "&РћРєРЅРѕ"
+    POPUP "&Окно"
     BEGIN
-        MENUITEM "&РќРѕРІРѕРµ РѕРєРЅРѕ",                 ID_WINDOW_NEW
-        MENUITEM "&РљР°СЃРєР°РґРѕРј",                   ID_WINDOW_CASCADE
-        MENUITEM "&Р СЏРґРѕРј",                      ID_WINDOW_TILE_HORZ
-        MENUITEM "&РЈРїРѕСЂСЏРґРѕС‡РёС‚СЊ Р·РЅР°С‡РєРё",         ID_WINDOW_ARRANGE
+        MENUITEM "&Новое окно",                 ID_WINDOW_NEW
+        MENUITEM "&Каскадом",                   ID_WINDOW_CASCADE
+        MENUITEM "&Рядом",                      ID_WINDOW_TILE_HORZ
+        MENUITEM "&Упорядочить значки",         ID_WINDOW_ARRANGE
     END
-    POPUP "&РќР°СЃС‚СЂРѕР№РєРё"
+    POPUP "&Настройки"
     BEGIN
-        MENUITEM "Р›РёРЅРёСЏ &СЃРІСЏР·Рё",                ID_LINK_OPTIONS
-        MENUITEM "~Р’~С‹РїСЂСЏРјРёС‚РµР»Рё",               ID_RECTIFIER_STATE
+        MENUITEM "Линия &связи",                ID_LINK_OPTIONS
+        MENUITEM "~В~ыпрямители",               ID_RECTIFIER_STATE
+        MENUITEM "Set Voltage",                 ID_OPEN_SET_PARAMETERS_DIALOG
     END
-    POPUP "&РЎРїСЂР°РІРєР°"
+    POPUP "&Справка"
     BEGIN
-        MENUITEM "&Рћ РїСЂРѕРµРєС‚Рµ RectifierControl...", ID_APP_ABOUT
+        MENUITEM "&О проекте RectifierControl...", ID_APP_ABOUT
     END
 END
 
@@ -218,13 +219,13 @@ END
 
 IDD_ABOUTBOX DIALOGEX 0, 0, 170, 62
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Рћ РїСЂРѕРµРєС‚Рµ RectifierControl"
+CAPTION "О проекте RectifierControl"
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     ICON            IDR_MAINFRAME,IDC_STATIC,14,14,21,20
-    LTEXT           "RectifierControl, РІРµСЂСЃРёСЏ 1.0",IDC_STATIC,42,14,114,8,SS_NOPREFIX
+    LTEXT           "RectifierControl, версия 1.0",IDC_STATIC,42,14,114,8,SS_NOPREFIX
     LTEXT           "Copyright (C) 2018",IDC_STATIC,42,26,114,8
-    DEFPUSHBUTTON   "РћРљ",IDOK,113,41,50,14,WS_GROUP
+    DEFPUSHBUTTON   "ОК",IDOK,113,41,50,14,WS_GROUP
 END
 
 IDD_SET_COMPORT_DIALOG DIALOGEX 0, 0, 309, 177
@@ -235,7 +236,7 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,198,156,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,252,156,50,14
     COMBOBOX        IDC_COMBO_COMPORT,59,24,66,30,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "РџРѕСЂС‚ СЃРІСЏР·Рё:",IDC_STATIC,14,25,41,8
+    LTEXT           "Порт связи:",IDC_STATIC,14,25,41,8
 END
 
 IDD_RECTIFIERS_STATE_DIALOG DIALOGEX 0, 0, 599, 265
@@ -252,6 +253,30 @@ BEGIN
     EDITTEXT        IDC_TEST_LOG,16,119,569,108,ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | WS_VSCROLL
     PUSHBUTTON      "Modeling rectifier",IDC_BUTTON2,308,22,108,16
     PUSHBUTTON      "Button3",IDC_BUTTON3,434,23,50,14
+END
+
+IDD_RECTIFIERCONTROLFVIEW DIALOGEX 0, 0, 459, 229
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
+BEGIN
+    LTEXT           "TODO: Place form controls on this dialog.",IDC_STATIC,24,42,280,8
+    CONTROL         "Разрешить управление",IDC_CHECK1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,189,31,95,10
+END
+
+IDD_SET_PARAMETERS_DIALOG DIALOGEX 0, 0, 281, 174
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Dialog"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    EDITTEXT        IDC_EDIT_V,51,47,98,25,ES_RIGHT | ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "",IDC_SPIN1,"msctls_updown32",UDS_ARROWKEYS,160,47,10,25
+    EDITTEXT        IDC_EDIT_A,51,76,97,23,ES_RIGHT | ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "",IDC_SPIN2,"msctls_updown32",UDS_ARROWKEYS,159,76,10,23
+    DEFPUSHBUTTON   "OK",IDOK,51,121,62,28
+    PUSHBUTTON      "Cancel",IDCANCEL,131,121,69,28
+    LTEXT           "Задать напряжение и ток",IDC_PARAMS_DLG_TEXT,17,14,248,21
+    LTEXT           "V:",IDC_PARAM_DLG_STATIC_V,26,47,16,25
+    LTEXT           "A:",IDC_PARAM_DLG_STATIC_A,26,76,16,23
 END
 
 
@@ -277,13 +302,13 @@ BEGIN
     BEGIN
         BLOCK "041904B0"
         BEGIN
-            VALUE "CompanyName", "TODO: <РќР°Р·РІР°РЅРёРµ РѕСЂРіР°РЅРёР·Р°С†РёРё>"
+            VALUE "CompanyName", "TODO: <Название организации>"
             VALUE "FileDescription", "RectifierControl"
             VALUE "FileVersion", "1.0.0.1"
             VALUE "InternalName", "RectifierControl.exe"
-            VALUE "LegalCopyright", "TODO: (c) <РќР°Р·РІР°РЅРёРµ РѕСЂРіР°РЅРёР·Р°С†РёРё>.  Р’СЃРµ РїСЂР°РІР° Р·Р°С‰РёС‰РµРЅС‹."
+            VALUE "LegalCopyright", "TODO: (c) <Название организации>.  Все права защищены."
             VALUE "OriginalFilename", "RectifierControl.exe"
-            VALUE "ProductName", "TODO: <РќР°Р·РІР°РЅРёРµ РїСЂРѕРґСѓРєС‚Р°>"
+            VALUE "ProductName", "TODO: <Название продукта>"
             VALUE "ProductVersion", "1.0.0.1"
         END
     END
@@ -325,6 +350,22 @@ BEGIN
         TOPMARGIN, 7
         BOTTOMMARGIN, 258
     END
+
+    IDD_RECTIFIERCONTROLFVIEW, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 452
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 222
+    END
+
+    IDD_SET_PARAMETERS_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 274
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 167
+    END
 END
 #endif    // APSTUDIO_INVOKED
 
@@ -344,6 +385,16 @@ BEGIN
     0
 END
 
+IDD_RECTIFIERCONTROLFVIEW AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_SET_PARAMETERS_DIALOG AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -352,7 +403,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDP_OLE_INIT_FAILED     "РќРµ СѓРґР°Р»РѕСЃСЊ РІС‹РїРѕР»РЅРёС‚СЊ РёРЅРёС†РёР°Р»РёР·Р°С†РёСЋ OLE.  РЈР±РµРґРёС‚РµСЃСЊ РІ С‚РѕРј, С‡С‚Рѕ РёСЃРїРѕР»СЊР·СѓСЋС‚СЃСЏ РїСЂР°РІРёР»СЊРЅС‹Рµ РІРµСЂСЃРёРё Р±РёР±Р»РёРѕС‚РµРє OLE."
+    IDP_OLE_INIT_FAILED     "Не удалось выполнить инициализацию OLE.  Убедитесь в том, что используются правильные версии библиотек OLE."
 END
 
 STRINGTABLE
@@ -364,7 +415,7 @@ END
 STRINGTABLE
 BEGIN
     AFX_IDS_APP_TITLE       "RectifierControl"
-    AFX_IDS_IDLEMESSAGE     "Р“РѕС‚РѕРІРѕ"
+    AFX_IDS_IDLEMESSAGE     "Готово"
 END
 
 STRINGTABLE
@@ -379,102 +430,102 @@ END
 
 STRINGTABLE
 BEGIN
-    ID_FILE_NEW             "РЎРѕР·РґР°РЅРёРµ РЅРѕРІРѕРіРѕ РґРѕРєСѓРјРµРЅС‚Р°\nРЎРѕР·РґР°С‚СЊ"
-    ID_FILE_OPEN            "РћС‚РєСЂС‹С‚РёРµ СЃСѓС‰РµСЃС‚РІСѓСЋС‰РµРіРѕ РґРѕРєСѓРјРµРЅС‚Р°\nРћС‚РєСЂС‹С‚СЊ"
-    ID_FILE_CLOSE           "Р—Р°РєСЂС‹С‚РёРµ Р°РєС‚РёРІРЅРѕРіРѕ РґРѕРєСѓРјРµРЅС‚Р°\nР—Р°РєСЂС‹С‚СЊ"
-    ID_FILE_SAVE            "РЎРѕС…СЂР°РЅРµРЅРёРµ Р°РєС‚РёРІРЅРѕРіРѕ РґРѕРєСѓРјРµРЅС‚Р°\nРЎРѕС…СЂР°РЅРёС‚СЊ"
-    ID_FILE_SAVE_AS         "РЎРѕС…СЂР°РЅРµРЅРёРµ Р°РєС‚РёРІРЅРѕРіРѕ РґРѕРєСѓРјРµРЅС‚Р° РїРѕРґ РЅРѕРІС‹Рј РёРјРµРЅРµРј\nРЎРѕС…СЂР°РЅРёС‚СЊ РєР°Рє"
-    ID_FILE_PAGE_SETUP      "РР·РјРµРЅРµРЅРёРµ РїР°СЂР°РјРµС‚СЂРѕРІ РїРµС‡Р°С‚Рё\nРџР°СЂР°РјРµС‚СЂС‹ СЃС‚СЂР°РЅРёС†С‹"
-    ID_FILE_PRINT_SETUP     "РР·РјРµРЅРµРЅРёРµ РїСЂРёРЅС‚РµСЂР° Рё РїР°СЂР°РјРµС‚СЂРѕРІ РїРµС‡Р°С‚Рё\nРќР°СЃС‚СЂРѕР№РєР° РїРµС‡Р°С‚Рё"
-    ID_FILE_PRINT           "РџРµС‡Р°С‚СЊ Р°РєС‚РёРІРЅРѕРіРѕ РґРѕРєСѓРјРµРЅС‚Р°\nРџРµС‡Р°С‚СЊ"
-    ID_FILE_PRINT_DIRECT    "РџРµС‡Р°С‚СЊ Р°РєС‚РёРІРЅРѕРіРѕ РґРѕРєСѓРјРµРЅС‚Р° СЃ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРµРј С‚РµРєСѓС‰РёС… РїР°СЂР°РјРµС‚СЂРѕРІ\nР‘С‹СЃС‚СЂР°СЏ РїРµС‡Р°С‚СЊ"
-    ID_FILE_PRINT_PREVIEW   "РџСЂРѕСЃРјРѕС‚СЂ РґРѕРєСѓРјРµРЅС‚Р° РІ РїРѕР»РЅРѕСЃС‚СЂР°РЅРёС‡РЅРѕРј СЂРµР¶РёРјРµ\nРџСЂРµРґРІР°СЂРёС‚РµР»СЊРЅС‹Р№ РїСЂРѕСЃРјРѕС‚СЂ"
+    ID_FILE_NEW             "Создание нового документа\nСоздать"
+    ID_FILE_OPEN            "Открытие существующего документа\nОткрыть"
+    ID_FILE_CLOSE           "Закрытие активного документа\nЗакрыть"
+    ID_FILE_SAVE            "Сохранение активного документа\nСохранить"
+    ID_FILE_SAVE_AS         "Сохранение активного документа под новым именем\nСохранить как"
+    ID_FILE_PAGE_SETUP      "Изменение параметров печати\nПараметры страницы"
+    ID_FILE_PRINT_SETUP     "Изменение принтера и параметров печати\nНастройка печати"
+    ID_FILE_PRINT           "Печать активного документа\nПечать"
+    ID_FILE_PRINT_DIRECT    "Печать активного документа с использованием текущих параметров\nБыстрая печать"
+    ID_FILE_PRINT_PREVIEW   "Просмотр документа в полностраничном режиме\nПредварительный просмотр"
 END
 
 STRINGTABLE
 BEGIN
-    ID_APP_ABOUT            "Р’С‹РІРѕРґ СЃРІРµРґРµРЅРёР№ Рѕ РїСЂРѕРіСЂР°РјРјРµ, РµРµ РІРµСЂСЃРёРё Рё Р°РІС‚РѕСЂСЃРєРёС… РїСЂР°РІР°С…\nРћ РїСЂРѕРіСЂР°РјРјРµ"
-    ID_APP_EXIT             "Р—Р°РІРµСЂС€РµРЅРёРµ СЂР°Р±РѕС‚С‹ РїСЂРёР»РѕР¶РµРЅРёСЏ СЃ Р·Р°РїСЂРѕСЃРѕРј РЅР° СЃРѕС…СЂР°РЅРµРЅРёРµ РґРѕРєСѓРјРµРЅС‚РѕРІ\nР’С‹С…РѕРґ"
+    ID_APP_ABOUT            "Вывод сведений о программе, ее версии и авторских правах\nО программе"
+    ID_APP_EXIT             "Завершение работы приложения с запросом на сохранение документов\nВыход"
 END
 
 STRINGTABLE
 BEGIN
-    ID_FILE_MRU_FILE1       "РћС‚РєСЂС‹С‚РёРµ РґР°РЅРЅРѕРіРѕ РґРѕРєСѓРјРµРЅС‚Р°"
-    ID_FILE_MRU_FILE2       "РћС‚РєСЂС‹С‚РёРµ РґР°РЅРЅРѕРіРѕ РґРѕРєСѓРјРµРЅС‚Р°"
-    ID_FILE_MRU_FILE3       "РћС‚РєСЂС‹С‚РёРµ РґР°РЅРЅРѕРіРѕ РґРѕРєСѓРјРµРЅС‚Р°"
-    ID_FILE_MRU_FILE4       "РћС‚РєСЂС‹С‚РёРµ РґР°РЅРЅРѕРіРѕ РґРѕРєСѓРјРµРЅС‚Р°"
-    ID_FILE_MRU_FILE5       "РћС‚РєСЂС‹С‚РёРµ РґР°РЅРЅРѕРіРѕ РґРѕРєСѓРјРµРЅС‚Р°"
-    ID_FILE_MRU_FILE6       "РћС‚РєСЂС‹С‚РёРµ РґР°РЅРЅРѕРіРѕ РґРѕРєСѓРјРµРЅС‚Р°"
-    ID_FILE_MRU_FILE7       "РћС‚РєСЂС‹С‚РёРµ РґР°РЅРЅРѕРіРѕ РґРѕРєСѓРјРµРЅС‚Р°"
-    ID_FILE_MRU_FILE8       "РћС‚РєСЂС‹С‚РёРµ РґР°РЅРЅРѕРіРѕ РґРѕРєСѓРјРµРЅС‚Р°"
-    ID_FILE_MRU_FILE9       "РћС‚РєСЂС‹С‚РёРµ РґР°РЅРЅРѕРіРѕ РґРѕРєСѓРјРµРЅС‚Р°"
-    ID_FILE_MRU_FILE10      "РћС‚РєСЂС‹С‚РёРµ РґР°РЅРЅРѕРіРѕ РґРѕРєСѓРјРµРЅС‚Р°"
-    ID_FILE_MRU_FILE11      "РћС‚РєСЂС‹С‚РёРµ РґР°РЅРЅРѕРіРѕ РґРѕРєСѓРјРµРЅС‚Р°"
-    ID_FILE_MRU_FILE12      "РћС‚РєСЂС‹С‚РёРµ РґР°РЅРЅРѕРіРѕ РґРѕРєСѓРјРµРЅС‚Р°"
-    ID_FILE_MRU_FILE13      "РћС‚РєСЂС‹С‚РёРµ РґР°РЅРЅРѕРіРѕ РґРѕРєСѓРјРµРЅС‚Р°"
-    ID_FILE_MRU_FILE14      "РћС‚РєСЂС‹С‚РёРµ РґР°РЅРЅРѕРіРѕ РґРѕРєСѓРјРµРЅС‚Р°"
-    ID_FILE_MRU_FILE15      "РћС‚РєСЂС‹С‚РёРµ РґР°РЅРЅРѕРіРѕ РґРѕРєСѓРјРµРЅС‚Р°"
-    ID_FILE_MRU_FILE16      "РћС‚РєСЂС‹С‚РёРµ РґР°РЅРЅРѕРіРѕ РґРѕРєСѓРјРµРЅС‚Р°"
+    ID_FILE_MRU_FILE1       "Открытие данного документа"
+    ID_FILE_MRU_FILE2       "Открытие данного документа"
+    ID_FILE_MRU_FILE3       "Открытие данного документа"
+    ID_FILE_MRU_FILE4       "Открытие данного документа"
+    ID_FILE_MRU_FILE5       "Открытие данного документа"
+    ID_FILE_MRU_FILE6       "Открытие данного документа"
+    ID_FILE_MRU_FILE7       "Открытие данного документа"
+    ID_FILE_MRU_FILE8       "Открытие данного документа"
+    ID_FILE_MRU_FILE9       "Открытие данного документа"
+    ID_FILE_MRU_FILE10      "Открытие данного документа"
+    ID_FILE_MRU_FILE11      "Открытие данного документа"
+    ID_FILE_MRU_FILE12      "Открытие данного документа"
+    ID_FILE_MRU_FILE13      "Открытие данного документа"
+    ID_FILE_MRU_FILE14      "Открытие данного документа"
+    ID_FILE_MRU_FILE15      "Открытие данного документа"
+    ID_FILE_MRU_FILE16      "Открытие данного документа"
 END
 
 STRINGTABLE
 BEGIN
-    ID_NEXT_PANE            "РџРµСЂРµС…РѕРґ Рє СЃР»РµРґСѓСЋС‰РµР№ РѕР±Р»Р°СЃС‚Рё РѕРєРЅР°\nРЎР»РµРґСѓСЋС‰Р°СЏ РѕР±Р»Р°СЃС‚СЊ"
-    ID_PREV_PANE            "Р’РѕР·РІСЂР°С‚ Рє РїСЂРµРґС‹РґСѓС‰РµР№ РѕР±Р»Р°СЃС‚Рё РѕРєРЅР°\nРџСЂРµРґС‹РґСѓС‰Р°СЏ РѕР±Р»Р°СЃС‚СЊ"
+    ID_NEXT_PANE            "Переход к следующей области окна\nСледующая область"
+    ID_PREV_PANE            "Возврат к предыдущей области окна\nПредыдущая область"
 END
 
 STRINGTABLE
 BEGIN
-    ID_WINDOW_NEW           "РћС‚РєСЂС‹С‚РёРµ РµС‰Рµ РѕРґРЅРѕРіРѕ РѕРєРЅР° РґР»СЏ Р°РєС‚РёРІРЅРѕРіРѕ РґРѕРєСѓРјРµРЅС‚Р°\nРќРѕРІРѕРµ РѕРєРЅРѕ"
-    ID_WINDOW_ARRANGE       "Р Р°СЃРїРѕР»РѕР¶РµРЅРёРµ Р·РЅР°С‡РєРѕРІ РІРґРѕР»СЊ РЅРёР¶РЅРµР№ РіСЂР°РЅРёС†С‹ РѕРєРЅР°\nРЈРїРѕСЂСЏРґРѕС‡РёС‚СЊ Р·РЅР°С‡РєРё"
-    ID_WINDOW_CASCADE       "Р Р°СЃРїРѕР»РѕР¶РµРЅРёРµ РѕРєРѕРЅ РґСЂСѓРі Р·Р° РґСЂСѓРіРѕРј (СЃ РїРµСЂРµРєСЂС‹С‚РёРµРј)\nРћРєРЅР° РєР°СЃРєР°РґРѕРј"
-    ID_WINDOW_TILE_HORZ     "Р Р°СЃРїРѕР»РѕР¶РµРЅРёРµ РѕРєРѕРЅ СЂСЏРґРѕРј (Р±РµР· РїРµСЂРµРєСЂС‹С‚РёСЏ)\nРћРєРЅР° СЂСЏРґРѕРј"
-    ID_WINDOW_TILE_VERT     "Р Р°СЃРїРѕР»РѕР¶РµРЅРёРµ РѕРєРѕРЅ СЂСЏРґРѕРј (Р±РµР· РїРµСЂРµРєСЂС‹С‚РёСЏ)\nРћРєРЅР° СЂСЏРґРѕРј"
-    ID_WINDOW_SPLIT         "Р Р°Р·РґРµР»РµРЅРёРµ Р°РєС‚РёРІРЅРѕРіРѕ РѕРєРЅР° РЅР° РѕР±Р»Р°СЃС‚Рё\nР Р°Р·РґРµР»РёС‚СЊ"
+    ID_WINDOW_NEW           "Открытие еще одного окна для активного документа\nНовое окно"
+    ID_WINDOW_ARRANGE       "Расположение значков вдоль нижней границы окна\nУпорядочить значки"
+    ID_WINDOW_CASCADE       "Расположение окон друг за другом (с перекрытием)\nОкна каскадом"
+    ID_WINDOW_TILE_HORZ     "Расположение окон рядом (без перекрытия)\nОкна рядом"
+    ID_WINDOW_TILE_VERT     "Расположение окон рядом (без перекрытия)\nОкна рядом"
+    ID_WINDOW_SPLIT         "Разделение активного окна на области\nРазделить"
 END
 
 STRINGTABLE
 BEGIN
-    ID_EDIT_CLEAR           "РЈРґР°Р»РµРЅРёРµ РІС‹РґРµР»РµРЅРЅРѕРіРѕ С„СЂР°РіРјРµРЅС‚Р°\nРЈРґР°Р»РёС‚СЊ"
-    ID_EDIT_CLEAR_ALL       "РџРѕР»РЅРѕРµ СѓРґР°Р»РµРЅРёРµ СЃРѕРґРµСЂР¶РёРјРѕРіРѕ РґРѕРєСѓРјРµРЅС‚Р°\nРЈРґР°Р»РёС‚СЊ РІСЃРµ"
-    ID_EDIT_COPY            "РљРѕРїРёСЂРѕРІР°РЅРёРµ РІС‹РґРµР»РµРЅРЅРѕРіРѕ С„СЂР°РіРјРµРЅС‚Р° РІ Р±СѓС„РµСЂ РѕР±РјРµРЅР°\nРљРѕРїРёСЂРѕРІР°С‚СЊ"
-    ID_EDIT_CUT             "РЈРґР°Р»РµРЅРёРµ РІС‹РґРµР»РµРЅРЅРѕРіРѕ С„СЂР°РіРјРµРЅС‚Р° РІ Р±СѓС„РµСЂ РѕР±РјРµРЅР°\nР’С‹СЂРµР·Р°С‚СЊ"
-    ID_EDIT_FIND            "РџРѕРёСЃРє СѓРєР°Р·Р°РЅРЅРѕРіРѕ С‚РµРєСЃС‚Р°\nРќР°Р№С‚Рё"
-    ID_EDIT_PASTE           "Р’СЃС‚Р°РІРєР° СЃРѕРґРµСЂР¶РёРјРѕРіРѕ Р±СѓС„РµСЂР° РѕР±РјРµРЅР°\nР’СЃС‚Р°РІРёС‚СЊ"
-    ID_EDIT_REPEAT          "РџРѕРІС‚РѕСЂРµРЅРёРµ РїРѕСЃР»РµРґРЅРµРіРѕ РґРµР№СЃС‚РІРёСЏ\nРџРѕРІС‚РѕСЂРёС‚СЊ"
-    ID_EDIT_REPLACE         "Р—Р°РјРµРЅР° Р·Р°РґР°РЅРЅРѕРіРѕ С‚РµРєСЃС‚Р° РґСЂСѓРіРёРј С‚РµРєСЃС‚РѕРј\nР—Р°РјРµРЅРёС‚СЊ"
-    ID_EDIT_SELECT_ALL      "Р’С‹РґРµР»РµРЅРёРµ РІСЃРµРіРѕ РґРѕРєСѓРјРµРЅС‚Р°\nР’С‹РґРµР»РёС‚СЊ РІСЃРµ"
-    ID_EDIT_UNDO            "РћС‚РјРµРЅР° РїРѕСЃР»РµРґРЅРµРіРѕ РґРµР№СЃС‚РІРёСЏ\nРћС‚РјРµРЅРёС‚СЊ"
-    ID_EDIT_REDO            "РџРѕРІС‚РѕСЂРЅРѕРµ РІС‹РїРѕР»РЅРµРЅРёРµ РїРѕСЃР»РµРґРЅРµРіРѕ РѕС‚РјРµРЅРµРЅРЅРѕРіРѕ РґРµР№СЃС‚РІРёСЏ\nР’РµСЂРЅСѓС‚СЊ"
+    ID_EDIT_CLEAR           "Удаление выделенного фрагмента\nУдалить"
+    ID_EDIT_CLEAR_ALL       "Полное удаление содержимого документа\nУдалить все"
+    ID_EDIT_COPY            "Копирование выделенного фрагмента в буфер обмена\nКопировать"
+    ID_EDIT_CUT             "Удаление выделенного фрагмента в буфер обмена\nВырезать"
+    ID_EDIT_FIND            "Поиск указанного текста\nНайти"
+    ID_EDIT_PASTE           "Вставка содержимого буфера обмена\nВставить"
+    ID_EDIT_REPEAT          "Повторение последнего действия\nПовторить"
+    ID_EDIT_REPLACE         "Замена заданного текста другим текстом\nЗаменить"
+    ID_EDIT_SELECT_ALL      "Выделение всего документа\nВыделить все"
+    ID_EDIT_UNDO            "Отмена последнего действия\nОтменить"
+    ID_EDIT_REDO            "Повторное выполнение последнего отмененного действия\nВернуть"
 END
 
 STRINGTABLE
 BEGIN
-    ID_VIEW_TOOLBAR         "РћС‚РѕР±СЂР°Р¶РµРЅРёРµ РёР»Рё СЃРєСЂС‹С‚РёРµ РїР°РЅРµР»Рё РёРЅСЃС‚СЂСѓРјРµРЅС‚РѕРІ\nРџР°РЅРµР»СЊ РёРЅСЃС‚СЂСѓРјРµРЅС‚РѕРІ"
-    ID_VIEW_STATUS_BAR      "РџРѕРєР°Р·Р°С‚СЊ РёР»Рё СЃРєСЂС‹С‚СЊ СЃС‚СЂРѕРєСѓ СЃРѕСЃС‚РѕСЏРЅРёСЏ\n РџРµСЂРµРєР»СЋС‡РµРЅРёРµ СЃС‚СЂРѕРєРё СЃРѕСЃС‚РѕСЏРЅРёСЏ"
+    ID_VIEW_TOOLBAR         "Отображение или скрытие панели инструментов\nПанель инструментов"
+    ID_VIEW_STATUS_BAR      "Показать или скрыть строку состояния\n Переключение строки состояния"
 END
 
 STRINGTABLE
 BEGIN
-    AFX_IDS_SCSIZE          "РР·РјРµРЅРµРЅРёРµ СЂР°Р·РјРµСЂР° РѕРєРЅР°"
-    AFX_IDS_SCMOVE          "РР·РјРµРЅРµРЅРёРµ РїРѕР»РѕР¶РµРЅРёСЏ РѕРєРЅР°"
-    AFX_IDS_SCMINIMIZE      "РЎРІРµСЂС‚С‹РІР°РЅРёРµ РѕРєРЅР° РІ Р·РЅР°С‡РѕРє"
-    AFX_IDS_SCMAXIMIZE      "Р Р°Р·РІРµСЂС‚С‹РІР°РЅРёРµ РѕРєРЅР° РґРѕ РїРѕР»РЅРѕРіРѕ СЂР°Р·РјРµСЂР°"
-    AFX_IDS_SCNEXTWINDOW    "РџРµСЂРµС…РѕРґ Рє СЃР»РµРґСѓСЋС‰РµРјСѓ РѕРєРЅСѓ РґРѕРєСѓРјРµРЅС‚Р°"
-    AFX_IDS_SCPREVWINDOW    "РџРµСЂРµС…РѕРґ Рє РїСЂРµРґС‹РґСѓС‰РµРјСѓ РѕРєРЅСѓ РґРѕРєСѓРјРµРЅС‚Р°"
-    AFX_IDS_SCCLOSE         "Р—Р°РєСЂС‹С‚РёРµ Р°РєС‚РёРІРЅРѕРіРѕ РѕРєРЅР° СЃ Р·Р°РїСЂРѕСЃРѕРј РЅР° СЃРѕС…СЂР°РЅРµРЅРёРµ РґРѕРєСѓРјРµРЅС‚РѕРІ"
+    AFX_IDS_SCSIZE          "Изменение размера окна"
+    AFX_IDS_SCMOVE          "Изменение положения окна"
+    AFX_IDS_SCMINIMIZE      "Свертывание окна в значок"
+    AFX_IDS_SCMAXIMIZE      "Развертывание окна до полного размера"
+    AFX_IDS_SCNEXTWINDOW    "Переход к следующему окну документа"
+    AFX_IDS_SCPREVWINDOW    "Переход к предыдущему окну документа"
+    AFX_IDS_SCCLOSE         "Закрытие активного окна с запросом на сохранение документов"
 END
 
 STRINGTABLE
 BEGIN
-    AFX_IDS_SCRESTORE       "Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РёСЃС…РѕРґРЅС‹С… СЂР°Р·РјРµСЂРѕРІ РѕРєРЅР°"
-    AFX_IDS_SCTASKLIST      "РџРµСЂРµС…РѕРґ Рє СЃРїРёСЃРєСѓ Р·Р°РґР°С‡"
-    AFX_IDS_MDICHILD        "РџРµСЂРµС…РѕРґ Рє РґР°РЅРЅРѕРјСѓ РѕРєРЅСѓ"
+    AFX_IDS_SCRESTORE       "Восстановление исходных размеров окна"
+    AFX_IDS_SCTASKLIST      "Переход к списку задач"
+    AFX_IDS_MDICHILD        "Переход к данному окну"
 END
 
 STRINGTABLE
 BEGIN
-    AFX_IDS_PREVIEW_CLOSE   "Р’С‹С…РѕРґ РёР· СЂРµР¶РёРјР° РїСЂРµРґРІР°СЂРёС‚РµР»СЊРЅРѕРіРѕ РїСЂРѕСЃРјРѕС‚СЂР°\nРћС‚РјРµРЅРёС‚СЊ РїСЂРѕСЃРјРѕС‚СЂ"
+    AFX_IDS_PREVIEW_CLOSE   "Выход из режима предварительного просмотра\nОтменить просмотр"
 END
 
 #endif    // Russian (Russia) resources

@@ -42,6 +42,32 @@ protected:
 	DECLARE_MESSAGE_MAP()
 	virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam);
 	virtual BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult);
+public:
+	virtual void OnInitialUpdate();
+private:
+	// Data member in your dialog class 
+	//CStatic m_V;
+	//CStatic m_A;
+	CButton m_EnableDrivingButton;
+	//CStatic m_SetVoltage;
+	CFont * mp_Font;
+	CFont * m_normalFont;
+	int m_fontHeight;
+	//CStatic m_SetCurrent;
+	bool doControl;
+	float m_Voltage;
+	float m_Current;
+	float m_VoltageToSet;
+	float m_CurrentToSet;
+
+protected:
+	afx_msg LRESULT OnIdSetParametersButton(WPARAM wParam, LPARAM lParam);
+public:
+//	afx_msg void OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized);
+protected:
+	afx_msg LRESULT OnMyMessage(WPARAM wParam, LPARAM lParam);
+public:
+	afx_msg void OnOpenSetParametersDialog();
 };
 
 #ifndef _DEBUG  // отладочна¤ верси¤ в RectifierControlView.cpp

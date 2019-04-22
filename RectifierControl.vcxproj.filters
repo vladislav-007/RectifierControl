@@ -63,6 +63,15 @@
     <ClInclude Include="scomport.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="RectifierControlFView.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SetParametersDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FloatCEdit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RectifierControl.cpp">
@@ -99,6 +108,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="scomport.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RectifierControlFView.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SetParametersDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FloatCEdit.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -40,6 +40,11 @@ protected:
 	afx_msg LRESULT OnUpdateRectifiers(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnUpdateRectifiers1(WPARAM wParam, LPARAM lParam);
 	virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam);
+public:
+	virtual BOOL DestroyWindow();
+	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
+	afx_msg void OnSize(UINT nType, int cx, int cy);
+	afx_msg void OnExitSizeMove();
 };
 
 

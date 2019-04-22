@@ -362,7 +362,7 @@ BOOL CRectifierControlApp::InitInstance()
 	pMainFrame->MDITile(MDITILE_HORIZONTAL);
 	pMainFrame->ShowWindow(m_nCmdShow);
 	pMainFrame->UpdateWindow();
-	
+	pMainFrame->MDITile(MDITILE_HORIZONTAL);
 	param.wnd = m_pMainWnd->GetSafeHwnd();
 	param.m_rectifierConfigs = &m_rectifierConfigs;
 	//param.portPtr = portPtr;
@@ -388,7 +388,7 @@ BOOL CRectifierControlApp::InitInstance()
 	
 	reading_param.m_rectifierConfigs = &m_rectifierConfigs;
 	m_readThreadState = 0;
-	reading_param.state = &m_readThreadState;
+	reading_param.readingThreadState = &m_readThreadState;
 	AfxBeginThread(ReadingComPortThread, &reading_param, THREAD_PRIORITY_NORMAL);
 
 	return TRUE;

@@ -19,6 +19,9 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWnd)
 	ON_WM_CREATE()
 	//ON_MESSAGE(UPDATE_RECTIFIERS, &CMainFrame::OnUpdateRectifiers)
 	//ON_REGISTERED_MESSAGE(UPDATE_RECTIFIERS1, &CMainFrame::OnUpdateRectifiers1)
+	ON_WM_SHOWWINDOW()
+	ON_WM_SIZE()
+	ON_WM_EXITSIZEMOVE()
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -74,7 +77,6 @@ BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
 		return FALSE;
 	// TODO: изменить класс Window или стили посредством изменения
 	//  CREATESTRUCT cs
-
 	return TRUE;
 }
 
@@ -140,4 +142,53 @@ BOOL CMainFrame::OnCommand(WPARAM wParam, LPARAM lParam)
 		return TRUE;
 	}
 	return CMDIFrameWnd::OnCommand(wParam, lParam);
+}
+
+
+BOOL CMainFrame::DestroyWindow()
+{
+	WINDOWPLACEMENT wp;
+	GetWindowPlacement(&wp);
+	AfxGetApp()->WriteProfileBinary(L"MainFrame", L"WP", (LPBYTE)&wp, sizeof(wp));
+
+	return CMDIFrameWnd::DestroyWindow();
+}
+
+
+void CMainFrame::OnShowWindow(BOOL bShow, UINT nStatus)
+{
+	CMDIFrameWnd::OnShowWindow(bShow, nStatus);
+
+	if (bShow && !IsWindowVisible())
+	{
+		WINDOWPLACEMENT *lwp;
+		UINT nl;
+
+		if (AfxGetApp()->GetProfileBinary(L"MainFrame", L"WP", (LPBYTE*)&lwp, &nl))
+		{
+			SetWindowPlacement(lwp);
+			delete[] lwp;
+		}
+	}
+
+}
+
+
+void CMainFrame::OnSize(UINT nType, int cx, int cy)
+{
+	CMDIFrameWnd::OnSize(nType, cx, cy);
+	if (SIZE_MAXIMIZED == nType) {
+		MDITile(MDITILE_HORIZONTAL);
+	}
+	// TODO: Add your message handler code here
+}
+
+
+void CMainFrame::OnExitSizeMove()
+{
+	// TODO: Add your message handler code here and/or call default
+
+	CMDIFrameWnd::OnExitSizeMove();
+	MDITile(MDITILE_HORIZONTAL);
+	//CMDIFrameWnd::MDICascade();
 }

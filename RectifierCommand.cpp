@@ -11,6 +11,7 @@ const DeviceCommand::DATA ACTIVATE_LOCAL_CONTROL_PANEL_06_02 = { 0x02/*size*/,0x
 const DeviceCommand::DATA TEST_POWER_MODULES_02_82 = { 0x02/*size*/,0x02/*addr*/,0x82/*cmd*/,std::vector<std::uint8_t>()/*data*/ };
 const DeviceCommand::DATA SWITCH_OFF_POWER_MODULE_02_80 = { 0x02/*size*/,0x02/*addr*/,0x80/*cmd*/,std::vector<std::uint8_t>()/*data*/ };
 const DeviceCommand::DATA GET_DEVICE_STATE_05 = { 0x01/*size*/,0x05/*addr*/,0x0/* cmd*/,std::vector<std::uint8_t>()/*data*/ };
+const DeviceCommand::DATA STOP_EXECUTING_PROGRAMM_06_09 = { 0x02, 0x06, 0x09, std::vector<std::uint8_t>() };
 
 DeviceCommand::DeviceCommand()
 {
@@ -247,6 +248,23 @@ std::vector<uint8_t> DeviceCommand::createRectifierStateF05(
 	return data;
 }
 
+std::vector<uint8_t> DeviceCommand::createRectifierMemoryData(
+	std::vector<uint8_t> memory,
+	int startAddress, unsigned int numberOfBytes)
+{
+	std::vector<uint8_t> data(numberOfBytes);
+	for (unsigned int i = 0; i < numberOfBytes; ++i) {
+		if (i + startAddress < memory.size()) {
+			data[i] = memory[startAddress + i];
+		}
+		else {
+			data[i] = 0xff;
+		}
+	}
+	
+	return data;
+}
+
 std::vector<uint8_t> DeviceCommand::convertToASCIIFrame(const std::vector<uint8_t> & frame_bytes) {
 	std::vector<uint8_t> ascii_array;
 	ascii_array.push_back(':'); // ASCII start
@@ -260,7 +278,9 @@ std::vector<uint8_t> DeviceCommand::convertToASCIIFrame(const std::vector<uint8_
 		ascii_array.push_back(second_simbol);
 		ascii_array.push_back(first_simbol);
 	}
-	//assert(check_LRC == 0);
+#ifdef DEBUG
+	assert(check_LRC == 0);
+#endif
 	ascii_array.push_back(0x0D);
 	ascii_array.push_back(0x0A);
 	return ascii_array;
@@ -434,6 +454,9 @@ std::uint8_t DeviceCommand::parseResponseCode(const std::vector<std::uint8_t> & 
 		crc += DeviceCommand::parseReplyCode(data_sub_vector, replyCode);
 	}
 
+	if (crc != 0) {
+		crc = 0;
+	}
 #ifdef DEBUG
 	assert(0 == crc);
 #endif
@@ -456,11 +479,14 @@ DeviceCommand::StateF07 DeviceCommand::parseDataForF07(const std::vector<std::ui
 DeviceCommand::StateF05 DeviceCommand::parseDataForF05(const std::vector<std::uint8_t> & data) {
 	//assert(data.size() == 0x08);
 	StateF05 state;
-	state.stateBytes[StateF05::hoursIndex] = data[StateF05::hoursIndex];
-	state.stateBytes[StateF05::minutesIndex] = data[StateF05::minutesIndex];
-	state.stateBytes[StateF05::secondsIndex] = data[StateF05::secondsIndex];
-	state.stateBytes[StateF05::lowAByteIndex] = data[StateF05::lowAByteIndex];
-	state.stateBytes[StateF05::hiAByteIndex] = data[StateF05::hiAByteIndex];
-	state.stateBytes[StateF05::vByteIndex] = data[StateF05::vByteIndex];
+	for (int i = 0; i < 27; ++i) {
+		state.stateBytes[i] = data[i];
+	}
+	//state.stateBytes[StateF05::hoursIndex] = data[StateF05::hoursIndex];
+	//state.stateBytes[StateF05::minutesIndex] = data[StateF05::minutesIndex];
+	//state.stateBytes[StateF05::secondsIndex] = data[StateF05::secondsIndex];
+	//state.stateBytes[StateF05::lowAByteIndex] = data[StateF05::lowAByteIndex];
+	//state.stateBytes[StateF05::hiAByteIndex] = data[StateF05::hiAByteIndex];
+	//state.stateBytes[StateF05::vByteIndex] = data[StateF05::vByteIndex];
 	return state;
 }

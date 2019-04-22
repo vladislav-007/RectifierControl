@@ -74,7 +74,12 @@ enum class RectifierState : std::int8_t {
 	NOT_INITIALIZED = 5,
 	ADDRESS_DOESNT_MATCH = 6,
 	DATA_ADDRESS_DOESNT_MATCH = 7,
-	DEVICE_ISNT_READY = 8
+	DEVICE_ISNT_READY = 8,
+	FAILED_TO_SET_REMOTE_CONTROL = 9,
+	FAILED_TO_SET_VOLTAGE = 10,
+	FAILED_TO_STOP_EXECUTING_PROGRAMM = 11,
+	FAILED_TO_START_EXECUTING_PROGRAMM = 12,
+	FAILED_TO_TEST_POWER_MODUES = 13
 };
 
 enum class PortState : std::int8_t {
@@ -89,8 +94,8 @@ enum class PortState : std::int8_t {
 
 enum class DeviceCommunicationState : std::int8_t {
 	INIT_STATE = 0,
-	FRAME_SENDED = 2,
-	REPAY_FRAME_RECEIVED = 3,
+	FRAME_SENT = 2,
+	REPLY_FRAME_RECEIVED = 3,
 	REPLY_READ_TIMEOUT = 4,
 	READ_SUCCEEDED = 7
 };
@@ -108,10 +113,25 @@ enum class DeviceCommunicationState : std::int8_t {
 //	return os << toString(enumValue);
 //}
 
-struct CmdsToSend {
-	int status;
-	std::int8_t cmd1[256];
-	std::int8_t cmd2[256];
+enum class RectifierCmd: std::int8_t {
+	SET_VOLTAGE_AND_CURRENT = 0,
+};
+
+enum class CmdStatus: std::int8_t {
+	EMPTY = 0,
+    PREPARED = 1,
+	SENT = 2,
+	SUCCEEDED = 3,
+	FAILED = 4
+};
+
+
+
+struct CmdToExecute {
+	CmdStatus status;
+	RectifierCmd rectifierCmd;
+	float voltage;
+	float current;
 };
 
 struct RecivedData {
@@ -121,7 +141,8 @@ struct RecivedData {
 
 struct RectifierInfo {
 	RectifierState state = RectifierState::NOT_INITIALIZED;
-	DeviceCommunicationState communcationState = DeviceCommunicationState::INIT_STATE;
+	int badStateSkipCount = 0;
+	DeviceCommunicationState communicationState = DeviceCommunicationState::INIT_STATE;
 	PortState portState = PortState::PORT_UNKNOWN;
 	OVERLAPPED * overlappedRD;
 	OVERLAPPED * overlappedWR;
@@ -138,7 +159,7 @@ struct RectifierInfo {
 	int modeByteSize;
 	Parity modeParity;
 	Stopbits modeStopbits;
-	CmdsToSend cmdToSend;
+	CmdToExecute cmdToSend;
 	RecivedData recivedData;
 	CDocument * doc;
 	
@@ -164,7 +185,7 @@ private:
 public:
 	//RectifierState readFromPort(std::vector<std::uint8_t>& rdSymbols);
 	void getReadFrameFromPort(DWORD signal, std::vector<std::uint8_t> & rdSymbols);
-	void sendCommand(std::vector<uint8_t> & frameSymbols, DWORD & dwBytesWritten, CString &log);
+	static void sendCommand(HANDLE hSerial, std::vector<uint8_t> & frameSymbols, DWORD & dwBytesWritten, CString &log);
 	void sendReplyData(std::vector<uint8_t> frameSymbols, DWORD & dwBytesWritten, CString & log);
 	RectifierState readFromPort(std::vector<std::uint8_t>& rdSymbols, std::vector<uint8_t>& sendSymbols, DWORD & dwBytesWritten, CString & log);
 	RectifierState readFromPort(std::vector<std::uint8_t>& rdSymbols);
@@ -173,7 +194,9 @@ public:
 	static std::vector<std::uint8_t> Device::getFrameFromTail(std::vector<std::uint8_t> & symbolsTail);
 	//void getRectifierState(RectifierInfo & info);
 
-	void getRectifierState(RectifierInfo & info, bool plusTime);
+	bool getRectifierState(RectifierInfo & info, bool plusTime);
+
+	bool executeCmd(RectifierInfo & info);
 
 	void clearReciveBuffer();
 private:
@@ -223,7 +246,7 @@ struct SThread_param {
 
 struct Reading_thread_param {
 	HWND wnd;
-	WORD * state;
+	WORD * readingThreadState;
 	std::map<int, RectifierInfo> * m_rectifierConfigs;
 };
 

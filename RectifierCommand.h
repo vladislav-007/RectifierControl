@@ -50,6 +50,8 @@ public:
 		static const uint8_t chan2Index = 0xc;
 		static const uint8_t chan3Index = 0xd;
 		static const uint8_t chan4Index = 0xe;
+		static const uint8_t controlByteIndex = 0x0a;
+
 		_StateF05::_StateF05() {
 			stateBytes.resize(27);
 		}
@@ -99,6 +101,37 @@ public:
 		uint8_t getChan1() const {
 			return stateBytes[chan1Index];
 		}
+		void setChan2(uint8_t v) {
+			stateBytes[chan2Index] = v;
+		}
+		uint8_t getChan2() const {
+			return stateBytes[chan2Index];
+		}
+		void setChan3(uint8_t v) {
+			stateBytes[chan3Index] = v;
+		}
+		uint8_t getChan3() const {
+			return stateBytes[chan3Index];
+		}
+		void setChan4(uint8_t v) {
+			stateBytes[chan4Index] = v;
+		}
+		uint8_t getChan4() const {
+			return stateBytes[chan4Index];
+		}
+		uint8_t getChan(int chanNumber) const {
+			chanNumber = chan1Index + chanNumber - 1;
+			return stateBytes[chanNumber];
+		}
+
+		uint8_t getControlByte() const {
+			return stateBytes[controlByteIndex];
+		}
+
+		uint8_t setControlByte(uint8_t controlByte) {
+			stateBytes[controlByteIndex] = controlByte;
+		}
+
 	} StateF05;
 
 	
@@ -144,6 +177,8 @@ public:
 	static std::vector<uint8_t> createRectifierStateF05(uint8_t hours, uint8_t minutes, uint8_t seconds,
 		uint8_t controlByte, uint8_t chan1, uint8_t chan2, uint8_t chan3, uint8_t chan4, uint8_t lowA, uint8_t hiA, uint8_t V);
 
+	static std::vector<uint8_t> createRectifierMemoryData(std::vector<uint8_t> memory, int startAddress, unsigned int numberOfBytes);
+
 	static std::vector<uint8_t> convertToASCIIFrame(const std::vector<uint8_t>& frame_bytes);
 
 	static std::vector<uint8_t> parseASCIIFrameToBytes(const std::vector<uint8_t>& ascii_bytes);
@@ -185,3 +220,7 @@ public:
 extern const DeviceCommand::DATA GET_CONCISE_DEVICE_STATE_07;
 extern const DeviceCommand::DATA GET_DEVICE_STATE_05;
 extern const DeviceCommand::DATA GET_RECTIFIER_STATE_10;
+extern const DeviceCommand::DATA ACTIVATE_REMOTE_CONTROL_PANEL_06_01;
+extern const DeviceCommand::DATA STOP_EXECUTING_PROGRAMM_06_09;
+extern const DeviceCommand::DATA TEST_POWER_MODULES_02_82;
+extern const DeviceCommand::DATA SWITCH_OFF_POWER_MODULE_02_80;

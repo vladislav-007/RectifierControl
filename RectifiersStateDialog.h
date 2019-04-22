@@ -39,6 +39,7 @@ public:
 	afx_msg void OnBnClickedButton3();
 	virtual void OnCancel();
 	afx_msg void OnClose();
+	afx_msg void OnBnClickedCheck1();
 };
 
 UINT StateThreadProc(LPVOID par);

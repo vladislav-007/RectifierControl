@@ -189,15 +189,18 @@
   <ItemGroup>
     <ClInclude Include="ChildFrm.h" />
     <ClInclude Include="ComportProperties.h" />
+    <ClInclude Include="FloatCEdit.h" />
     <ClInclude Include="MainFrm.h" />
     <ClInclude Include="RectifierCommand.h" />
     <ClInclude Include="RectifierControl.h" />
     <ClInclude Include="RectifierControlDoc.h" />
+    <ClInclude Include="RectifierControlFView.h" />
     <ClInclude Include="RectifierControlView.h" />
     <ClInclude Include="RectifiersStateDialog.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="scomport.h" />
     <ClInclude Include="SetComportDlg.h" />
+    <ClInclude Include="SetParametersDialog.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="tinyxml2.h" />
@@ -205,14 +208,17 @@
   <ItemGroup>
     <ClCompile Include="ChildFrm.cpp" />
     <ClCompile Include="ComportProperties.cpp" />
+    <ClCompile Include="FloatCEdit.cpp" />
     <ClCompile Include="MainFrm.cpp" />
     <ClCompile Include="RectifierCommand.cpp" />
     <ClCompile Include="RectifierControl.cpp" />
     <ClCompile Include="RectifierControlDoc.cpp" />
+    <ClCompile Include="RectifierControlFView.cpp" />
     <ClCompile Include="RectifierControlView.cpp" />
     <ClCompile Include="RectifiersStateDialog.cpp" />
     <ClCompile Include="scomport.cpp" />
     <ClCompile Include="SetComportDlg.cpp" />
+    <ClCompile Include="SetParametersDialog.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
