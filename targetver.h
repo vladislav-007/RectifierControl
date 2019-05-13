@@ -5,4 +5,9 @@
 // Если требуется выполнить сборку приложения для предыдущей версии Windows, включите WinSDKVer.h и
 // задайте для макроопределения _WIN32_WINNT значение поддерживаемой платформы перед вхождением SDKDDKVer.h.
 
+#include <winsdkver.h>
+
+#define WINVER 0x0601
+#define _WIN32_WINNT 0x0601
+
 #include <SDKDDKVer.h>

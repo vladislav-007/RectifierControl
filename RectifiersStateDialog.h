@@ -4,6 +4,19 @@
 
 // CRectifiersStateDialog dialog
 
+struct ModelateThreadParams {
+	HWND wnd;
+	int * state;
+	CString * log;
+	//HANDLE hSerial;
+	//DWORD * dwpByteTimeOut;
+	RectifierInfo rectifierConfig;
+	CEdit * m_CEditTestLog;
+	OVERLAPPED * stateDialogOverlappedRD;
+	DWORD * pMask;
+	OVERLAPPED * stateDialogOverlappedWR;
+};
+
 class CRectifiersStateDialog : public CDialogEx
 {
 	DECLARE_DYNAMIC(CRectifiersStateDialog)
@@ -29,6 +42,7 @@ public:
 private:
 	CStatic m_addressText;
 	int state;
+	ModelateThreadParams param;
 public:
 	afx_msg void OnBnClickedButton1();
 	CEdit m_CEditTestLog;

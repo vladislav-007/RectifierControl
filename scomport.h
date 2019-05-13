@@ -79,7 +79,10 @@ enum class RectifierState : std::int8_t {
 	FAILED_TO_SET_VOLTAGE = 10,
 	FAILED_TO_STOP_EXECUTING_PROGRAMM = 11,
 	FAILED_TO_START_EXECUTING_PROGRAMM = 12,
-	FAILED_TO_TEST_POWER_MODUES = 13
+	FAILED_TO_TEST_POWER_MODUES = 13,
+	SUCCESSFULLY_INITIALIZED = 14,
+	FAILED_TO_READ_PROGRAM = 15,
+	FAILED_TO_GET_DELAYED_REPLY = 16,
 };
 
 enum class PortState : std::int8_t {
@@ -89,7 +92,7 @@ enum class PortState : std::int8_t {
 	READ_TIMEOUT = 4,
 	READ_EMPTY_BUFFER = 5,
 	READ_SUCCEEDED = 7,
-	READ_ERROR = 4,
+	READ_ERROR = 8,
 };
 
 enum class DeviceCommunicationState : std::int8_t {
@@ -113,8 +116,10 @@ enum class DeviceCommunicationState : std::int8_t {
 //	return os << toString(enumValue);
 //}
 
-enum class RectifierCmd: std::int8_t {
+enum class RectifierCmd : std::int8_t {
 	SET_VOLTAGE_AND_CURRENT = 0,
+	START_EXISTIN_PROGRAM = 1,
+	STOP_EXISTIN_PROGRAM = 2,
 };
 
 enum class CmdStatus: std::int8_t {
@@ -148,6 +153,7 @@ struct RectifierInfo {
 	OVERLAPPED * overlappedWR;
 	DWORD * mask;
 	DeviceCommand::StateF05 stateF05;
+	std::vector<uint8_t> memory;
 	int id;
 	CString name;
 	int address;
@@ -162,7 +168,7 @@ struct RectifierInfo {
 	CmdToExecute cmdToSend;
 	RecivedData recivedData;
 	CDocument * doc;
-	
+	static CCriticalSection cs;
 };
 
 
@@ -197,6 +203,7 @@ public:
 	bool getRectifierState(RectifierInfo & info, bool plusTime);
 
 	bool executeCmd(RectifierInfo & info);
+	bool readProgram(RectifierInfo & info);
 
 	void clearReciveBuffer();
 private:

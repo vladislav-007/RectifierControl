@@ -14,6 +14,7 @@
 
 std::map<CString, HANDLE> Device::openedPorts;
 std::map<HANDLE, int> Device::openedPortsCount;
+CCriticalSection RectifierInfo::cs;
 
 char * taskStateStr[] = { ("Нет задания"),"Ожидание запроса на загрузку программы",
 	"Загрузка программы",
@@ -116,7 +117,7 @@ bool Device::registerRectifier(RectifierInfo & info)
 		if (hSerial == INVALID_HANDLE_VALUE)
 		{
 			CString message;
-			message.Format(L"Failed to open comport %s.", info.comport);
+			message.Format(L"Failed to open comport %s.", (LPCWSTR)info.comport);
 			if (GetLastError() == ERROR_FILE_NOT_FOUND)
 			{
 				message += L"Comport doesn't exists";
@@ -156,7 +157,7 @@ bool Device::registerRectifier(RectifierInfo & info)
 		{
 			// Handle the error. 
 			CString message;
-			message.Format(L"SetCommMask failed with error %d.\n", GetLastError());
+			message.Format(L"SetCommMask failed with error %u.\n", GetLastError());
 			AfxMessageBox(message, MB_YESNO | MB_ICONSTOP);
 			return false;
 		}
@@ -182,6 +183,7 @@ bool Device::registerRectifier(RectifierInfo & info)
 
 	}
 	info.communicationState = DeviceCommunicationState::INIT_STATE;
+	info.state = RectifierState::SUCCESSFULLY_INITIALIZED;
 	return true;
 }
 
@@ -247,7 +249,7 @@ void Device::getReadFrameFromPort(DWORD signal, std::vector<std::uint8_t> & rdSy
 			BOOL wasRead = false;
 			Sleep(1);
 			do {
-				ReadFile(hSerial, bufrd, 1, &size, overlappedRDPtr);     //прочитать байты из порта в буфер программы
+				BOOL innerRes = ReadFile(hSerial, bufrd, 1, &size, overlappedRDPtr);     //прочитать байты из порта в буфер программы
 				if (size > 0) {   // если что-то принято, выводим
 					for (DWORD i = 0; i < size; ++i) {
 						symbolsTail.push_back(bufrd[i]);
@@ -296,7 +298,7 @@ void Device::sendCommand(HANDLE hSerial, std::vector<uint8_t> & frameSymbols, DW
 	std::wstring str1;
 	str1 = ss.str();
 	log += str1.c_str();
-	
+
 }
 
 
@@ -339,12 +341,12 @@ RectifierState Device::readFromPort(std::vector<std::uint8_t> & rdSymbols, std::
 				symbolsTail.push_back(bufrd[i]);
 			}
 			DWORD numberOfBytesRead;
-			ReadFile(hSerial, bufrd, 1024, &numberOfBytesRead, overlappedRDPtr);
+			BOOL res2 = ReadFile(hSerial, bufrd, 1024, &numberOfBytesRead, overlappedRDPtr);
 			while (numberOfBytesRead > 0) {
 				for (DWORD i = 0; i < numberOfBytesRead; ++i) {
 					symbolsTail.push_back(bufrd[i]);
 				}
-				ReadFile(hSerial, bufrd, 1024, &numberOfBytesRead, overlappedRDPtr);
+				res2 = ReadFile(hSerial, bufrd, 1024, &numberOfBytesRead, overlappedRDPtr);
 			}
 		}
 		else {
@@ -711,11 +713,9 @@ bool Device::getRectifierState(RectifierInfo & info, bool plusTime) {
 			info.communicationState = DeviceCommunicationState::FRAME_SENT;
 		}
 		Sleep(1);
-		std::uint8_t modbus_addr;
-		std::uint8_t modbus_func;
 
 		// wait for replay (should be read in separate  thread)
-		int count = 0;
+		count = 0;
 		while (info.communicationState == DeviceCommunicationState::FRAME_SENT) {
 			Sleep(100);
 			if (count++ > 100) {
@@ -768,7 +768,7 @@ bool Device::getRectifierState(RectifierInfo & info, bool plusTime) {
 				info.state = RectifierState::OK;
 			}
 			else {
-				if (info.address == modbus_addr) {
+				if (info.address != modbus_addr) {
 					info.state = RectifierState::DATA_ADDRESS_DOESNT_MATCH;
 					return true;
 				}
@@ -824,6 +824,7 @@ void doLog(DWORD dwBytesWritten, std::vector<uint8_t> & rdSymbols, CString & log
 }
 
 bool setRemoteControl(HANDLE hSerial, RectifierInfo & info, std::vector<uint8_t> & rdSymbols, CString & log) {
+	rdSymbols.clear();
 	// set control to remote pult
 	DWORD dwBytesWritten;
 	std::vector<uint8_t> frameBytes = DeviceCommand::createCmdFrame(
@@ -948,8 +949,8 @@ bool writeVoltageProgram(HANDLE hSerial, RectifierInfo & info, std::vector<uint8
 		voltageData.push_back(b);
 	}
 	std::vector<uint8_t> programStepData = createProgramStepData(0, voltageData);
-	
-	DeviceCommand::DATA SET_VOLTAGE_PROGRAM_STEP_03_01 = {(uint8_t)(programStepData[2] + (uint8_t)0x05)/*size*/,(uint8_t)0x03/*addr*/,(uint8_t)0x01/*cmd*/, programStepData };
+
+	DeviceCommand::DATA SET_VOLTAGE_PROGRAM_STEP_03_01 = { (uint8_t)(programStepData[2] + (uint8_t)0x05)/*size*/,(uint8_t)0x03/*addr*/,(uint8_t)0x01/*cmd*/, programStepData };
 	std::vector<uint8_t> frameBytes = DeviceCommand::createCmdFrame(info.address, 0x43, SET_VOLTAGE_PROGRAM_STEP_03_01);
 	std::vector<uint8_t> frameSymbols = DeviceCommand::convertToASCIIFrame(frameBytes);
 	info.recivedData.buffer.clear();
@@ -1030,6 +1031,116 @@ bool writeVoltageProgram(HANDLE hSerial, RectifierInfo & info, std::vector<uint8
 	info.cmdToSend.status = CmdStatus::SUCCEEDED;
 	return false;
 }
+bool sendFrame(HANDLE hSerial, RectifierInfo & info, std::vector<uint8_t> frameBytes,
+	std::vector<uint8_t> & rdSymbols, CString & log, DWORD & dwBytesWritten, bool checkForReply = true) {
+	rdSymbols.clear();
+	std::vector<uint8_t> frameSymbols = DeviceCommand::convertToASCIIFrame(frameBytes);
+	info.recivedData.buffer.clear();
+	Device::sendCommand(hSerial, frameSymbols, dwBytesWritten, log);
+	setFrameIsSentFlag(info, dwBytesWritten);
+	std::uint8_t modbus_addr;
+	std::uint8_t modbus_func;
+	std::uint8_t reply_code;
+
+	// wait for replay (while is being read in separate thread)
+	waiteForReply(info);
+
+	// check for error
+	if (checkForError(info)) {
+		return true;
+	}
+	if (info.communicationState == DeviceCommunicationState::READ_SUCCEEDED) {
+		// check the whole frame received
+		rdSymbols.insert(rdSymbols.begin(), info.recivedData.buffer.begin(), info.recivedData.buffer.end());
+		if (!Device::isValidFrame(rdSymbols)) {
+			// try read again
+			info.communicationState = DeviceCommunicationState::FRAME_SENT;
+			waiteForReply(info);
+			if (checkForError(info)) {
+				return true;
+			}
+
+			if (info.communicationState == DeviceCommunicationState::READ_SUCCEEDED) {
+				rdSymbols.insert(rdSymbols.end(), info.recivedData.buffer.begin(), info.recivedData.buffer.end());
+				// check the whole frame received (if not - return an error)
+				if (!Device::isValidFrame(rdSymbols)) {
+					info.communicationState = DeviceCommunicationState::INIT_STATE;
+					// failed to send command 
+					info.cmdToSend.status = CmdStatus::FAILED;
+					return true;
+				}
+			}
+			else {
+				info.communicationState = DeviceCommunicationState::INIT_STATE;
+				// failed to send command 
+				info.cmdToSend.status = CmdStatus::FAILED;
+				return true;
+			}
+		}
+		else {
+			// OK
+		}
+	}
+	else {
+		return true;
+	}
+
+	doLog(dwBytesWritten, rdSymbols, log);
+
+	if (checkForReply) {
+		// check for reply is OK (code == 5)
+		if (!rdSymbols.empty()) {
+			DeviceCommand::parseResponseCode(rdSymbols, modbus_addr, modbus_func, reply_code);
+			if (reply_code != 5) {
+				// failed to send command 
+				info.cmdToSend.status = CmdStatus::FAILED;
+				return true;
+			}
+			if (modbus_addr != info.address) {
+				// failed to send command 
+				info.cmdToSend.status = CmdStatus::FAILED;
+				return true;
+			}
+		}
+		else {
+			return true;
+		}
+	}
+	return false;
+}
+bool Device::readProgram(RectifierInfo & info) {
+	CString log;
+	std::vector<uint8_t> rdSymbols;
+	// read only first program step (assume second step is null)
+	std::vector<uint8_t> programFirstStepAddrSize = { 0/*addr low byte*/, 0/*addr hi byte*/, 8/*bytes to read*/ };
+	DeviceCommand::DATA READ_FIRST_PROGRAM_STEP_03_00 =
+	{ (uint8_t)0x05/*size*/,(uint8_t)0x03/*addr*/,(uint8_t)0x00/*cmd*/, programFirstStepAddrSize };
+	std::vector<uint8_t> frameBytes = DeviceCommand::createCmdFrame(info.address, 0x43, READ_FIRST_PROGRAM_STEP_03_00);
+	DWORD dwBytesWritten;
+	if (sendFrame(info.hSerial, info, frameBytes, rdSymbols, log, dwBytesWritten)) {
+		info.state = RectifierState::FAILED_TO_READ_PROGRAM;
+		return true;
+	}
+
+	// L"Send command 0x01";
+	frameBytes = DeviceCommand::createCmdFrame(
+		info.address, 0x43, DeviceCommand::GIVE_PREPARED_DATA_01);
+	if (sendFrame(info.hSerial, info, frameBytes, rdSymbols, log, dwBytesWritten, false)) {
+		info.state = RectifierState::FAILED_TO_GET_DELAYED_REPLY;
+		return true;
+	}
+
+	std::uint8_t modbus_addr;
+	std::uint8_t modbus_func;
+	DeviceCommand::REPLY_DATA data;
+	// parse program data
+	DeviceCommand::parseResponseFrame(rdSymbols, modbus_addr, modbus_func, data);
+	if (data.data.size() > 0 && info.address == modbus_addr) {
+		info.memory = data.data;
+	}
+	return false;
+}
+
 
 bool setStartProgram(HANDLE hSerial, RectifierInfo & info, std::vector<uint8_t> & rdSymbols, CString & log) {
 	rdSymbols.clear();
@@ -1201,82 +1312,6 @@ bool stopExecutingProgram(HANDLE hSerial, RectifierInfo & info, std::vector<uint
 	return false;
 }
 
-
-bool sendFrame(HANDLE hSerial, RectifierInfo & info, std::vector<uint8_t> frameBytes, 
-	std::vector<uint8_t> & rdSymbols, CString & log, DWORD & dwBytesWritten) {
-	std::vector<uint8_t> frameSymbols = DeviceCommand::convertToASCIIFrame(frameBytes);
-	info.recivedData.buffer.clear();
-	Device::sendCommand(hSerial, frameSymbols, dwBytesWritten, log);
-	setFrameIsSentFlag(info, dwBytesWritten);
-	std::uint8_t modbus_addr;
-	std::uint8_t modbus_func;
-	std::uint8_t reply_code;
-
-	// wait for replay (while is being read in separate thread)
-	waiteForReply(info);
-
-	// check for error
-	if (checkForError(info)) {
-		return true;
-	}
-	if (info.communicationState == DeviceCommunicationState::READ_SUCCEEDED) {
-		// check the whole frame received
-		rdSymbols.insert(rdSymbols.begin(), info.recivedData.buffer.begin(), info.recivedData.buffer.end());
-		if (!Device::isValidFrame(rdSymbols)) {
-			// try read again
-			info.communicationState = DeviceCommunicationState::FRAME_SENT;
-			waiteForReply(info);
-			if (checkForError(info)) {
-				return true;
-			}
-
-			if (info.communicationState == DeviceCommunicationState::READ_SUCCEEDED) {
-				rdSymbols.insert(rdSymbols.end(), info.recivedData.buffer.begin(), info.recivedData.buffer.end());
-				// check the whole frame received (if not - return an error)
-				if (!Device::isValidFrame(rdSymbols)) {
-					info.communicationState = DeviceCommunicationState::INIT_STATE;
-					// failed to send command 
-					info.cmdToSend.status = CmdStatus::FAILED;
-					return true;
-				}
-			}
-			else {
-				info.communicationState = DeviceCommunicationState::INIT_STATE;
-				// failed to send command 
-				info.cmdToSend.status = CmdStatus::FAILED;
-				return true;
-			}
-		}
-		else {
-			// OK
-		}
-	}
-	else {
-		return true;
-	}
-
-	doLog(dwBytesWritten, rdSymbols, log);
-
-	// check for reply is OK (code == 5)
-	if (!rdSymbols.empty()) {
-		DeviceCommand::parseResponseCode(rdSymbols, modbus_addr, modbus_func, reply_code);
-		if (reply_code != 5) {
-			// failed to send command 
-			info.cmdToSend.status = CmdStatus::FAILED;
-			return true;
-		}
-		if (modbus_addr != info.address) {
-			// failed to send command 
-			info.cmdToSend.status = CmdStatus::FAILED;
-			return true;
-		}
-	}
-	else {
-		return true;
-	}
-	return false;
-}
-
 bool testDevice(HANDLE hSerial, RectifierInfo & info, std::vector<uint8_t> & rdSymbols, CString & log) {
 	rdSymbols.clear();
 	DWORD dwBytesWritten;
@@ -1305,7 +1340,7 @@ bool Device::executeCmd(RectifierInfo & info) {
 		return false;
 	}
 
-//	DWORD dwBytesWritten;    // тут будет количество собственно переданных байт
+	//	DWORD dwBytesWritten;    // тут будет количество собственно переданных байт
 	CString log;
 
 	// clear buffer
@@ -1329,7 +1364,7 @@ bool Device::executeCmd(RectifierInfo & info) {
 				return true;
 			}
 			// check that remote control is activated
-			if ((info.stateF05.getControlByte() & 0x03) != 0x03 ) {
+			if ((info.stateF05.getControlByte() & 0x03) != 0x03) {
 				info.state = RectifierState::FAILED_TO_SET_REMOTE_CONTROL;
 				info.cmdToSend.status = CmdStatus::FAILED;
 				return true;
@@ -1362,7 +1397,8 @@ bool Device::executeCmd(RectifierInfo & info) {
 					info.cmdToSend.status = CmdStatus::FAILED;
 					return true;
 				}
-			} else {
+			}
+			else {
 				// test device
 				if (testDevice(hSerial, info, rdSymbols, log)) {
 					info.cmdToSend.status = CmdStatus::FAILED;
@@ -1375,11 +1411,113 @@ bool Device::executeCmd(RectifierInfo & info) {
 				info.cmdToSend.status = CmdStatus::FAILED;
 				return true;
 			}
+			// read program from
+			if (readProgram(info)) {
+				info.state = RectifierState::FAILED_TO_START_EXECUTING_PROGRAMM;
+				info.cmdToSend.status = CmdStatus::FAILED;
+				return true;
+			}
+			break;
+		}
+		return false;
+
+	case RectifierCmd::START_EXISTIN_PROGRAM:
+		switch (info.cmdToSend.status) {
+		case CmdStatus::PREPARED:
+			// send command to set remote control
+			if (setRemoteControl(hSerial, info, rdSymbols, log)) {
+				// some error occured
+				// failed to send command 
+				info.cmdToSend.status = CmdStatus::FAILED;
+				return true;
+			}
+			if (getRectifierState(info, true)) {
+				//some error occurred
+				info.state = RectifierState::FAILED_TO_GET_STATE;
+				info.cmdToSend.status = CmdStatus::FAILED;
+				return true;
+			}
+			// check that remote control is activated
+			if ((info.stateF05.getControlByte() & 0x03) != 0x03) {
+				info.state = RectifierState::FAILED_TO_SET_REMOTE_CONTROL;
+				info.cmdToSend.status = CmdStatus::FAILED;
+				return true;
+			}
+
+			if ((info.stateF05.getControlByte() & 0x04) == 0x04) {
+				// stop executing program 
+				if (stopExecutingProgram(hSerial, info, rdSymbols, log)) {
+					info.state = RectifierState::FAILED_TO_STOP_EXECUTING_PROGRAMM;
+					info.cmdToSend.status = CmdStatus::FAILED;
+					return true;
+				}
+				// send command to set remote control
+				if (setRemoteControl(hSerial, info, rdSymbols, log)) {
+					// some error occured
+					// failed to send command
+					info.state = RectifierState::FAILED_TO_SET_REMOTE_CONTROL;
+					info.cmdToSend.status = CmdStatus::FAILED;
+					return true;
+				}
+				if (getRectifierState(info, true)) {
+					//some error occurred
+					info.state = RectifierState::FAILED_TO_GET_STATE;
+					info.cmdToSend.status = CmdStatus::FAILED;
+					return true;
+				}
+				// check that remote control is activated
+				if ((info.stateF05.getControlByte() & 0x03) != 0x03) {
+					info.state = RectifierState::FAILED_TO_SET_REMOTE_CONTROL;
+					info.cmdToSend.status = CmdStatus::FAILED;
+					return true;
+				}
+			}
+			else {
+				// test device
+				if (testDevice(hSerial, info, rdSymbols, log)) {
+					info.cmdToSend.status = CmdStatus::FAILED;
+					return true;
+				}
+			}
 			// start program from first step
 			if (setStartProgram(hSerial, info, rdSymbols, log)) {
 				info.state = RectifierState::FAILED_TO_START_EXECUTING_PROGRAMM;
 				info.cmdToSend.status = CmdStatus::FAILED;
 				return true;
+			}
+			break;
+		}
+		return false;
+	case RectifierCmd::STOP_EXISTIN_PROGRAM:
+		switch (info.cmdToSend.status) {
+		case CmdStatus::PREPARED:
+			// send command to set remote control
+			if (setRemoteControl(hSerial, info, rdSymbols, log)) {
+				// some error occured
+				// failed to send command 
+				info.cmdToSend.status = CmdStatus::FAILED;
+				return true;
+			}
+			if (getRectifierState(info, true)) {
+				//some error occurred
+				info.state = RectifierState::FAILED_TO_GET_STATE;
+				info.cmdToSend.status = CmdStatus::FAILED;
+				return true;
+			}
+			// check that remote control is activated
+			if ((info.stateF05.getControlByte() & 0x03) != 0x03) {
+				info.state = RectifierState::FAILED_TO_SET_REMOTE_CONTROL;
+				info.cmdToSend.status = CmdStatus::FAILED;
+				return true;
+			}
+
+			if ((info.stateF05.getControlByte() & 0x04) == 0x04) {
+				// stop executing program 
+				if (stopExecutingProgram(hSerial, info, rdSymbols, log)) {
+					info.state = RectifierState::FAILED_TO_STOP_EXECUTING_PROGRAMM;
+					info.cmdToSend.status = CmdStatus::FAILED;
+					return true;
+				}
 			}
 			break;
 		}
@@ -1393,7 +1531,7 @@ void Device::clearReciveBuffer()
 	uint8_t buffer[1024];
 	DWORD size;
 	do {
-		ReadFile(this->hSerial, buffer, 1024, &size, overlappedRDPtr);
+		BOOL res = ReadFile(this->hSerial, buffer, 1024, &size, overlappedRDPtr);
 	} while (size > 0);
 
 }
@@ -1418,7 +1556,9 @@ UINT ThreadProc(LPVOID par) {
 		}
 
 		for (auto & rectInfo : param->m_rectifierConfigs[0]) {
+			// lock info in the thread
 			RectifierInfo & info = rectInfo.second;
+			CSingleLock lock(&info.cs, true);
 			// for now only one port for all rectifiers
 			if (info.state != RectifierState::OK
 				&& info.state != RectifierState::NOT_INITIALIZED
@@ -1433,13 +1573,20 @@ UINT ThreadProc(LPVOID par) {
 			else {
 				info.badStateSkipCount = 0;
 			}
-			device.registerRectifier(info);
+			if (RectifierState::NOT_INITIALIZED == info.state) {
+				device.registerRectifier(info);
+			}
+			if (info.memory.size() < 7) {
+				//read memory
+				device.readProgram(info);
+			}
 			//device.clearReciveBuffer();
 			if (info.cmdToSend.status == CmdStatus::PREPARED) {
 				device.executeCmd(info);
 			}
 			device.getRectifierState(info, true);
 			info.recivedData.status = ++cnt;
+			lock.Unlock();
 			PostMessage((HWND)param->wnd, WM_COMMAND, 7, 7);
 			Sleep(100);
 		}
@@ -1462,7 +1609,7 @@ UINT ReadingComPortThread(LPVOID par) {
 	overlappedRD.InternalHigh = 0;
 	overlappedRD.Offset = 0;
 	overlappedRD.OffsetHigh = 0;
-//	DWORD mask;
+	//	DWORD mask;
 
 
 	while (1) {
@@ -1476,9 +1623,9 @@ UINT ReadingComPortThread(LPVOID par) {
 			if (info.communicationState == DeviceCommunicationState::FRAME_SENT) {
 				// command sended try to read replay
 				std::vector<std::uint8_t> symbols;
-//				DWORD trans;
+				//				DWORD trans;
 				DWORD rdBytes;
-				PortState portState;
+				PortState portState = PortState::PORT_UNKNOWN;
 				unsigned char bufrd[1024];
 				BOOL res1 = ReadFile(info.hSerial, bufrd, 1024, &rdBytes, NULL);
 				if (res1) {

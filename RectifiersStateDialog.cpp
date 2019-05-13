@@ -119,9 +119,9 @@ void CRectifiersStateDialog::OnBnClickedButton1()
 		RectifierInfo testRectirierInfo;
 		RectifierInfo & info = testRectirierInfo;
 		if (m_rectifierConfigs.empty()) {
-			CString str;
-			str.Format(L"COM%d", id);
-			testRectirierInfo.comport = str;
+			CString strLocal2;
+			strLocal2.Format(L"COM%d", id);
+			testRectirierInfo.comport = strLocal2;
 			testRectirierInfo.address = 1;
 			testRectirierInfo.modeBoundRate = 115200;
 			testRectirierInfo.modeByteSize = 7;
@@ -191,21 +191,9 @@ class RectifierStateF10 {
 
 //std::vector<uint8_t> rectifierStateFrame = { 0x3A, 0x30, 0x31, 0x34, 0x33, 0x45, 0x38, 0x30, 0x33, 0x37, 0x38, 0x30, 0x30, 0x34, 0x31, 0x33, 0x30, 0x33, 0x31, 0x33, 0x31, 0x33, 0x38, 0x32, 0x44, 0x33, 0x33, 0x33, 0x31, 0x33, 0x31, 0x33, 0x32, 0x33, 0x37, 0x33, 0x32, 0x33, 0x34, 0x42, 0x44, 0x0D, 0x0A };
 
-struct ModelateThreadParams {
-	HWND wnd;
-	int * state;
-	CString * log;
-	//HANDLE hSerial;
-	//CCriticalSection * portBlock;
-	//DWORD * dwpByteTimeOut;
-	RectifierInfo rectifierConfig;
-	CEdit * m_CEditTestLog;
-	OVERLAPPED * stateDialogOverlappedRD;
-	DWORD * pMask;
-	OVERLAPPED * stateDialogOverlappedWR;
-};
 
-ModelateThreadParams param;
+
+//ModelateThreadParams param;
 
 UINT StateThreadProc(LPVOID par) {
 	ModelateThreadParams * param;
@@ -242,27 +230,7 @@ void CRectifiersStateDialog::OnBnClickedButton2()
 		testRectirierInfo.modeByteSize = 7;
 		testRectirierInfo.modeStopbits = Stopbits::ONE_STOPBIT;
 		testRectirierInfo.modeParity = Parity::NO_PARITY;
-	
-		//
-		//m_CEditTestLog.GetWindowText(m_log);
-		//m_CEditTestLog.SetWindowText(m_log);
-		//HANDLE hSerial;
-		//LPCTSTR sPortName = info.comport;
-		//hSerial = ::CreateFile(sPortName, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, 0);
-		//if (hSerial == INVALID_HANDLE_VALUE)
-		//{
-		//	CString message;
-		//	message.Format(L"Failed to open comport %s.", info.comport);
-		//	if (GetLastError() == ERROR_FILE_NOT_FOUND)
-		//	{
-		//		message += L"Comport doesn't exists";
-		//	}
-		//	AfxMessageBox(message, MB_YESNO | MB_ICONSTOP);
-		//	return;
-		//}
 
-		
-		//param.wnd = m_pMainWnd->GetSafeHwnd();
 		param.rectifierConfig = testRectirierInfo;
 		//param.portPtr = portPtr;
 		param.state = &this->state;
@@ -301,18 +269,31 @@ void CRectifiersStateDialog::modelateRectifier(
 		0x01, 0x43, 0x05, ReplyStatus::OK);
 	//std::vector<uint8_t> replyOKSymbols = DeviceCommand::convertToASCIIFrame(replyOKBytes);
 	//conrol byte
-	std::uint8_t controlByte = 0x01; // not defined pult
+	static std::uint8_t controlByte = 0x01; // not defined pult
 	static uint8_t voltage = 0x78;
 	static uint8_t current = 0x10;
 	static bool testing = false;
 	const int memorySize = 512;
 	static std::vector<uint8_t> memory = std::vector<uint8_t>(memorySize);
+	memory[0] = 0x83;	// set cuccent and voltage
+	memory[1] = 0x00;	// A low
+	memory[2] = 0x02;	// A hi
+	memory[3] = 0xc8;	// voltage
+	memory[4] = 0xa;	// hours
+	memory[5] = 0x0;	// minutes
+	memory[6] = 0x0;	// seconds
+	memory[7] = 0;
 
 	state[0] = 1;
 	Device device(stateDialogOverlappedRD, pMask, stateDialogOverlappedWR);
 	device.registerRectifier(info);
+	DeviceCommand::DATA prev_cmd_data;
 	while (true)
 	{
+		if (state[0] == 2) {
+			break;
+		}
+
 		device.getFrameFromBuffer(rdSymbolsFrame);
 		if (!Device::isValidFrame(rdSymbolsFrame)) {
 			device.readFromPort(rdSymbolsFrame);
@@ -333,7 +314,7 @@ void CRectifiersStateDialog::modelateRectifier(
 			//std::uint8_t replyCode;
 			//DeviceCommand::parseResponseCode(readBytes, addr, modbus_func, replyCode);
 			DeviceCommand::DATA cmd_data;
-			DeviceCommand::DATA prev_cmd_data;
+			
 			DWORD dwBytesWritten;    // тут будет количество собственно переданных байт
 			if (0 != DeviceCommand::parseCommand(readBytes, addr, modbus_func, cmd_data))
 				//bad command try to get nest frame
@@ -391,20 +372,18 @@ void CRectifiersStateDialog::modelateRectifier(
 					int startAddress = cmd_data.data[0] + (cmd_data.data[1] << 8);
 					int numberOfBytes = cmd_data.data[2];
 					for (int i = 0; i < numberOfBytes; ++i) {
-						int addr = startAddress + i;
-						if (addr < memorySize) {
-							memory[addr] = cmd_data.data[3 + i];
+						int addrIndex = startAddress + i;
+						if (addrIndex < memorySize) {
+							memory[addrIndex] = cmd_data.data[3 + i];
 						}
 					}
 				}
 				Sleep(50);
 				device.sendReplyData(DeviceCommand::createReplyOKFrameSymbols(addr), dwBytesWritten, log);
-				//sendCommand(hSerial, data, 1, dwBytesWritten, m_CEditTestLog, log);
 			}
 			else if (0x05 == cmd_data.address) {
 				// asked for rectifier state. Send normal reply :014305B7 0D 0A
 				device.sendReplyData(DeviceCommand::createReplyOKFrameSymbols(addr), dwBytesWritten, log);
-				//sendCommand(hSerial, data, 1, dwBytesWritten, m_CEditTestLog, log);
 			}
 			else if (0x07 == cmd_data.address) {
 				// asked for rectifier state. Send normal reply :014305B7 0D 0A
@@ -464,8 +443,8 @@ void CRectifiersStateDialog::modelateRectifier(
 				}
 				else if (0x03 == prev_cmd_data.address && 0x00 == prev_cmd_data.command) {
 					// read FRAM
-					int startAddress = cmd_data.data[0] + (cmd_data.data[1] << 8);
-					int numberOfBytes = cmd_data.data[2];
+					int startAddress = prev_cmd_data.data[0] + (prev_cmd_data.data[1] << 8);
+					int numberOfBytes = prev_cmd_data.data[2];
 					std::vector<uint8_t> reply_data = DeviceCommand::createRectifierMemoryData(memory, startAddress, numberOfBytes);
 					std::vector<uint8_t> replyBytes = DeviceCommand::createReplyDataFrame(addr, 0x43, reply_data);
 					std::vector<uint8_t> frameSymbols = DeviceCommand::convertToASCIIFrame(replyBytes);
@@ -476,9 +455,9 @@ void CRectifiersStateDialog::modelateRectifier(
 					int startAddress = cmd_data.data[0] + (cmd_data.data[1] << 8);
 					int numberOfBytes = cmd_data.data[2];
 					for (int i = 0; i < numberOfBytes; ++i) {
-						int addr = startAddress + i;
-						if (addr < memorySize) {
-							memory[addr] = cmd_data.data[3 + i];
+						int addrIndex = startAddress + i;
+						if (addrIndex < memorySize) {
+							memory[addrIndex] = cmd_data.data[3 + i];
 						}
 					}
 				}
@@ -495,9 +474,6 @@ void CRectifiersStateDialog::modelateRectifier(
 			prev_cmd_data.command = cmd_data.command;
 			prev_cmd_data.data = cmd_data.data;
 
-		}
-		if (state[0] == 2) {
-			break;
 		}
 
 	}

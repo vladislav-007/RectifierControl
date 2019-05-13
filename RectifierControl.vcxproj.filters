@@ -110,13 +110,7 @@
     <ClCompile Include="scomport.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="RectifierControlFView.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="SetParametersDialog.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="FloatCEdit.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

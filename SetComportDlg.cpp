@@ -39,7 +39,7 @@ END_MESSAGE_MAP()
 
 void SelectComPort(std::vector<CString> & portNames) //added fucntion to find the present serial ports of the system; 
 {
-	const DWORD maxSize = 50000;
+	const DWORD maxSize = 512;
 	WCHAR lpTargetPath[maxSize]; // buffer to store the path of the COMPORTS
 	DWORD test;
 	bool gotPort = 0; // in case the port is not found
@@ -62,7 +62,8 @@ void SelectComPort(std::vector<CString> & portNames) //added fucntion to find th
 		res = ::GetLastError();
 		if (res == ERROR_INSUFFICIENT_BUFFER) //in case buffer got filled
 		{
-			lpTargetPath[10000]; // in case the buffer got filled, increase size of the buffer.
+			//lpTargetPath[maxSize*2]; // in case the buffer got filled, increase size of the buffer.
+			MessageBox(NULL, L"Error! Com port buffer names is full!", L"Error!", MB_OK);
 			continue;
 		}
 

@@ -49,6 +49,8 @@ private:
 	//CStatic m_V;
 	//CStatic m_A;
 	CButton m_EnableDrivingButton;
+	CButton m_StartButton;
+	CButton m_StopButton;
 	//CStatic m_SetVoltage;
 	CFont * mp_Font;
 	CFont * m_normalFont;
@@ -66,8 +68,12 @@ public:
 //	afx_msg void OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized);
 protected:
 	afx_msg LRESULT OnMyMessage(WPARAM wParam, LPARAM lParam);
+	afx_msg void execCommand(RectifierCmd rectifierCmd);
 public:
 	afx_msg void OnOpenSetParametersDialog();
+	afx_msg void OnStartProgram();
+	afx_msg void OnStopProgram();
+//	afx_msg void OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized);
 };
 
 #ifndef _DEBUG  // отладочна¤ верси¤ в RectifierControlView.cpp

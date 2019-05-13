@@ -36,6 +36,9 @@
 #define ID_32777                        32777
 #define ID_32778                        32778
 #define ID_OPEN_SET_PARAMETERS_DIALOG   32779
+#define ID_START_PROGRAM   32780
+#define ID_STOP_PROGRAM   32781
+
 
 // Next default values for new objects
 // 

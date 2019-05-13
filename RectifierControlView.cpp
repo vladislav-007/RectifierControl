@@ -31,6 +31,9 @@ BEGIN_MESSAGE_MAP(CRectifierControlView, CView)
 	ON_COMMAND(ID_FILE_PRINT_DIRECT, &CView::OnFilePrint)
 	ON_COMMAND(ID_FILE_PRINT_PREVIEW, &CView::OnFilePrintPreview)
 	ON_COMMAND(ID_OPEN_SET_PARAMETERS_DIALOG, &CRectifierControlView::OnOpenSetParametersDialog)
+	ON_COMMAND(ID_START_PROGRAM, &CRectifierControlView::OnStartProgram)
+	ON_COMMAND(ID_STOP_PROGRAM, &CRectifierControlView::OnStopProgram)
+	//	ON_WM_ACTIVATE()
 END_MESSAGE_MAP()
 
 // создание/уничтожение CRectifierControlView
@@ -52,6 +55,8 @@ CRectifierControlView::CRectifierControlView()
 		L"Arial");
 	m_Voltage = 0.0;
 	m_Current = 0.0;
+	m_VoltageToSet = 0.0;
+	m_CurrentToSet = 0.0;
 }
 
 CRectifierControlView::~CRectifierControlView()
@@ -108,15 +113,15 @@ const CString & toString(RectifierState state) {
 
 void CRectifierControlView::OnDraw(CDC* pDC)
 {
-	
+
 	CRectifierControlDoc* pDoc = GetDocument();
 	ASSERT_VALID(pDoc);
 	if (!pDoc)
 		return;
 
 	CString rectifierName(CA2T("", CP_UTF8));
-	
-	
+
+
 	pDC->SelectObject(m_normalFont);
 	pDC->SetTextColor(RGB(0, 0, 0));
 	int rectifierID = pDoc->getRectifierInfo().id;
@@ -129,10 +134,11 @@ void CRectifierControlView::OnDraw(CDC* pDC)
 	rectifierName += pDoc->getRectifierInfo().comport;
 	rectifierName += ")";
 	std::map<int, RectifierInfo> & actualRectifiesInfos = theApp.getRectifierInfos();
-	
+
 	CString rectifierState(CA2T("Состояние: ", CP_UTF8));
 	std::wstringstream ss;
 	const RectifierInfo & info = actualRectifiesInfos.at(rectifierID);
+	CSingleLock lock(&info.cs, true);
 	const CString & strState = toString(info.state);
 	CString deviceState(strState);
 	bool overHeatFlag = false;
@@ -155,17 +161,27 @@ void CRectifierControlView::OnDraw(CDC* pDC)
 			}
 			protectionFlag = true;
 		}
-		
+
 	}
 
-	rectifierState += "(";
-	ss << std::setw(2);
-	ss << L"0x" << std::setfill(L'0') << std::setw(2) << std::hex << info.stateF05.getChan(1) << L",";
-	ss << L"0x" << std::setfill(L'0') << std::setw(2) << std::hex << info.stateF05.getControlByte();
-	CString stateBytes;
-	stateBytes = ss.str().c_str();
-	rectifierState += stateBytes;
-	rectifierState += ") ";
+	//rectifierState += "(";
+	//ss << std::setw(2);
+	//ss << L"0x" << std::setfill(L'0') << std::setw(2) << std::hex << info.stateF05.getChan(1) << L",";
+	//ss << L"0x" << std::setfill(L'0') << std::setw(2) << std::hex << info.stateF05.getControlByte();
+	//CString stateBytes;
+	//stateBytes = ss.str().c_str();
+	//rectifierState += stateBytes;
+	//rectifierState += ") ";
+
+	if ((info.stateF05.getControlByte() & 0x04) == 0x04) {
+		// program is currently executed
+		GetDlgItem(ID_START_PROGRAM)->EnableWindow(FALSE);
+		GetDlgItem(ID_STOP_PROGRAM)->EnableWindow(TRUE);
+	}
+	else {
+		GetDlgItem(ID_START_PROGRAM)->EnableWindow(TRUE);
+		GetDlgItem(ID_STOP_PROGRAM)->EnableWindow(FALSE);
+	}
 
 	CString overheatMsg(CA2T("Перегрев", CP_UTF8));
 	CString protectMsg(CA2T("Защита", CP_UTF8));
@@ -209,7 +225,7 @@ void CRectifierControlView::OnDraw(CDC* pDC)
 
 	pDC->TextOutW(10, 10, rectifierName);
 	pDC->TextOutW(10, 10 + m_fontHeight, rectifierState);
-	
+
 	CFont headerFont;
 	headerFont.CreateFont(2 * m_fontHeight, 0, 0, 0, 400, FALSE, FALSE, 0, RUSSIAN_CHARSET,
 		OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
@@ -238,7 +254,7 @@ void CRectifierControlView::OnDraw(CDC* pDC)
 		ANTIALIASED_QUALITY, DEFAULT_PITCH | FF_SWISS,
 		L"Arial");
 	pDC->SelectObject(valuesFont);
-	pDC->SetTextColor(RGB(0,0,255));
+	pDC->SetTextColor(RGB(0, 0, 255));
 	pDC->TextOutW(80, yShift + 10 + 2 * m_fontHeight, voltageValue);
 
 	pDC->SelectObject(headerFont);
@@ -246,7 +262,7 @@ void CRectifierControlView::OnDraw(CDC* pDC)
 	CString currentValue(CA2T("A: ", CP_UTF8));
 	pDC->TextOutW(10, yShift + 10 + 4 * m_fontHeight, currentValue);
 	ss.str(std::wstring());
-	
+	ss << std::dec;
 	if (info.state != RectifierState::OK) {
 		ss << " -- ";
 	}
@@ -284,142 +300,180 @@ void CRectifierControlView::OnDraw(CDC* pDC)
 	pDC->TextOutW(80, yShift + 10 + 6 * m_fontHeight, currentValue);
 
 	//pDC->SelectObject(m_normalFont);
-	if (info.cmdToSend.rectifierCmd == RectifierCmd::SET_VOLTAGE_AND_CURRENT
-		&& CmdStatus::SUCCEEDED == info.cmdToSend.status) {
-		m_VoltageToSet = info.cmdToSend.voltage;
-		m_CurrentToSet = info.cmdToSend.current;
-	}
-	
-	//if (m_EnableDrivingButton.GetCheck()) {
-		ss.str(std::wstring());
-		switch(info.cmdToSend.status) {
-			case CmdStatus::FAILED:
-				switch (info.state) {
-					case RectifierState::FAILED_TO_SET_REMOTE_CONTROL:
-						ss << "Failed to set remote control";
-						break;
-					case RectifierState::FAILED_TO_SET_VOLTAGE:
-						ss << "Failed to set voltage";
-						break;
-					case RectifierState::FAILED_TO_STOP_EXECUTING_PROGRAMM:
-						ss << "Failed to stop program executing";
-						break;
-					case RectifierState::FAILED_TO_START_EXECUTING_PROGRAMM:
-						ss << "Failed to start program executing";
-						break;
-					default: 
-						ss << "Unknown error";
-						break;
-				}
-				
-			break;
-			case CmdStatus::PREPARED:
-				ss << "Setting voltage...";
-			break;
-			case CmdStatus::SUCCEEDED:
-			case CmdStatus::EMPTY:
-			{
-//				CString succeededValues(CA2T("Установлены: ", CP_UTF8));
-//				ss << succeededValues;
-				ss << " V: ";
-				ss.setf(std::ios::floatfield, std::ios::fixed);
-				ss << std::setprecision(1) << m_VoltageToSet;
-				ss << " A: ";
-				ss.setf(std::ios::floatfield, std::ios::fixed);
-				ss << std::setprecision(1) << m_CurrentToSet;
-			}
-				break;
-		default:break;
-		}
-		currentValue = ss.str().c_str();
-		pDC->SelectObject(m_normalFont);
-		pDC->SetTextColor(RGB(0, 255, 0));
-		pDC->TextOutW(250, yShift + 16 + 1 * m_fontHeight, currentValue);
-		//m_SetVoltage.SetReadOnly(FALSE);
-		//m_SetVoltage.EnableWindow();
-		//m_SetCurrent.SetReadOnly(FALSE);
-		//m_SetCurrent.EnableWindow();
-	//}else {
-		//m_SetVoltage.SetReadOnly();
-		//m_SetVoltage.EnableWindow(FALSE);
-		//m_SetCurrent.SetReadOnly();
-		//m_SetCurrent.EnableWindow(FALSE);
+	//if (info.cmdToSend.rectifierCmd == RectifierCmd::SET_VOLTAGE_AND_CURRENT
+	//	&& CmdStatus::SUCCEEDED == info.cmdToSend.status) {
+	//	m_VoltageToSet = info.cmdToSend.voltage;
+	//	m_CurrentToSet = info.cmdToSend.current;
 	//}
 
-	//CFont defaultFont;
-	//defaultFont.CreateFont(20, 0, 0, 0, 600, FALSE, FALSE, 0, RUSSIAN_CHARSET,
-	//	OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
-	//	ANTIALIASED_QUALITY, DEFAULT_PITCH | FF_SWISS,
-	//	L"Arial");
+	if (info.memory.size() > 7) {
+		m_CurrentToSet = (float)(info.memory[1] + info.memory[2] * 256);
+		m_VoltageToSet = (float)(info.memory[3] / 10.0);
+	}
 
+	//if (m_EnableDrivingButton.GetCheck()) {
+	ss.str(std::wstring());
+	switch (info.cmdToSend.status) {
+	case CmdStatus::FAILED:
+		switch (info.state) {
+		case RectifierState::FAILED_TO_SET_REMOTE_CONTROL:
+			ss << "Failed to set remote control";
+			break;
+		case RectifierState::FAILED_TO_SET_VOLTAGE:
+			ss << "Failed to set voltage";
+			break;
+		case RectifierState::FAILED_TO_STOP_EXECUTING_PROGRAMM:
+			ss << "Failed to stop program executing";
+			break;
+		case RectifierState::FAILED_TO_START_EXECUTING_PROGRAMM:
+			ss << "Failed to start program executing";
+			break;
+		default:
+			ss << "Unknown error";
+			break;
+		}
+
+		break;
+	case CmdStatus::PREPARED:
+		ss << "Setting voltage...";
+		break;
+	case CmdStatus::SUCCEEDED:
+	case CmdStatus::EMPTY:
+	{
+		//				CString succeededValues(CA2T("Установлены: ", CP_UTF8));
+		//				ss << succeededValues;
+	}
+	break;
+	default:break;
+	}
+	ss.str(std::wstring());
+	ss << " V: ";
+	ss.setf(std::ios::floatfield, std::ios::fixed);
+	ss << std::setprecision(1) << m_VoltageToSet;
+	ss << " A: ";
+	ss.setf(std::ios::floatfield, std::ios::fixed);
+	ss << std::setprecision(1) << m_CurrentToSet;
+
+	currentValue = ss.str().c_str();
+	pDC->SelectObject(m_normalFont);
+	pDC->SetTextColor(RGB(0, 255, 0));
+	pDC->TextOutW(270, yShift + 16 + 1 * m_fontHeight, currentValue);
+	//m_SetVoltage.SetReadOnly(FALSE);
+	//m_SetVoltage.EnableWindow();
+	//m_SetCurrent.SetReadOnly(FALSE);
+	//m_SetCurrent.EnableWindow();
+//}else {
+	//m_SetVoltage.SetReadOnly();
+	//m_SetVoltage.EnableWindow(FALSE);
+	//m_SetCurrent.SetReadOnly();
+	//m_SetCurrent.EnableWindow(FALSE);
+//}
+
+//CFont defaultFont;
+//defaultFont.CreateFont(20, 0, 0, 0, 600, FALSE, FALSE, 0, RUSSIAN_CHARSET,
+//	OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+//	ANTIALIASED_QUALITY, DEFAULT_PITCH | FF_SWISS,
+//	L"Arial");
+	lock.Unlock();
 }
 
 void CRectifierControlView::OnInitialUpdate()
 {
 	CView::OnInitialUpdate();
-	
-	CString caption(CA2T("Задать значения:", CP_UTF8));
+
+	CString caption(CA2T("Изменить значения", CP_UTF8));
 	int yPos = 75;
 	m_EnableDrivingButton.Create(caption, BS_ICON | WS_CHILD | WS_VISIBLE, CRect(10, yPos, 270, yPos + 30), this, ID_OPEN_SET_PARAMETERS_DIALOG);
 	m_EnableDrivingButton.SetFont(mp_Font);
 	CDC * pDC = this->GetDC();
 	pDC->SelectObject(mp_Font);
-	//pDC->SetTextColor(RGB(0, 255, 0));
+	int xPos = 500;
+	int buttomsSize = 80;
+	CString start(CA2T("Пуск", CP_UTF8));
+	m_StartButton.Create(start, BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE, 
+		CRect(xPos, yPos, xPos + buttomsSize, yPos + 30), this, ID_START_PROGRAM);
+	m_StartButton.SetFont(mp_Font);
 
-	//m_V.Create(L"V:", WS_CHILD | WS_VISIBLE, CRect(270, yPos, 295, yPos + 30), this, 4);
-	//m_V.SetFont(mp_Font);
-	//m_SetVoltage.Create(L"-", WS_CHILD | WS_VISIBLE, CRect(300, 75, 400, 105), this, 2);
-	////m_SetVoltage.SetReadOnly();
-	//m_SetVoltage.SetFont(mp_Font);
+	CString stop(CA2T("Стоп", CP_UTF8));
+	m_StopButton.Create(stop, BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_DISABLED,
+		CRect(xPos + buttomsSize + 10, yPos, xPos + 10 + 2* buttomsSize, yPos + 30), this, ID_STOP_PROGRAM);
+	m_StopButton.SetFont(mp_Font);
 
-	//m_A.Create(L"A:", WS_CHILD | WS_VISIBLE, CRect(420, yPos, 445, yPos + 30), this, 5);
-	//m_A.SetFont(mp_Font);
-	//m_SetCurrent.Create(L"-", WS_CHILD | WS_VISIBLE, CRect(450, 75, 550, 105), this, 3);
-	////m_SetCurrent.SetReadOnly();
-	//m_SetCurrent.SetFont(mp_Font);
-	// TODO: Add your specialized code here and/or call the base class
 }
 
 void CRectifierControlView::OnOpenSetParametersDialog()
 {
 	// TODO: Add your command handler code here
 	//if (BST_CHECKED == this->m_EnableDrivingButton.GetCheck()) {
-		SetParametersDialog setParametersDialog(mp_Font, m_Voltage, m_Current);
-		//setParametersDialog.SetFont(mp_Font);
-		//setParametersDialog.setCurrentlyUsedComport(initComport);
-		INT_PTR res = setParametersDialog.DoModal();
-		if (IDOK == res) {
-			std::wstringstream ss;
-			ss << setParametersDialog.getVoltage();
-			CString val = ss.str().c_str();
-			//m_SetVoltage.SetWindowTextW(val);
-			ss.str(std::wstring());
-			ss << setParametersDialog.getCurrent();
-			val = ss.str().c_str();
-			//m_SetCurrent.SetWindowTextW(val);
-			doControl = true;
-			CRectifierControlDoc* pDoc = GetDocument();
-			ASSERT_VALID(pDoc);
-			if (!pDoc)
-				return;
+	SetParametersDialog setParametersDialog(mp_Font, m_VoltageToSet, m_CurrentToSet);
+	//setParametersDialog.SetFont(mp_Font);
+	//setParametersDialog.setCurrentlyUsedComport(initComport);
+	INT_PTR res = setParametersDialog.DoModal();
+	if (IDOK == res) {
+		std::wstringstream ss;
+		ss << setParametersDialog.getVoltage();
+		CString val = ss.str().c_str();
+		//m_SetVoltage.SetWindowTextW(val);
+		ss.str(std::wstring());
+		ss << setParametersDialog.getCurrent();
+		val = ss.str().c_str();
+		//m_SetCurrent.SetWindowTextW(val);
+		doControl = true;
+		CRectifierControlDoc* pDoc = GetDocument();
+		ASSERT_VALID(pDoc);
+		if (!pDoc)
+			return;
 
-			int rectifierID = pDoc->getRectifierInfo().id;
-			std::map<int, RectifierInfo> & actualRectifiesInfos = theApp.getRectifierInfos();
-			RectifierInfo & info = actualRectifiesInfos.at(rectifierID);
-			// set command to set voltage and current
-			CmdToExecute cmdToExecute;
-			
-			cmdToExecute.rectifierCmd = RectifierCmd::SET_VOLTAGE_AND_CURRENT;
-			cmdToExecute.voltage = setParametersDialog.getVoltage();
-			cmdToExecute.current = setParametersDialog.getCurrent();
-			info.cmdToSend = cmdToExecute;
-			info.cmdToSend.status = CmdStatus::PREPARED; // prepared
-		}
-		else
-		{
-			this->m_EnableDrivingButton.SetCheck(0);
-		}
+		int rectifierID = pDoc->getRectifierInfo().id;
+		std::map<int, RectifierInfo> & actualRectifiesInfos = theApp.getRectifierInfos();
+		RectifierInfo & info = actualRectifiesInfos.at(rectifierID);
+		CSingleLock lock(&info.cs, true);
+		// set command to set voltage and current
+		CmdToExecute cmdToExecute;
+
+		cmdToExecute.rectifierCmd = RectifierCmd::SET_VOLTAGE_AND_CURRENT;
+		cmdToExecute.voltage = setParametersDialog.getVoltage();
+		cmdToExecute.current = setParametersDialog.getCurrent();
+		info.cmdToSend = cmdToExecute;
+		info.cmdToSend.status = CmdStatus::PREPARED; // prepared
+		lock.Unlock();
+	}
+	else
+	{
+		this->m_EnableDrivingButton.SetCheck(0);
+	}
 	//}
+}
+
+void CRectifierControlView::execCommand(RectifierCmd rectifierCmd) {
+	CRectifierControlDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+	if (!pDoc)
+		return;
+
+	int rectifierID = pDoc->getRectifierInfo().id;
+	std::map<int, RectifierInfo> & actualRectifiesInfos = theApp.getRectifierInfos();
+	RectifierInfo & info = actualRectifiesInfos.at(rectifierID);
+	CSingleLock lock(&info.cs, true);
+	// set command to set voltage and current
+	if (info.cmdToSend.status != CmdStatus::PREPARED
+		&& info.cmdToSend.status != CmdStatus::SENT) {
+		CmdToExecute cmdToExecute;
+		cmdToExecute.rectifierCmd = rectifierCmd;
+		info.cmdToSend = cmdToExecute;
+		info.cmdToSend.status = CmdStatus::PREPARED; // prepared
+	}
+	lock.Unlock();
+}
+
+void CRectifierControlView::OnStartProgram()
+{
+	execCommand(RectifierCmd::START_EXISTIN_PROGRAM);
+}
+
+void CRectifierControlView::OnStopProgram()
+{
+	execCommand(RectifierCmd::STOP_EXISTIN_PROGRAM);
 }
 
 BOOL CRectifierControlView::OnPreparePrinting(CPrintInfo* pInfo)
@@ -466,7 +520,7 @@ CRectifierControlDoc* CRectifierControlView::GetDocument() const // встрое
 BOOL CRectifierControlView::OnCommand(WPARAM wParam, LPARAM lParam)
 {
 	// TODO: Add your specialized code here and/or call the base class
-	
+
 	if (wParam == ID_OPEN_SET_PARAMETERS_DIALOG)
 	{
 		//open dialog to set voltage and current
@@ -497,3 +551,11 @@ afx_msg LRESULT CRectifierControlView::OnMyMessage(WPARAM wParam, LPARAM lParam)
 }
 
 
+
+
+//void CRectifierControlView::OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized)
+//{
+//	CView::OnActivate(nState, pWndOther, bMinimized);
+//
+//	// TODO: Add your message handler code here
+//}

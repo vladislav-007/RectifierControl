@@ -169,31 +169,31 @@ void CRectifierControlDoc::parseRectifierCfg(CString & rectifierCfgPath)
 		while (rectifier != nullptr) {
 			if (tinyxml2::XML_SUCCESS != rectifier->QueryIntAttribute("id", &m_rectifierInfo.id))
 				throw std::exception("Can't read 'id' if rectifier");
-			const char * str;
-			rectifier->QueryStringAttribute("name", &str);
-			m_rectifierInfo.name = CA2T(str, CP_UTF8);
-			if (tinyxml2::XML_SUCCESS != rectifier->QueryStringAttribute("comport", &str))
+			const char * strLocal1;
+			rectifier->QueryStringAttribute("name", &strLocal1);
+			m_rectifierInfo.name = CA2T(strLocal1, CP_UTF8);
+			if (tinyxml2::XML_SUCCESS != rectifier->QueryStringAttribute("comport", &strLocal1))
 				throw std::exception("Can't read 'comport' if rectifier's mode");
-			m_rectifierInfo.comport = CA2T(str, CP_UTF8);
+			m_rectifierInfo.comport = CA2T(strLocal1, CP_UTF8);
 
 			rectifier->QueryIntAttribute("address", &m_rectifierInfo.address);
 			tinyxml2::XMLElement * mode = rectifier->FirstChildElement("Mode");
 			if (tinyxml2::XML_SUCCESS != mode->QueryIntAttribute("id", &m_rectifierInfo.modeID))
 				throw std::exception("Can't read 'id' if rectifier's mode");
 
-			mode->QueryStringAttribute("name", &str);
-			m_rectifierInfo.modeName = CA2T(str, CP_UTF8);
+			mode->QueryStringAttribute("name", &strLocal1);
+			m_rectifierInfo.modeName = CA2T(strLocal1, CP_UTF8);
 			tinyxml2::XMLElement * valueElement = mode->FirstChildElement("BaudRate");
 			valueElement->QueryIntAttribute("value", &m_rectifierInfo.modeBoundRate);
 			valueElement = mode->FirstChildElement("ByteSize");
 			valueElement->QueryIntAttribute("value", &m_rectifierInfo.modeByteSize);
 			valueElement = mode->FirstChildElement("Parity");
-			valueElement->QueryStringAttribute("value", &str);
-			CString valueStr = CA2T(str, CP_UTF8);
+			valueElement->QueryStringAttribute("value", &strLocal1);
+			CString valueStr = CA2T(strLocal1, CP_UTF8);
 			m_rectifierInfo.modeParity = parityFromString(valueStr);
 			valueElement = mode->FirstChildElement("StopBits");
-			valueElement->QueryStringAttribute("value", &str);
-			valueStr = CA2T(str, CP_UTF8);
+			valueElement->QueryStringAttribute("value", &strLocal1);
+			valueStr = CA2T(strLocal1, CP_UTF8);
 			m_rectifierInfo.modeStopbits = stopbitsFromString(valueStr);
 			m_rectifierInfo.communicationState = DeviceCommunicationState::INIT_STATE;
 			break;
