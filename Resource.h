@@ -2,6 +2,7 @@
 // Microsoft Visual C++ generated include file.
 // Used by RectifierControl.rc
 //
+#define IDI_ICON_STATUS_OK              1
 #define IDD_ABOUTBOX                    100
 #define IDP_OLE_INIT_FAILED             100
 #define IDR_MAINFRAME                   128
@@ -12,6 +13,13 @@
 #define IDD_DIALOG1                     312
 #define IDD_RECTIFIERS_STATE_DIALOG     312
 #define IDD_SET_PARAMETERS_DIALOG       315
+#define IDB_PNG4                        328
+#define IDB_PNG5                        335
+#define IDI_ICON1                       338
+#define IDI_ICON2                       341
+#define IDI_ICON_STATUS_PAUSE           346
+#define IDI_ICON_STATUS_RUN             348
+#define IDI_ICON_STATUS_NO              350
 #define IDC_COMBO_COMPORT               1000
 #define IDC_RECTIFIERS_COMBO            1001
 #define IDC_BUTTON1                     1002
@@ -36,15 +44,15 @@
 #define ID_32777                        32777
 #define ID_32778                        32778
 #define ID_OPEN_SET_PARAMETERS_DIALOG   32779
-#define ID_START_PROGRAM   32780
-#define ID_STOP_PROGRAM   32781
-
+#define ID_START_PROGRAM                32780
+#define ID_STOP_PROGRAM                 32781
+#define ID_STATE_ICON                   32782
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        317
+#define _APS_NEXT_RESOURCE_VALUE        351
 #define _APS_NEXT_COMMAND_VALUE         32780
 #define _APS_NEXT_CONTROL_VALUE         1018
 #define _APS_NEXT_SYMED_VALUE           312

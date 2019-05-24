@@ -37,6 +37,7 @@ BEGIN_MESSAGE_MAP(CRectifierControlView, CView)
 END_MESSAGE_MAP()
 
 // создание/уничтожение CRectifierControlView
+HICON CRectifierControlView::aIcons[MAXICONS];
 
 CRectifierControlView::CRectifierControlView()
 {
@@ -57,6 +58,10 @@ CRectifierControlView::CRectifierControlView()
 	m_Current = 0.0;
 	m_VoltageToSet = 0.0;
 	m_CurrentToSet = 0.0;
+	aIcons[0] = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON_STATUS_OK));
+	aIcons[1] = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON_STATUS_PAUSE));
+	aIcons[2] = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON_STATUS_RUN));
+	aIcons[3] = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON_STATUS_NO));
 }
 
 CRectifierControlView::~CRectifierControlView()
@@ -111,6 +116,19 @@ const CString & toString(RectifierState state) {
 }
 
 
+void DrawEllipse(HWND hwnd, HDC hdc, _In_ int left, _In_ int top, _In_ int right, _In_ int bottom, COLORREF color) /*<-- dc sent to this function now*/
+{
+	/*create and select gdi brush*/
+	HBRUSH hbr = CreateSolidBrush(color);
+	HBRUSH hOld = (HBRUSH)SelectObject(hdc, hbr);
+	/*draw ellipse*/
+	Ellipse(hdc, left, top, right, bottom);
+	/*restore device context's original, default brush object*/
+	SelectObject(hdc, hOld);
+	/*free brush resources back to system*/
+	DeleteObject(hbr);
+}
+
 void CRectifierControlView::OnDraw(CDC* pDC)
 {
 
@@ -138,7 +156,10 @@ void CRectifierControlView::OnDraw(CDC* pDC)
 	CString rectifierState(CA2T("Состояние: ", CP_UTF8));
 	std::wstringstream ss;
 	const RectifierInfo & info = actualRectifiesInfos.at(rectifierID);
+
+	// Multythreading Synchronization
 	CSingleLock lock(&info.cs, true);
+
 	const CString & strState = toString(info.state);
 	CString deviceState(strState);
 	bool overHeatFlag = false;
@@ -187,6 +208,11 @@ void CRectifierControlView::OnDraw(CDC* pDC)
 	CString protectMsg(CA2T("Защита", CP_UTF8));
 	COLORREF overheatColor = RGB(250, 0, 100);
 	COLORREF protectColor = RGB(230, 100, 100);
+	// color indicator
+	//circle.Height = 20; //or some size
+	//circle.Width = 20; //height and width is the same for a circle
+	//circle.Fill = System.Windows.Media.Brushes.Red;
+
 	if (info.state == RectifierState::OK) {
 		if (overHeatFlag) {
 			RECT rect;
@@ -374,6 +400,15 @@ void CRectifierControlView::OnDraw(CDC* pDC)
 //	OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
 //	ANTIALIASED_QUALITY, DEFAULT_PITCH | FF_SWISS,
 //	L"Arial");
+	if ((info.stateF05.getControlByte() & 0x04) == 0x04) {
+		pDC->DrawIcon(700, 75, aIcons[2]);
+	} 
+	else if ((info.stateF05.getControlByte() & 0x08) == 0x08) {
+		pDC->DrawIcon(700, 75, aIcons[1]);
+	}
+	else if ((info.stateF05.getControlByte() & 0x08) != 0x08) {
+		pDC->DrawIcon(700, 75, aIcons[0]);
+	}
 	lock.Unlock();
 }
 
@@ -398,6 +433,11 @@ void CRectifierControlView::OnInitialUpdate()
 	m_StopButton.Create(stop, BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_DISABLED,
 		CRect(xPos + buttomsSize + 10, yPos, xPos + 10 + 2* buttomsSize, yPos + 30), this, ID_STOP_PROGRAM);
 	m_StopButton.SetFont(mp_Font);
+
+	xPos += 50;
+	m_stateIcon.Create(L"Blocked", SS_ICON,
+		CRect(xPos + buttomsSize + 10, yPos, xPos + 10 + 2 * buttomsSize, yPos + 30), this, ID_STATE_ICON | WS_VISIBLE);
+	m_stateIcon.SetIcon(aIcons[0]);
 
 }
 

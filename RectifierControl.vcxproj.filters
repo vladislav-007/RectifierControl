@@ -135,5 +135,59 @@
     <Image Include="res\Toolbar.bmp">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="res\icon1.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\..\Programming\2015_VSIcon\StatusBlocked\StatusBlocked_cyan_32x.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\icon2.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\..\Programming\2015_VSIcon\StatusStop\StatusStop_32x.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\icon3.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\..\Programming\2015_VSIcon\StatusStop\StatusStop_color_32xLG.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\StatusStop_color_32xLG.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\icon4.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\..\Programming\2015_VSIcon\StatusStop\StatusStop_grey.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\..\Programming\2015_VSIcon\StatusBlocked\StatusBlocked.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\..\Programming\2015_VSIcon\StatusOK\StatusOK.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\StatusOK.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\..\Programming\2015_VSIcon\StatusPause\StatusPause_grey.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\StatusPause_grey.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\..\Programming\2015_VSIcon\StatusRun\StatusRun.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\StatusRun.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\..\Programming\2015_VSIcon\StatusNo\StatusNo_cyan.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\StatusNo_cyan.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

@@ -69,9 +69,21 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
+IDI_ICON_STATUS_OK      ICON                    "res\\StatusOK.ico"
+
 IDR_MAINFRAME           ICON                    "res\\RectifierControl.ico"
 
 IDR_RectifierControTYPE ICON                    "res\\RectifierControlDoc.ico"
+
+IDI_ICON1               ICON                    "D:\\git\\RectifierControl\\res\\icon1.ico"
+
+IDI_ICON2               ICON                    "res\\icon2.ico"
+
+IDI_ICON_STATUS_PAUSE   ICON                    "res\\StatusPause_grey.ico"
+
+IDI_ICON_STATUS_RUN     ICON                    "res\\StatusRun.ico"
+
+IDI_ICON_STATUS_NO      ICON                    "res\\StatusNo_cyan.ico"
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -394,6 +406,16 @@ IDD_SET_PARAMETERS_DIALOG AFX_DIALOG_LAYOUT
 BEGIN
     0
 END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// PNG
+//
+
+IDB_PNG5                PNG                     "res\\StatusStop_color_32xLG.png"
+
+IDB_PNG4                PNG                     "D:\\git\\RectifierControl\\res\\StatusStop_color_32xLG.png"
 
 
 /////////////////////////////////////////////////////////////////////////////

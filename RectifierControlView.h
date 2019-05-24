@@ -4,6 +4,7 @@
 
 #pragma once
 
+#define MAXICONS 4 
 
 class CRectifierControlView : public CView
 {
@@ -51,7 +52,8 @@ private:
 	CButton m_EnableDrivingButton;
 	CButton m_StartButton;
 	CButton m_StopButton;
-	//CStatic m_SetVoltage;
+
+	CStatic m_stateIcon;
 	CFont * mp_Font;
 	CFont * m_normalFont;
 	int m_fontHeight;
@@ -61,7 +63,7 @@ private:
 	float m_Current;
 	float m_VoltageToSet;
 	float m_CurrentToSet;
-
+	static HICON aIcons[MAXICONS];
 protected:
 	afx_msg LRESULT OnIdSetParametersButton(WPARAM wParam, LPARAM lParam);
 public:
