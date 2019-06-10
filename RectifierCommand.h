@@ -52,10 +52,12 @@ public:
 		static const uint8_t chan4Index = 0xe;
 		static const uint8_t controlByteIndex = 0x0a;
 
+		std::vector<uint8_t> stateBytes;
+
 		_StateF05::_StateF05() {
 			stateBytes.resize(27);
 		}
-		std::vector<uint8_t> stateBytes;
+		
 
 		void setHours(uint8_t value) {
 			stateBytes[hoursIndex] = value;
@@ -193,9 +195,10 @@ public:
 
 	static std::uint8_t parseResponseCode(const std::vector<std::uint8_t>& frame_array, uint8_t & modbus_addr, uint8_t & modbus_func, uint8_t & replyCode);
 
-	static StateF07 parseDataForF07(const std::vector<std::uint8_t>& rdSymbolsFrame);
+	static bool parseDataForF07(const std::vector<std::uint8_t>& rdSymbolsFrame, DeviceCommand::StateF07 & state);
+	
 
-	static DeviceCommand::StateF05 parseDataForF05(const std::vector<std::uint8_t>& data);
+	static bool parseDataForF05(const std::vector<std::uint8_t>& data, DeviceCommand::StateF05 & state);
 	
 
 	DeviceCommand(const DATA & cmd_data) {

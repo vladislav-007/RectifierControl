@@ -83,6 +83,7 @@ enum class RectifierState : std::int8_t {
 	SUCCESSFULLY_INITIALIZED = 14,
 	FAILED_TO_READ_PROGRAM = 15,
 	FAILED_TO_GET_DELAYED_REPLY = 16,
+	FAILED_TO_PARSE_STATE = 17,
 };
 
 enum class PortState : std::int8_t {
@@ -97,10 +98,12 @@ enum class PortState : std::int8_t {
 
 enum class DeviceCommunicationState : std::int8_t {
 	INIT_STATE = 0,
-	FRAME_SENT = 2,
-	REPLY_FRAME_RECEIVED = 3,
-	REPLY_READ_TIMEOUT = 4,
-	READ_SUCCEEDED = 7
+	CLEAR_BUFFER = 1,
+	CLEAR_BUFFER_SUCCEEDED = 2,
+	FRAME_SENT = 3,
+	REPLY_FRAME_RECEIVED = 4,
+	REPLY_READ_TIMEOUT = 5,
+	READ_SUCCEEDED = 6
 };
 
 //template<class T>
@@ -144,10 +147,12 @@ struct RecivedData {
 	std::vector<std::int8_t> buffer;
 };
 
-struct RectifierInfo {
+class RectifierInfo {
+	DeviceCommunicationState communicationState = DeviceCommunicationState::INIT_STATE;
+	RecivedData recivedData;
+public:
 	RectifierState state = RectifierState::NOT_INITIALIZED;
 	int badStateSkipCount = 0;
-	DeviceCommunicationState communicationState = DeviceCommunicationState::INIT_STATE;
 	PortState portState = PortState::PORT_UNKNOWN;
 	OVERLAPPED * overlappedRD;
 	OVERLAPPED * overlappedWR;
@@ -166,9 +171,14 @@ struct RectifierInfo {
 	Parity modeParity;
 	Stopbits modeStopbits;
 	CmdToExecute cmdToSend;
-	RecivedData recivedData;
+
 	CDocument * doc;
 	static CCriticalSection cs;
+	void setCommunicationState(DeviceCommunicationState commState);
+	DeviceCommunicationState getCommunicationState();
+	std::vector<std::uint8_t> getReceivedDataBuffer();
+	void clearReceivedBuffer();
+	void addToReceivedBuffer(std::vector<std::uint8_t> symbols);
 };
 
 
@@ -195,7 +205,7 @@ public:
 	void sendReplyData(std::vector<uint8_t> frameSymbols, DWORD & dwBytesWritten, CString & log);
 	RectifierState readFromPort(std::vector<std::uint8_t>& rdSymbols, std::vector<uint8_t>& sendSymbols, DWORD & dwBytesWritten, CString & log);
 	RectifierState readFromPort(std::vector<std::uint8_t>& rdSymbols);
-	static bool isValidFrame(std::vector<std::uint8_t> & symbols);
+	static bool isValidFrame(std::vector<std::uint8_t> symbols);
 	static bool trimLeftSymbolsSequenceAsFrame(std::vector<std::uint8_t>& framePretenders);
 	static std::vector<std::uint8_t> Device::getFrameFromTail(std::vector<std::uint8_t> & symbolsTail);
 	//void getRectifierState(RectifierInfo & info);
@@ -249,12 +259,14 @@ struct SThread_param {
 	OVERLAPPED * mainOverlappedRD;
 	DWORD * pMask;
 	OVERLAPPED * mainOverlappedWR;
+	int logLevel;
 };
 
 struct Reading_thread_param {
 	HWND wnd;
 	WORD * readingThreadState;
 	std::map<int, RectifierInfo> * m_rectifierConfigs;
+	int logLevel;
 };
 
 

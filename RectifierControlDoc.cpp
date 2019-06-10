@@ -195,7 +195,7 @@ void CRectifierControlDoc::parseRectifierCfg(CString & rectifierCfgPath)
 			valueElement->QueryStringAttribute("value", &strLocal1);
 			valueStr = CA2T(strLocal1, CP_UTF8);
 			m_rectifierInfo.modeStopbits = stopbitsFromString(valueStr);
-			m_rectifierInfo.communicationState = DeviceCommunicationState::INIT_STATE;
+			m_rectifierInfo.setCommunicationState( DeviceCommunicationState::INIT_STATE);
 			break;
 		}
 	}

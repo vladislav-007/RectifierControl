@@ -220,6 +220,7 @@ BOOL CRectifierControlApp::InitInstance()
 	// Синтаксический разбор командной строки на стандартные команды оболочки, DDE, открытие файлов
 	CCommandLineInfo cmdInfo;
 	ParseCommandLine(cmdInfo);
+	int logLevel = 0;
 	if (cmdInfo.m_nShellCommand == CCommandLineInfo::FileNew) {   // actually none
 																  // try to find app config file 
 		const fs::path app_dir(fs::path(szPath).parent_path());
@@ -233,6 +234,14 @@ BOOL CRectifierControlApp::InitInstance()
 			DWORD error = GetLastError();
 		}
 		else {
+			tinyxml2::XMLElement * logOptions = app_cfg_doc.FirstChildElement("RectifierController")->FirstChildElement("Log");
+			const char * levelStr;
+			if (logOptions != nullptr && tinyxml2::XML_SUCCESS == logOptions->QueryStringAttribute("level", &levelStr)) {
+				CString level = CA2T(levelStr, CP_UTF8);
+				if (level.Find(L"debug", 0) != -1) {
+					logLevel = 1;
+				}
+			}
 			tinyxml2::XMLElement * rectifiers = app_cfg_doc.FirstChildElement("RectifierController")->FirstChildElement("RectifierDocuments");
 			tinyxml2::XMLElement * rectifierDocument = rectifiers->FirstChildElement("Document");
 			while (rectifierDocument != nullptr) {
@@ -381,14 +390,14 @@ BOOL CRectifierControlApp::InitInstance()
 	param.mainOverlappedRD = &overlappedRD;
 	param.mainOverlappedWR = &overlappedWR;
 	param.pMask = &glMask;
-
-
+	param.logLevel = logLevel;
 	AfxBeginThread(ThreadProc, &param, THREAD_PRIORITY_NORMAL);
 
 	
 	reading_param.m_rectifierConfigs = &m_rectifierConfigs;
 	m_readThreadState = 0;
 	reading_param.readingThreadState = &m_readThreadState;
+	reading_param.logLevel = logLevel;
 	AfxBeginThread(ReadingComPortThread, &reading_param, THREAD_PRIORITY_NORMAL);
 
 	return TRUE;

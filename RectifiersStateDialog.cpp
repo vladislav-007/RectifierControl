@@ -427,7 +427,7 @@ void CRectifiersStateDialog::modelateRectifier(
 						voltage = 0x20;
 					}
 					uint8_t channelState = 0x11;
-					if (voltage > 0x10) {
+					if (voltage > 0x50) {
 						// overheat of module
 						channelState = 0x11 | 0x02;
 					} 

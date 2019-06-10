@@ -4,4 +4,5 @@
 		<Document filename="RectifierControlConfig.rcf"/>
 		<Document filename="Второй Выпрямитель.rcf"/>
 	</RectifierDocuments>
+	<Log level="debug"/>
 </RectifierController>

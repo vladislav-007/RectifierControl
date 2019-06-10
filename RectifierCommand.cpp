@@ -41,8 +41,13 @@ std::vector<uint8_t> DeviceCommand::dataToVector(DATA cmd_data) {
 		data_array.push_back(cmd_data.address);
 	if (cmd_data.size > 1)
 		data_array.push_back(cmd_data.command);
-	for (int8_t i = 0; i < cmd_data.size - 2; ++i) {
-		data_array.push_back(cmd_data.data[i]);
+	int8_t i = 0;
+	for (uint8_t byte : cmd_data.data) {
+		if (i >= cmd_data.size - 2) {
+			break;
+		}
+		data_array.push_back(byte);
+		i++;
 	}
 	return data_array;
 }
@@ -372,9 +377,10 @@ std::uint8_t DeviceCommand::parseCommand(const std::vector<std::uint8_t> & frame
 		crc += modbus_func;
 	}
 
-	std::vector<std::uint8_t> data_sub_vector(frame_array.cbegin() + 2, frame_array.cend());
-
-	crc += DeviceCommand::commandBytesToData(data_sub_vector, data);
+	if (frame_array.size() > 2) {
+		std::vector<std::uint8_t> data_sub_vector(frame_array.cbegin() + 2, frame_array.cend());
+		crc += DeviceCommand::commandBytesToData(data_sub_vector, data);
+	}
 #ifdef DEBUG
 	//assert(0 == crc);
 #endif
@@ -463,9 +469,10 @@ std::uint8_t DeviceCommand::parseResponseCode(const std::vector<std::uint8_t> & 
 	return crc;
 }
 
-DeviceCommand::StateF07 DeviceCommand::parseDataForF07(const std::vector<std::uint8_t> & data) {
-	//assert(data.size() == 0x08);
-	StateF07 state;
+bool DeviceCommand::parseDataForF07(const std::vector<std::uint8_t> & data, DeviceCommand::StateF07 & state) {
+	if (data.size() != 0x08) {
+		return true;
+	};
 	state.control = data[0];
 	for (int channel = 0; channel < 4; ++channel) {
 		state.channel_state[channel] = data[channel + 1];
@@ -473,20 +480,15 @@ DeviceCommand::StateF07 DeviceCommand::parseDataForF07(const std::vector<std::ui
 	state.aLow = data[0x05];
 	state.aHi = data[0x06];
 	state.V = data[0x07];
-	return state;
+	return false;
 }
 
-DeviceCommand::StateF05 DeviceCommand::parseDataForF05(const std::vector<std::uint8_t> & data) {
-	//assert(data.size() == 0x08);
-	StateF05 state;
+bool DeviceCommand::parseDataForF05(const std::vector<std::uint8_t> & data, DeviceCommand::StateF05 & state) {
+	if (data.size() != 27) {
+		return true;
+	}
 	for (int i = 0; i < 27; ++i) {
 		state.stateBytes[i] = data[i];
 	}
-	//state.stateBytes[StateF05::hoursIndex] = data[StateF05::hoursIndex];
-	//state.stateBytes[StateF05::minutesIndex] = data[StateF05::minutesIndex];
-	//state.stateBytes[StateF05::secondsIndex] = data[StateF05::secondsIndex];
-	//state.stateBytes[StateF05::lowAByteIndex] = data[StateF05::lowAByteIndex];
-	//state.stateBytes[StateF05::hiAByteIndex] = data[StateF05::hiAByteIndex];
-	//state.stateBytes[StateF05::vByteIndex] = data[StateF05::vByteIndex];
-	return state;
+	return false;
 }

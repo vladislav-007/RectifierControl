@@ -21,6 +21,8 @@ public:
 
 // ѕереопределение
 public:
+	void DocToClient(CRect & rect);
+	void OnPrepareDC(CDC * pDC, CPrintInfo * pInfo);
 	virtual void OnDraw(CDC* pDC);  // переопределено дл¤ отрисовки этого представлени¤
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 protected:
@@ -76,6 +78,7 @@ public:
 	afx_msg void OnStartProgram();
 	afx_msg void OnStopProgram();
 //	afx_msg void OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized);
+	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 };
 
 #ifndef _DEBUG  // отладочна¤ верси¤ в RectifierControlView.cpp

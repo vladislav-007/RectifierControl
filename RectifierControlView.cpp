@@ -34,6 +34,7 @@ BEGIN_MESSAGE_MAP(CRectifierControlView, CView)
 	ON_COMMAND(ID_START_PROGRAM, &CRectifierControlView::OnStartProgram)
 	ON_COMMAND(ID_STOP_PROGRAM, &CRectifierControlView::OnStopProgram)
 	//	ON_WM_ACTIVATE()
+	ON_WM_ERASEBKGND()
 END_MESSAGE_MAP()
 
 // создание/уничтожение CRectifierControlView
@@ -129,6 +130,41 @@ void DrawEllipse(HWND hwnd, HDC hdc, _In_ int left, _In_ int top, _In_ int right
 	DeleteObject(hbr);
 }
 
+void CRectifierControlView::DocToClient(CRect& rect)
+{
+	CClientDC dc(this);
+	OnPrepareDC(&dc, NULL);
+	dc.LPtoDP(rect);
+	rect.NormalizeRect();
+}
+
+void CRectifierControlView::OnPrepareDC(CDC* pDC, CPrintInfo* pInfo)
+{
+	CView::OnPrepareDC(pDC, pInfo);
+
+	// mapping mode is MM_ANISOTROPIC
+	// these extents setup a mode similar to MM_LOENGLISH
+	// MM_LOENGLISH is in .01 physical inches
+	// these extents provide .01 logical inches
+
+	pDC->SetMapMode(MM_ANISOTROPIC);
+
+	int res = pDC->GetDeviceCaps(DRIVERVERSION);
+
+	res = pDC->GetDeviceCaps(LOGPIXELSX);
+
+	pDC->SetViewportExt(pDC->GetDeviceCaps(LOGPIXELSX),	pDC->GetDeviceCaps(LOGPIXELSY));
+	pDC->SetWindowExt(100, -100);
+
+	//// set the origin of the coordinate system to the center of the page
+	//CPoint ptOrg;
+	//ptOrg.x = GetDocument()->GetSize().cx / 2;
+	//ptOrg.y = GetDocument()->GetSize().cy / 2;
+
+	//// ptOrg is in logical coordinates
+	//pDC->OffsetWindowOrg(-ptOrg.x, ptOrg.y);
+}
+
 void CRectifierControlView::OnDraw(CDC* pDC)
 {
 
@@ -136,6 +172,65 @@ void CRectifierControlView::OnDraw(CDC* pDC)
 	ASSERT_VALID(pDoc);
 	if (!pDoc)
 		return;
+
+	// only paint the rect that needs repainting
+	CRect client;
+	pDC->GetClipBox(client);
+	CRect rect = client;
+	DocToClient(rect);
+
+	CDC dc;
+	CDC* pDrawDC = pDC;
+	CBitmap bitmap;
+	CBitmap* pOldBitmap = 0;
+
+	if (!pDC->IsPrinting())
+	{
+		// draw to offscreen bitmap for fast looking repaints
+		if (dc.CreateCompatibleDC(pDC))
+		{
+			if (bitmap.CreateCompatibleBitmap(pDC, rect.Width(), rect.Height()))
+			{
+				OnPrepareDC(&dc, NULL);
+				pDrawDC = &dc;
+
+				// offset origin more because bitmap is just piece of the whole drawing
+				dc.OffsetViewportOrg(-rect.left, -rect.top);
+				pOldBitmap = dc.SelectObject(&bitmap);
+				dc.SetBrushOrg(rect.left % 8, rect.top % 8);
+
+				// might as well clip to the same rectangle
+				dc.IntersectClipRect(client);
+			}
+		}
+	}
+
+	//// paint background
+	//CBrush brush;
+	//if (!brush.CreateSolidBrush(pDoc->GetPaperColor()))
+	//	return;
+
+	//brush.UnrealizeObject();
+	//pDrawDC->FillRect(client, &brush);
+
+	//if (!pDC->IsPrinting() && m_bGrid)
+	//	DrawGrid(pDrawDC);
+
+	//pDoc->Draw(pDrawDC, this);
+
+	if (pDrawDC != pDC)
+	{
+		pDC->SetViewportOrg(0, 0);
+		pDC->SetWindowOrg(0, 0);
+		pDC->SetMapMode(MM_TEXT);
+		dc.SetViewportOrg(0, 0);
+		dc.SetWindowOrg(0, 0);
+		dc.SetMapMode(MM_TEXT);
+		pDC->BitBlt(rect.left, rect.top, rect.Width(), rect.Height(),
+			&dc, 0, 0, SRCCOPY);
+		dc.SelectObject(pOldBitmap);
+	}
+
 
 	CString rectifierName(CA2T("", CP_UTF8));
 
@@ -185,14 +280,14 @@ void CRectifierControlView::OnDraw(CDC* pDC)
 
 	}
 
-	//rectifierState += "(";
-	//ss << std::setw(2);
-	//ss << L"0x" << std::setfill(L'0') << std::setw(2) << std::hex << info.stateF05.getChan(1) << L",";
-	//ss << L"0x" << std::setfill(L'0') << std::setw(2) << std::hex << info.stateF05.getControlByte();
-	//CString stateBytes;
-	//stateBytes = ss.str().c_str();
-	//rectifierState += stateBytes;
-	//rectifierState += ") ";
+	rectifierState += "(";
+	ss << std::setw(2);
+	ss << L"0x" << std::setfill(L'0') << std::setw(2) << std::hex << info.stateF05.getChan(1) << L",";
+	ss << L"0x" << std::setfill(L'0') << std::setw(2) << std::hex << info.stateF05.getControlByte();
+	CString stateBytes;
+	stateBytes = ss.str().c_str();
+	rectifierState += stateBytes;
+	rectifierState += ") ";
 
 	if ((info.stateF05.getControlByte() & 0x04) == 0x04) {
 		// program is currently executed
@@ -208,6 +303,7 @@ void CRectifierControlView::OnDraw(CDC* pDC)
 	CString protectMsg(CA2T("Защита", CP_UTF8));
 	COLORREF overheatColor = RGB(250, 0, 100);
 	COLORREF protectColor = RGB(230, 100, 100);
+	COLORREF whiteColor = RGB(254, 254, 254);
 	// color indicator
 	//circle.Height = 20; //or some size
 	//circle.Width = 20; //height and width is the same for a circle
@@ -231,6 +327,10 @@ void CRectifierControlView::OnDraw(CDC* pDC)
 			}
 			else {
 				rectifierState += deviceState;
+				RECT rect;
+				::GetClientRect(m_hWnd, &rect);
+				pDC->FillRect(&rect, &CBrush(whiteColor));
+				pDC->SetBkColor(whiteColor);
 			}
 		}
 	}
@@ -400,11 +500,13 @@ void CRectifierControlView::OnDraw(CDC* pDC)
 //	OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
 //	ANTIALIASED_QUALITY, DEFAULT_PITCH | FF_SWISS,
 //	L"Arial");
-	if ((info.stateF05.getControlByte() & 0x04) == 0x04) {
-		pDC->DrawIcon(700, 75, aIcons[2]);
-	} 
-	else if ((info.stateF05.getControlByte() & 0x08) == 0x08) {
+	 
+	if ((info.stateF05.getControlByte() & 0x08) == 0x08) {
+		// blocked by out chain
 		pDC->DrawIcon(700, 75, aIcons[1]);
+	}
+	else if ((info.stateF05.getControlByte() & 0x04) == 0x04) {
+		pDC->DrawIcon(700, 75, aIcons[2]);
 	}
 	else if ((info.stateF05.getControlByte() & 0x08) != 0x08) {
 		pDC->DrawIcon(700, 75, aIcons[0]);
@@ -599,3 +701,11 @@ afx_msg LRESULT CRectifierControlView::OnMyMessage(WPARAM wParam, LPARAM lParam)
 //
 //	// TODO: Add your message handler code here
 //}
+
+
+BOOL CRectifierControlView::OnEraseBkgnd(CDC* pDC)
+{
+	// TODO: Add your message handler code here and/or call default
+	return true;
+	// return CView::OnEraseBkgnd(pDC);
+}

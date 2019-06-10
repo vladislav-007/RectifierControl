@@ -57,4 +57,5 @@ protected:
 #endif // SHARED_HANDLERS
 public:
 	virtual BOOL OnOpenDocument(LPCTSTR lpszPathName);
+	//void Draw(CDC* pDC, CDrawView* pView);
 };
